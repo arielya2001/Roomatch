@@ -25,6 +25,7 @@ fun CreateProfileScreen(
     var lifestyle by remember { mutableStateOf("") }
     var interests by remember { mutableStateOf("") }
     var userType by remember { mutableStateOf("seeker") }
+    var seekerType by remember { mutableStateOf("apartment") }
 
     Column(
         modifier = Modifier
@@ -34,7 +35,6 @@ fun CreateProfileScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("צור פרופיל", style = MaterialTheme.typography.headlineMedium)
-
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(value = fullName, onValueChange = { fullName = it }, label = { Text("שם מלא") })
@@ -42,8 +42,8 @@ fun CreateProfileScreen(
         OutlinedTextField(value = gender, onValueChange = { gender = it }, label = { Text("מגדר") })
         OutlinedTextField(value = lifestyle, onValueChange = { lifestyle = it }, label = { Text("סגנון חיים") })
         OutlinedTextField(value = interests, onValueChange = { interests = it }, label = { Text("תחומי עניין") })
-        Spacer(modifier = Modifier.height(16.dp))
 
+        Spacer(modifier = Modifier.height(16.dp))
         Text("סוג משתמש:", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -64,6 +64,29 @@ fun CreateProfileScreen(
             Text("בעל דירה")
         }
 
+        if (userType == "seeker") {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("סוג חיפוש:", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                RadioButton(
+                    selected = seekerType == "apartment",
+                    onClick = { seekerType = "apartment" }
+                )
+                Text("מחפש דירה")
+
+                RadioButton(
+                    selected = seekerType == "partner",
+                    onClick = { seekerType = "partner" }
+                )
+                Text("מחפש שותף")
+            }
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(onClick = {
@@ -77,6 +100,9 @@ fun CreateProfileScreen(
                     "interests" to interests,
                     "userType" to userType
                 )
+                if (userType == "seeker") {
+                    profile["seekerType"] = seekerType
+                }
 
                 db.collection("users").document(uid).set(profile)
                     .addOnSuccessListener {

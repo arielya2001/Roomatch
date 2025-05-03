@@ -40,67 +40,56 @@ class MainActivity : ComponentActivity() {
 
                     var currentScreen by remember { mutableStateOf("loading") }
 
-                    LaunchedEffect(isUserLoggedIn) {
-                        if (isUserLoggedIn) {
-                            val uid = auth.currentUser?.uid
-                            val db = FirebaseFirestore.getInstance()
-                            if (uid != null) {
-                                db.collection("users").document(uid).get()
-                                    .addOnSuccessListener { document ->
-                                        if (document.exists()) {
-                                            val userType = document.getString("userType")
-                                            currentScreen = when (userType) {
-                                                "owner" -> "owner"
-                                                "seeker" -> "welcome"
-                                                else -> "profile" // fallback אם חסר
-                                            }
-                                        } else {
-                                            currentScreen = "profile"
-                                        }
-                                    }
-                                    .addOnFailureListener {
-                                        currentScreen = "auth"
-                                    }
-                            } else {
-                                currentScreen = "auth"
-                            }
-                        } else {
-                            currentScreen = "auth"
-                        }
-                    }
                     var showMissingTypeDialog by remember { mutableStateOf(false) }
-
                     LaunchedEffect(isUserLoggedIn) {
-                        if (isUserLoggedIn) {
-                            val uid = auth.currentUser?.uid
-                            val db = FirebaseFirestore.getInstance()
-                            if (uid != null) {
-                                db.collection("users").document(uid).get()
-                                    .addOnSuccessListener { document ->
-                                        if (document.exists()) {
-                                            val userType = document.getString("userType")
-                                            if (userType.isNullOrEmpty()) {
-                                                showMissingTypeDialog = true
-                                            } else {
-                                                currentScreen = when (userType) {
-                                                    "owner" -> "owner"
-                                                    "seeker" -> "welcome"
-                                                    else -> "profile"
-                                                }
+                        if (!isUserLoggedIn) {
+                            currentScreen = "auth"
+                            return@LaunchedEffect
+                        }
+
+                        val uid = auth.currentUser?.uid
+                        val db = FirebaseFirestore.getInstance()
+
+                        if (uid == null) {
+                            auth.signOut()
+                            isUserLoggedIn = false
+                            currentScreen = "auth"
+                            return@LaunchedEffect
+                        }
+
+                        db.collection("users").document(uid).get()
+                            .addOnSuccessListener { document ->
+                                if (!document.exists()) {
+                                    // המשתמש מחובר, אבל אין לו פרופיל => ננתק אותו
+                                    auth.signOut()
+                                    isUserLoggedIn = false
+                                    currentScreen = "auth"
+                                    return@addOnSuccessListener
+                                }
+
+                                val userType = document.getString("userType")
+                                if (userType.isNullOrEmpty()) {
+                                    showMissingTypeDialog = true
+                                } else {
+                                    currentScreen = when (userType) {
+                                        "owner" -> "owner"
+                                        "seeker" -> {
+                                            val seekerType = document.getString("seekerType")
+                                            when (seekerType) {
+                                                "partner" -> "partner"
+                                                "apartment" -> "apartment"
+                                                else -> "profile"
                                             }
-                                        } else {
-                                            currentScreen = "profile"
                                         }
+                                        else -> "profile"
                                     }
-                                    .addOnFailureListener {
-                                        currentScreen = "auth"
-                                    }
-                            } else {
+                                }
+                            }
+                            .addOnFailureListener {
+                                auth.signOut()
+                                isUserLoggedIn = false
                                 currentScreen = "auth"
                             }
-                        } else {
-                            currentScreen = "auth"
-                        }
                     }
                     if (showMissingTypeDialog) {
                         AlertDialog(
@@ -137,12 +126,34 @@ class MainActivity : ComponentActivity() {
 
                         "auth" -> AuthScreen(
                             auth = auth,
-                            onAuthSuccess = {
-                                isUserLoggedIn = false
-                                isUserLoggedIn = true
+                            onAuthSuccess = { auth ->
+                                val uid = auth.currentUser?.uid
+                                val db = FirebaseFirestore.getInstance()
+                                if (uid != null) {
+                                    db.collection("users").document(uid).get()
+                                        .addOnSuccessListener { document ->
+                                            val userType = document.getString("userType")
+                                            currentScreen = when (userType) {
+                                                "owner" -> "owner"
+                                                "seeker" -> {
+                                                    when (document.getString("seekerType")) {
+                                                        "partner" -> "partner"
+                                                        "apartment" -> "apartment"
+                                                        else -> "profile"
+                                                    }
+                                                }
+                                                else -> "profile"
+                                            }
+                                        }
+                                        .addOnFailureListener {
+                                            Toast.makeText(context, "שגיאה בעת טעינת פרופיל", Toast.LENGTH_SHORT).show()
+                                            currentScreen = "auth"
+                                        }
+                                }
                             },
                             context = context
                         )
+
 
                         "profile" -> CreateProfileScreen(
                             auth = auth,
@@ -155,8 +166,14 @@ class MainActivity : ComponentActivity() {
                                             val userType = document.getString("userType")
                                             currentScreen = when (userType) {
                                                 "owner" -> "owner"
-                                                "seeker" -> "welcome"
-                                                else -> "profile"//d
+                                                "seeker" -> {
+                                                    when (document.getString("seekerType")) {
+                                                        "partner" -> "partner"
+                                                        "apartment" -> "apartment"
+                                                        else -> "profile"
+                                                    }
+                                                }
+                                                else -> "profile"
                                             }
                                         }
                                         .addOnFailureListener {
@@ -179,13 +196,29 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                         "owner" -> OwnerScreen(
+                            auth = auth,
                             onLogout = {
                                 auth.signOut()
                                 isUserLoggedIn = false
                                 currentScreen = "auth"
                             }
                         )
-
+                        "partner" -> PartnerScreen(
+                            auth = auth,
+                            onLogout = {
+                                auth.signOut()
+                                isUserLoggedIn = false
+                                currentScreen = "auth"
+                            }
+                        )
+                        "apartment" -> ApartmentSearchScreen(
+                            auth = auth,
+                            onLogout = {
+                                auth.signOut()
+                                isUserLoggedIn = false
+                                currentScreen = "auth"
+                            }
+                        )
                     }
                 }
             }
@@ -195,7 +228,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AuthScreen(auth: FirebaseAuth, onAuthSuccess: () -> Unit, context: android.content.Context) {
+fun AuthScreen(auth: FirebaseAuth, onAuthSuccess: (FirebaseAuth) -> Unit, context: android.content.Context) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoginMode by remember { mutableStateOf(true) }
@@ -235,7 +268,8 @@ fun AuthScreen(auth: FirebaseAuth, onAuthSuccess: () -> Unit, context: android.c
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 Toast.makeText(context, "התחברת בהצלחה!", Toast.LENGTH_SHORT).show()
-                                onAuthSuccess()
+                                onAuthSuccess(auth)
+
                             } else {
                                 Toast.makeText(context, "שגיאה בהתחברות: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                             }
@@ -245,7 +279,7 @@ fun AuthScreen(auth: FirebaseAuth, onAuthSuccess: () -> Unit, context: android.c
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 Toast.makeText(context, "נרשמת בהצלחה!", Toast.LENGTH_SHORT).show()
-                                onAuthSuccess()
+                                onAuthSuccess(auth)
                             } else {
                                 Toast.makeText(context, "שגיאה בהרשמה: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                             }
@@ -281,3 +315,4 @@ fun WelcomeScreen(onLogout: () -> Unit) {
         }
     }
 }
+
