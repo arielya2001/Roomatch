@@ -71,39 +71,43 @@ fun ApartmentSearchScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text("דירות פנויות", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            Text("דירות פנויות", style = MaterialTheme.typography.headlineMedium)
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (!loaded) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (apartments.isEmpty()) {
-            Text("אין דירות זמינות כרגע.")
-        } else {
-            LazyColumn {
-                items(apartments) { apartment ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("מיקום: ${apartment.location}")
-                            Text("מחיר: ${apartment.price} ש\"ח")
-                            Text("שותפים דרושים: ${apartment.roommatesNeeded}")
-                            Text("כניסה: ${apartment.entryDate}")
-                            Text("תיאור: ${apartment.description}")
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Button(onClick = {
-                                Toast.makeText(context, "הודעה נשלחה לבעל הדירה", Toast.LENGTH_SHORT).show()
-                            }) {
-                                Text("שלח הודעה לבעל הדירה")
+            if (!loaded) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (apartments.isEmpty()) {
+                Text("אין דירות זמינות כרגע.", modifier = Modifier.weight(1f))
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(apartments) { apartment ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text("מיקום: ${apartment.location}")
+                                Text("מחיר: ${apartment.price} ש\"ח")
+                                Text("שותפים דרושים: ${apartment.roommatesNeeded}")
+                                Text("כניסה: ${apartment.entryDate}")
+                                Text("תיאור: ${apartment.description}")
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Button(onClick = {
+                                    Toast.makeText(context, "הודעה נשלחה לבעל הדירה", Toast.LENGTH_SHORT).show()
+                                }) {
+                                    Text("שלח הודעה לבעל הדירה")
+                                }
                             }
                         }
                     }
@@ -111,9 +115,14 @@ fun ApartmentSearchScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onLogout, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+        Button(
+            onClick = onLogout,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) {
             Text("התנתק")
         }
     }
 }
+

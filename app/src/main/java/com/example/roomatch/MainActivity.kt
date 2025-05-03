@@ -1,10 +1,16 @@
 package com.example.roomatch
+import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +22,12 @@ import com.example.roomatch.ui.theme.RoomatchTheme
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+
+
 
 
 class MainActivity : ComponentActivity() {
@@ -125,33 +137,56 @@ class MainActivity : ComponentActivity() {
                         }
 
                         "auth" -> AuthScreen(
-                            auth = auth,
-                            onAuthSuccess = { auth ->
-                                val uid = auth.currentUser?.uid
-                                val db = FirebaseFirestore.getInstance()
-                                if (uid != null) {
-                                    db.collection("users").document(uid).get()
-                                        .addOnSuccessListener { document ->
-                                            val userType = document.getString("userType")
-                                            currentScreen = when (userType) {
-                                                "owner" -> "owner"
-                                                "seeker" -> {
-                                                    when (document.getString("seekerType")) {
-                                                        "partner" -> "partner"
-                                                        "apartment" -> "apartment"
+                            onLoginClicked = { email, password ->
+                                auth.signInWithEmailAndPassword(email, password)
+                                    .addOnSuccessListener {
+                                        val uid = auth.currentUser?.uid
+                                        val db = FirebaseFirestore.getInstance()
+                                        if (uid != null) {
+                                            db.collection("users").document(uid).get()
+                                                .addOnSuccessListener { document ->
+                                                    val userType = document.getString("userType")
+                                                    currentScreen = when (userType) {
+                                                        "owner" -> "owner"
+                                                        "seeker" -> {
+                                                            when (document.getString("seekerType")) {
+                                                                "partner" -> "partner"
+                                                                "apartment" -> "apartment"
+                                                                else -> "profile"
+                                                            }
+                                                        }
                                                         else -> "profile"
                                                     }
                                                 }
-                                                else -> "profile"
+                                                .addOnFailureListener {
+                                                    Toast.makeText(context, "שגיאה בעת טעינת פרופיל", Toast.LENGTH_SHORT).show()
+                                                    currentScreen = "auth"
+                                                }
+                                        }
+                                    }
+                                    .addOnFailureListener {
+                                        Toast.makeText(context, "שגיאת התחברות: ${it.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                            },
+                            onRegisterClicked = { email, password, username ->
+                                auth.createUserWithEmailAndPassword(email, password)
+                                    .addOnSuccessListener {
+                                        val uid = auth.currentUser?.uid
+                                        val db = FirebaseFirestore.getInstance()
+                                        if (uid != null) {
+                                            db.collection("users").document(uid).set(
+                                                mapOf("username" to username, "userType" to "") // משאיר userType ריק עד יצירת פרופיל
+                                            ).addOnSuccessListener {
+                                                currentScreen = "profile"
+                                            }.addOnFailureListener {
+                                                Toast.makeText(context, "שגיאה ביצירת פרופיל", Toast.LENGTH_SHORT).show()
                                             }
                                         }
-                                        .addOnFailureListener {
-                                            Toast.makeText(context, "שגיאה בעת טעינת פרופיל", Toast.LENGTH_SHORT).show()
-                                            currentScreen = "auth"
-                                        }
-                                }
-                            },
-                            context = context
+                                    }
+                                    .addOnFailureListener {
+                                        Toast.makeText(context, "שגיאת הרשמה: ${it.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                            }
                         )
 
 
@@ -228,76 +263,114 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AuthScreen(auth: FirebaseAuth, onAuthSuccess: (FirebaseAuth) -> Unit, context: android.content.Context) {
+fun AuthScreen(
+    onLoginClicked: (email: String, password: String) -> Unit,
+    onRegisterClicked: (email: String, password: String, username: String) -> Unit
+) {
+    var isLogin by remember { mutableStateOf(true) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var isLoginMode by remember { mutableStateOf(true) }
+    var username by remember { mutableStateOf("") }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(Color(0xFFEAF3FB))
     ) {
-        Text(
-            text = if (isLoginMode) "התחברות" else "הרשמה",
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("אימייל") }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("סיסמה") },
-            visualTransformation = PasswordVisualTransformation()
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = {
-                if (isLoginMode) {
-                    auth.signInWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                Toast.makeText(context, "התחברת בהצלחה!", Toast.LENGTH_SHORT).show()
-                                onAuthSuccess(auth)
-
-                            } else {
-                                Toast.makeText(context, "שגיאה בהתחברות: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-                            }
-                        }
-                } else {
-                    auth.createUserWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                Toast.makeText(context, "נרשמת בהצלחה!", Toast.LENGTH_SHORT).show()
-                                onAuthSuccess(auth)
-                            } else {
-                                Toast.makeText(context, "שגיאה בהרשמה: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-                            }
-                        }
-                }
-            }
-        ) {
-            Text(if (isLoginMode) "התחבר" else "הרשם")
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawCircle(color = Color(0xFF1E5C9A), radius = 300f, center = Offset(200f, 0f))
+            drawCircle(color = Color(0xFF1E5C9A), radius = 150f, center = Offset(80f, size.height))
+            drawCircle(color = Color(0xFF1E5C9A), radius = 80f, center = Offset(size.width - 60f, size.height - 200f))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.Center)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // ✅ הכותרת החדשה למעלה
+            Text(
+                text = "Roomatch",
+                style = MaterialTheme.typography.headlineLarge,
+                color = Color(0xFF1E5C9A)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
 
-        TextButton(onClick = { isLoginMode = !isLoginMode }) {
-            Text(if (isLoginMode) "אין לך חשבון? לחץ כאן להרשמה"
-            else "כבר יש לך חשבון? התחבר")
+            Row {
+                TextButton(onClick = { isLogin = true }) {
+                    Text("Login", color = if (isLogin) Color.Blue else Color.Gray)
+                }
+                TextButton(onClick = { isLogin = false }) {
+                    Text("Register", color = if (!isLogin) Color.Blue else Color.Gray)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.cardElevation(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    if (!isLogin) {
+                        OutlinedTextField(
+                            value = username,
+                            onValueChange = { username = it },
+                            label = { Text("User Name") },
+                            leadingIcon = { Icon(Icons.Default.Person, null) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
+                        leadingIcon = { Icon(Icons.Default.Email, null) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        leadingIcon = { Icon(Icons.Default.Lock, null) },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            if (isLogin) {
+                                onLoginClicked(email, password)
+                            } else {
+                                onRegisterClicked(email, password, username)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text(if (isLogin) "Login" else "Register")
+                    }
+                }
+            }
         }
     }
 }
+
+
+
 
 @Composable
 fun WelcomeScreen(onLogout: () -> Unit) {
