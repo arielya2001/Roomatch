@@ -156,7 +156,7 @@ class MainActivity : ComponentActivity() {
                                             currentScreen = when (userType) {
                                                 "owner" -> "owner"
                                                 "seeker" -> "welcome"
-                                                else -> "profile"
+                                                else -> "profile"//d
                                             }
                                         }
                                         .addOnFailureListener {
