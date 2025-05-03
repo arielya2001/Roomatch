@@ -51,6 +51,8 @@ class MainActivity : ComponentActivity() {
                     }
 
                     var currentScreen by remember { mutableStateOf("loading") }
+                    var selectedChatPartnerId by remember { mutableStateOf<String?>(null) }
+
 
                     var showMissingTypeDialog by remember { mutableStateOf(false) }
                     LaunchedEffect(isUserLoggedIn) {
@@ -236,8 +238,14 @@ class MainActivity : ComponentActivity() {
                                 auth.signOut()
                                 isUserLoggedIn = false
                                 currentScreen = "auth"
+                            },
+                            onOpenChat = { otherUserId ->
+                                // נוכל בהמשך גם להחליף למסך נפרד עם נווט, אבל לעכשיו:
+                                currentScreen = "chat_with_$otherUserId"
+                                Toast.makeText(this, "לחצת לדבר עם $otherUserId", Toast.LENGTH_SHORT).show()
                             }
                         )
+
                         "partner" -> PartnerScreen(
                             auth = auth,
                             onLogout = {
@@ -252,9 +260,38 @@ class MainActivity : ComponentActivity() {
                                 auth.signOut()
                                 isUserLoggedIn = false
                                 currentScreen = "auth"
+                            },
+                            onOpenChat = { ownerId ->
+                                selectedChatPartnerId = ownerId
+                                currentScreen = "chat"
                             }
                         )
+                        "chat" -> selectedChatPartnerId?.let { partnerId ->
+                            ChatScreen(
+                                auth = auth,
+                                otherUserId = partnerId,
+                                onBack = { currentScreen = "apartment" }
+                            )
+                        }
+
+
+                        else -> {
+                            if (currentScreen.startsWith("chat_with_")) {
+                                val otherUserId = currentScreen.removePrefix("chat_with_")
+                                ChatScreen(
+                                    auth = auth,
+                                    otherUserId = otherUserId,
+                                    onBack = { currentScreen = "owner" }
+                                )
+                            } else {
+                                // fallback אם איכשהו הגיע למשהו לא ידוע
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text("שגיאה: מסך לא קיים")
+                                }
+                            }
+                        }
                     }
+
                 }
             }
         }
