@@ -1,5 +1,4 @@
 package com.example.roomatch
-//hello
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -16,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import com.example.roomatch.ui.theme.RoomatchTheme
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+
 
 class MainActivity : ComponentActivity() {
 
@@ -26,7 +27,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         FirebaseApp.initializeApp(this)
         auth = FirebaseAuth.getInstance()
-
         setContent {
             RoomatchTheme {
                 Surface(
@@ -38,25 +38,159 @@ class MainActivity : ComponentActivity() {
                         mutableStateOf(auth.currentUser != null)
                     }
 
-                    if (isUserLoggedIn) {
-                        WelcomeScreen(
-                            onLogout = {
-                                auth.signOut()
-                                isUserLoggedIn = false
+                    var currentScreen by remember { mutableStateOf("loading") }
+
+                    LaunchedEffect(isUserLoggedIn) {
+                        if (isUserLoggedIn) {
+                            val uid = auth.currentUser?.uid
+                            val db = FirebaseFirestore.getInstance()
+                            if (uid != null) {
+                                db.collection("users").document(uid).get()
+                                    .addOnSuccessListener { document ->
+                                        if (document.exists()) {
+                                            val userType = document.getString("userType")
+                                            currentScreen = when (userType) {
+                                                "owner" -> "owner"
+                                                "seeker" -> "welcome"
+                                                else -> "profile" // fallback אם חסר
+                                            }
+                                        } else {
+                                            currentScreen = "profile"
+                                        }
+                                    }
+                                    .addOnFailureListener {
+                                        currentScreen = "auth"
+                                    }
+                            } else {
+                                currentScreen = "auth"
                             }
+                        } else {
+                            currentScreen = "auth"
+                        }
+                    }
+                    var showMissingTypeDialog by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(isUserLoggedIn) {
+                        if (isUserLoggedIn) {
+                            val uid = auth.currentUser?.uid
+                            val db = FirebaseFirestore.getInstance()
+                            if (uid != null) {
+                                db.collection("users").document(uid).get()
+                                    .addOnSuccessListener { document ->
+                                        if (document.exists()) {
+                                            val userType = document.getString("userType")
+                                            if (userType.isNullOrEmpty()) {
+                                                showMissingTypeDialog = true
+                                            } else {
+                                                currentScreen = when (userType) {
+                                                    "owner" -> "owner"
+                                                    "seeker" -> "welcome"
+                                                    else -> "profile"
+                                                }
+                                            }
+                                        } else {
+                                            currentScreen = "profile"
+                                        }
+                                    }
+                                    .addOnFailureListener {
+                                        currentScreen = "auth"
+                                    }
+                            } else {
+                                currentScreen = "auth"
+                            }
+                        } else {
+                            currentScreen = "auth"
+                        }
+                    }
+                    if (showMissingTypeDialog) {
+                        AlertDialog(
+                            onDismissRequest = {},
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    showMissingTypeDialog = false
+                                    currentScreen = "profile"
+                                }) {
+                                    Text("למלא פרופיל מחדש")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = {
+                                    auth.signOut()
+                                    showMissingTypeDialog = false
+                                    isUserLoggedIn = false
+                                    currentScreen = "auth"
+                                }) {
+                                    Text("התנתק")
+                                }
+                            },
+                            title = { Text("פרופיל לא שלם") },
+                            text = { Text("נראה שחסרים פרטים בפרופיל שלך. מה תרצה לעשות?") }
                         )
-                    } else {
-                        AuthScreen(
+                    }
+
+                    when (currentScreen) {
+                        "loading" -> {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator()
+                            }
+                        }
+
+                        "auth" -> AuthScreen(
                             auth = auth,
                             onAuthSuccess = {
+                                isUserLoggedIn = false
                                 isUserLoggedIn = true
                             },
                             context = context
                         )
+
+                        "profile" -> CreateProfileScreen(
+                            auth = auth,
+                            onProfileSaved = {
+                                val uid = auth.currentUser?.uid
+                                val db = FirebaseFirestore.getInstance()
+                                if (uid != null) {
+                                    db.collection("users").document(uid).get()
+                                        .addOnSuccessListener { document ->
+                                            val userType = document.getString("userType")
+                                            currentScreen = when (userType) {
+                                                "owner" -> "owner"
+                                                "seeker" -> "welcome"
+                                                else -> "profile"
+                                            }
+                                        }
+                                        .addOnFailureListener {
+                                            Toast.makeText(context, "שגיאה בעת טעינת פרופיל", Toast.LENGTH_SHORT).show()
+                                            currentScreen = "auth"
+                                        }
+                                } else {
+                                    currentScreen = "auth"
+                                }
+                            }
+                        )
+
+
+                        "welcome" -> HomeScreen(
+                            auth = auth,
+                            onLogout = {
+                                auth.signOut()
+                                isUserLoggedIn = false
+                                currentScreen = "auth"
+                            }
+                        )
+                        "owner" -> OwnerScreen(
+                            onLogout = {
+                                auth.signOut()
+                                isUserLoggedIn = false
+                                currentScreen = "auth"
+                            }
+                        )
+
                     }
                 }
             }
         }
+
     }
 }
 
