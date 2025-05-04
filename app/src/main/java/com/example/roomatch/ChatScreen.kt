@@ -30,24 +30,28 @@ fun ChatScreen(
     var messages by remember { mutableStateOf(listOf<Map<String, Any>>()) }
     var newMessage by remember { mutableStateOf("") }
 
-    fun loadChatMessages() {
-        db.collection("messages")
+    // מאזין בזמן אמת
+    DisposableEffect(Unit) {
+        val listener = db.collection("messages")
             .document(chatId)
             .collection("chat")
             .orderBy("timestamp", Query.Direction.ASCENDING)
-            .get()
-            .addOnSuccessListener { documents ->
-                messages = documents.map { it.data }
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("ChatScreen", "Error in real-time listener", error)
+                    Toast.makeText(context, "שגיאה בעדכון הודעות בזמן אמת", Toast.LENGTH_SHORT).show()
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && !snapshot.isEmpty) {
+                    messages = snapshot.documents.map { it.data ?: emptyMap() }
+                }
             }
-            .addOnFailureListener {
-                Log.e("ChatScreen", "Error loading chat", it)
-                Toast.makeText(context, "שגיאה בטעינת הצ'אט", Toast.LENGTH_SHORT).show()
-            }
+
+        onDispose {
+            listener.remove() // מבטל את המאזין בזמן עזיבת המסך
+        }
     }
 
-    LaunchedEffect(Unit) {
-        loadChatMessages()
-    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("צ'אט עם $otherUserId", style = MaterialTheme.typography.titleLarge)
@@ -97,7 +101,6 @@ fun ChatScreen(
                         .add(message)
                         .addOnSuccessListener {
                             newMessage = ""
-                            loadChatMessages()
                         }
                         .addOnFailureListener {
                             Log.e("ChatScreen", "Error sending message", it)
