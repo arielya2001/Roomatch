@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/textProfileName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="שם: "
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/textProfileAge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="גיל: "
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/textProfileGender"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="מגדר: "
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/textProfileLifestyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="סגנון חיים: "
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/textProfileInterests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="תחומי עניין: "
+            android:textSize="18sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="הודעות:"
+            android:textSize="20sp"
+            android:paddingTop="12dp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewUserMessages"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+</ScrollView>

@@ -34,11 +34,12 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
     @Override
     public void onBindViewHolder(@NonNull ApartmentViewHolder holder, int position) {
         Apartment apt = apartmentList.get(position);
-        holder.locationTextView.setText("מיקום: " + apt.getLocation());
+        holder.locationTextView.setText("כתובת: " + apt.getAddress()); // תוקן
         holder.priceTextView.setText("מחיר: " + apt.getPrice() + " ש\"ח");
         holder.roommatesTextView.setText("שותפים דרושים: " + apt.getRoommatesNeeded());
-        holder.entryDateTextView.setText("כניסה: " + apt.getEntryDate());
+        holder.entryDateTextView.setVisibility(View.GONE); // כי אין שדה כזה יותר
     }
+
 
     @Override
     public int getItemCount() {

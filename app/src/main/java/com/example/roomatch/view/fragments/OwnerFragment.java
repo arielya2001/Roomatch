@@ -22,20 +22,13 @@ import java.util.*;
 public class OwnerFragment extends Fragment {
 
     private EditText addressEditText, priceEditText, roommatesEditText, descriptionEditText;
-    private Button selectImageButton, publishButton, logoutButton;
+    private Button selectImageButton, publishButton;
     private ImageView imageView;
-    private RecyclerView apartmentsRecyclerView, messagesRecyclerView;
     private Uri imageUri;
     private String imageUrl = "";
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private FirebaseStorage storage;
-
-    private List<Map<String, Object>> apartments = new ArrayList<>();
-    private List<Map<String, Object>> messages = new ArrayList<>();
-
-    private ApartmentCardAdapter apartmentAdapter;
-    private MessageAdapter messageAdapter;
 
     public OwnerFragment() {}
 
@@ -62,30 +55,12 @@ public class OwnerFragment extends Fragment {
         descriptionEditText = view.findViewById(R.id.editTextDescription);
         selectImageButton = view.findViewById(R.id.buttonSelectImage);
         publishButton = view.findViewById(R.id.buttonPublish);
-        logoutButton = view.findViewById(R.id.buttonLogout);
         imageView = view.findViewById(R.id.imageViewPreview);
-
-        apartmentsRecyclerView = view.findViewById(R.id.recyclerViewApartments);
-        apartmentsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        apartmentAdapter = new ApartmentCardAdapter(apartments, this::showApartmentDetails);
-        apartmentsRecyclerView.setAdapter(apartmentAdapter);
-
-        messagesRecyclerView = view.findViewById(R.id.recyclerViewMessages);
-        messagesRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        messageAdapter = new MessageAdapter(messages, this::openChatWithUser);
-        messagesRecyclerView.setAdapter(messageAdapter);
 
         selectImageButton.setOnClickListener(v -> openFileChooser());
 
         publishButton.setOnClickListener(v -> publishApartment());
 
-        logoutButton.setOnClickListener(v -> {
-            auth.signOut();
-            Toast.makeText(getContext(), "התנתקת בהצלחה", Toast.LENGTH_SHORT).show();
-        });
-
-        loadApartments();
-        loadMessages();
     }
 
     private void openFileChooser() {
@@ -137,7 +112,6 @@ public class OwnerFragment extends Fragment {
                     .addOnSuccessListener(docRef -> {
                         Toast.makeText(getContext(), "הדירה פורסמה", Toast.LENGTH_SHORT).show();
                         resetForm();
-                        loadApartments();
                     })
                     .addOnFailureListener(e -> Toast.makeText(getContext(), "שגיאה בפרסום", Toast.LENGTH_SHORT).show());
         };
@@ -167,36 +141,6 @@ public class OwnerFragment extends Fragment {
         imageView.setImageDrawable(null);
     }
 
-    private void loadApartments() {
-        String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
-        if (uid == null) return;
-
-        db.collection("apartments").whereEqualTo("ownerId", uid).get()
-                .addOnSuccessListener(snapshot -> {
-                    apartments.clear();
-                    for (DocumentSnapshot doc : snapshot) {
-                        Map<String, Object> data = doc.getData();
-                        data.put("id", doc.getId());
-                        apartments.add(data);
-                    }
-                    apartmentAdapter.notifyDataSetChanged();
-                });
-    }
-
-    private void loadMessages() {
-        String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
-        if (uid == null) return;
-
-        db.collection("messages").whereEqualTo("toUserId", uid).get()
-                .addOnSuccessListener(snapshot -> {
-                    messages.clear();
-                    for (DocumentSnapshot doc : snapshot) {
-                        messages.add(doc.getData());
-                    }
-                    messageAdapter.notifyDataSetChanged();
-                });
-    }
-
     private void showApartmentDetails(Map<String, Object> apt) {
         String details = "כתובת: " + apt.get("address") +
                 "\nמחיר: " + apt.get("price") +
@@ -208,10 +152,5 @@ public class OwnerFragment extends Fragment {
         builder.setMessage(details);
         builder.setPositiveButton("סגור", null);
         builder.show();
-    }
-
-    private void openChatWithUser(String userId) {
-        Toast.makeText(getContext(), "פתיחת צ'אט עם: " + userId, Toast.LENGTH_SHORT).show();
-        // כאן תוכל להחליף לנווט לצ'אט בפועל
     }
 }

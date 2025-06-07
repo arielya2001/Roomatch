@@ -1,11 +1,10 @@
 package com.example.roomatch.model;
 
 public class Apartment {
-    private String location;
+    private String address;
     private int price;
     private String description;
     private int roommatesNeeded;
-    private String entryDate;
     private String ownerId;
     private String imageUrl;
 
@@ -13,21 +12,19 @@ public class Apartment {
     public Apartment() {}
 
     // Constructor מלא
-    public Apartment(String location, int price, String description,
-                     int roommatesNeeded, String entryDate,
-                     String ownerId, String imageUrl) {
-        this.location = location;
+    public Apartment(String address, int price, String description,
+                     int roommatesNeeded, String ownerId, String imageUrl) {
+        this.address = address;
         this.price = price;
         this.description = description;
         this.roommatesNeeded = roommatesNeeded;
-        this.entryDate = entryDate;
         this.ownerId = ownerId;
         this.imageUrl = imageUrl;
     }
 
     // Getters
-    public String getLocation() {
-        return location;
+    public String getAddress() {
+        return address;
     }
 
     public int getPrice() {
@@ -42,10 +39,6 @@ public class Apartment {
         return roommatesNeeded;
     }
 
-    public String getEntryDate() {
-        return entryDate;
-    }
-
     public String getOwnerId() {
         return ownerId;
     }
@@ -55,8 +48,8 @@ public class Apartment {
     }
 
     // Setters
-    public void setLocation(String location) {
-        this.location = location;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public void setPrice(int price) {
@@ -69,10 +62,6 @@ public class Apartment {
 
     public void setRoommatesNeeded(int roommatesNeeded) {
         this.roommatesNeeded = roommatesNeeded;
-    }
-
-    public void setEntryDate(String entryDate) {
-        this.entryDate = entryDate;
     }
 
     public void setOwnerId(String ownerId) {

@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="בית" />
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="הפרופיל שלי" />
+    <item
+        android:id="@+id/nav_back"
+        android:icon="@android:drawable/ic_media_previous"
+        android:title="חזור" />
+    <item
+        android:id="@+id/nav_logout"
+        android:icon="@drawable/baseline_logout_24"
+        android:title="התנתקות"/>
+</menu>
