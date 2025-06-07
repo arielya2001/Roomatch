@@ -8,6 +8,9 @@ public class Apartment {
     private String ownerId;
     private String imageUrl;
 
+    private String id;
+
+
     // Constructor ריק – נדרש על ידי Firebase
     public Apartment() {}
 
@@ -20,6 +23,12 @@ public class Apartment {
         this.roommatesNeeded = roommatesNeeded;
         this.ownerId = ownerId;
         this.imageUrl = imageUrl;
+    }
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
     }
 
     // Getters

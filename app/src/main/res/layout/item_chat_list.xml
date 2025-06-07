@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/textViewSender"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="מאת: [User ID]" />
+
+    <TextView
+        android:id="@+id/textViewApartment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="דירה: [Apartment ID]" />
+
+    <TextView
+        android:id="@+id/textViewMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="הודעה אחרונה: [Text]" />
+
+    <TextView
+        android:id="@+id/textViewTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="שעה: [Time]" />
+
+    <Button
+        android:id="@+id/buttonOpenChat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="פתח שיחה" />
+
+    <TextView
+        android:id="@+id/textViewUnreadBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📨"
+        android:textSize="16sp"
+        android:textColor="@android:color/holo_red_dark"
+        android:layout_gravity="end"
+        android:padding="8dp"
+        android:visibility="gone"/>
+
+
+</LinearLayout>

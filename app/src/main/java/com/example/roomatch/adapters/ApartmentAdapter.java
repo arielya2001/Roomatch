@@ -16,12 +16,18 @@ import java.util.List;
 
 public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.ApartmentViewHolder> {
 
+    public interface OnApartmentClickListener {
+        void onApartmentClick(Apartment apartment);
+    }
+
     private List<Apartment> apartmentList;
     private Context context;
+    private OnApartmentClickListener listener;
 
-    public ApartmentAdapter(List<Apartment> apartmentList, Context context) {
+    public ApartmentAdapter(List<Apartment> apartmentList, Context context, OnApartmentClickListener listener) {
         this.apartmentList = apartmentList;
         this.context = context;
+        this.listener = listener;
     }
 
     @NonNull
@@ -34,12 +40,16 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
     @Override
     public void onBindViewHolder(@NonNull ApartmentViewHolder holder, int position) {
         Apartment apt = apartmentList.get(position);
-        holder.locationTextView.setText("כתובת: " + apt.getAddress()); // תוקן
+        holder.locationTextView.setText("כתובת: " + apt.getAddress());
         holder.priceTextView.setText("מחיר: " + apt.getPrice() + " ש\"ח");
         holder.roommatesTextView.setText("שותפים דרושים: " + apt.getRoommatesNeeded());
-        holder.entryDateTextView.setVisibility(View.GONE); // כי אין שדה כזה יותר
-    }
 
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onApartmentClick(apt);
+            }
+        });
+    }
 
     @Override
     public int getItemCount() {
@@ -47,14 +57,13 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
     }
 
     static class ApartmentViewHolder extends RecyclerView.ViewHolder {
-        TextView locationTextView, priceTextView, roommatesTextView, entryDateTextView;
+        TextView locationTextView, priceTextView, roommatesTextView;
 
         public ApartmentViewHolder(@NonNull View itemView) {
             super(itemView);
             locationTextView = itemView.findViewById(R.id.locationTextView);
             priceTextView = itemView.findViewById(R.id.priceTextView);
             roommatesTextView = itemView.findViewById(R.id.roommatesTextView);
-            entryDateTextView = itemView.findViewById(R.id.entryDateTextView);
         }
     }
 }

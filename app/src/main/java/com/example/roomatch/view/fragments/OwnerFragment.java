@@ -140,17 +140,4 @@ public class OwnerFragment extends Fragment {
         imageUri = null;
         imageView.setImageDrawable(null);
     }
-
-    private void showApartmentDetails(Map<String, Object> apt) {
-        String details = "כתובת: " + apt.get("address") +
-                "\nמחיר: " + apt.get("price") +
-                "\nשותפים דרושים: " + apt.get("roommatesNeeded") +
-                "\nתיאור: " + apt.get("description");
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("פרטי הדירה");
-        builder.setMessage(details);
-        builder.setPositiveButton("סגור", null);
-        builder.show();
-    }
 }

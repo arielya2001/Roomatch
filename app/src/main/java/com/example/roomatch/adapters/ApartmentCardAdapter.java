@@ -1,6 +1,5 @@
 package com.example.roomatch.adapters;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,8 +19,8 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
         void onClick(Map<String, Object> apartment);
     }
 
-    private List<Map<String, Object>> apartments;
-    private OnApartmentClickListener listener;
+    private final List<Map<String, Object>> apartments;
+    private final OnApartmentClickListener listener;
 
     public ApartmentCardAdapter(List<Map<String, Object>> apartments, OnApartmentClickListener listener) {
         this.apartments = apartments;
@@ -39,11 +38,18 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
     @Override
     public void onBindViewHolder(@NonNull ApartmentViewHolder holder, int position) {
         Map<String, Object> apartment = apartments.get(position);
+
         holder.address.setText("כתובת: " + apartment.get("address"));
         holder.price.setText("מחיר: " + apartment.get("price") + " ₪");
 
+        // ❌ הסרה של הודעה חדשה
+        // boolean hasMessages = Boolean.TRUE.equals(apartment.get("hasMessages"));
+        // holder.messageBadge.setVisibility(hasMessages ? View.VISIBLE : View.GONE);
+
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) listener.onClick(apartment);
+            if (listener != null) {
+                listener.onClick(apartment);
+            }
         });
     }
 
@@ -53,12 +59,13 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
     }
 
     static class ApartmentViewHolder extends RecyclerView.ViewHolder {
-        TextView address, price;
+        TextView address, price; // ❌ הסרנו messageBadge
 
         public ApartmentViewHolder(@NonNull View itemView) {
             super(itemView);
             address = itemView.findViewById(R.id.textViewApartmentAddress);
             price = itemView.findViewById(R.id.textViewApartmentPrice);
+            // ❌ לא צריך: messageBadge = itemView.findViewById(R.id.textViewMessageBadge);
         }
     }
 }

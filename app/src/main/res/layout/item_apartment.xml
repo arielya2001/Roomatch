@@ -3,25 +3,27 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="12dp">
+    android:padding="12dp"
+    android:background="#EEEEEE"
+    android:layout_marginBottom="8dp">
 
-    <TextView android:id="@+id/locationTextView"
+    <TextView
+        android:id="@+id/locationTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="מיקום" />
+        android:text="כתובת"
+        android:textStyle="bold"
+        android:textSize="16sp" />
 
-    <TextView android:id="@+id/priceTextView"
+    <TextView
+        android:id="@+id/priceTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="מחיר" />
 
-    <TextView android:id="@+id/roommatesTextView"
+    <TextView
+        android:id="@+id/roommatesTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="שותפים דרושים" />
-
-    <TextView android:id="@+id/entryDateTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="כניסה" />
 </LinearLayout>

@@ -4,8 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="24dp"
-    android:gravity="center"
-    android:layoutDirection="rtl">
+    android:layoutDirection="rtl"
+    android:gravity="top">
 
     <TextView
         android:id="@+id/textWelcome"
@@ -14,18 +14,20 @@
         android:text="ברוך הבא למחפש דירה/שותף"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="24dp" />
 
     <Button
         android:id="@+id/btnFindApartments"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="חפש דירות"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp" />
 
     <Button
         android:id="@+id/btnFindPartners"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="חפש שותפים"/>
+        android:text="חפש שותפים"
+        android:layout_marginBottom="16dp" />
+
 </LinearLayout>

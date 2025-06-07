@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.ChatAdapter;
+import com.example.roomatch.utils.ChatUtil;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.*;
 
@@ -27,6 +28,7 @@ public class ChatFragment extends Fragment {
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private String otherUserId;
+    private String apartmentId;
     private String chatId;
 
     private RecyclerView recyclerView;
@@ -37,8 +39,9 @@ public class ChatFragment extends Fragment {
     private ChatAdapter adapter;
     private ListenerRegistration listener;
 
-    public ChatFragment(String otherUserId) {
+    public ChatFragment(String otherUserId, String apartmentId) {
         this.otherUserId = otherUserId;
+        this.apartmentId = apartmentId;
     }
 
     @Override
@@ -49,15 +52,14 @@ public class ChatFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
         String currentUid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "";
-        chatId = getSortedChatId(currentUid, otherUserId);
+        chatId = ChatUtil.generateChatId(currentUid, otherUserId, apartmentId);
 
         recyclerView = view.findViewById(R.id.recyclerViewMessages);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -72,6 +74,7 @@ public class ChatFragment extends Fragment {
         backButton.setOnClickListener(v -> requireActivity().onBackPressed());
 
         startMessageListener();
+        markMessagesAsRead();
     }
 
     private void sendMessage(String currentUid) {
@@ -83,6 +86,8 @@ public class ChatFragment extends Fragment {
         message.put("toUserId", otherUserId);
         message.put("text", text);
         message.put("timestamp", System.currentTimeMillis());
+        message.put("apartmentId", apartmentId);
+        message.put("read", currentUid.equals(otherUserId)); // אם השולח הוא הנמען, read=true, אחרת false
 
         db.collection("messages")
                 .document(chatId)
@@ -95,6 +100,27 @@ public class ChatFragment extends Fragment {
                     Log.e("ChatFragment", "Error sending message", e);
                     Toast.makeText(getContext(), "שגיאה בשליחת הודעה", Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void markMessagesAsRead() {
+        String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "";
+        if (uid.isEmpty() || chatId.isEmpty()) return;
+
+        db.collection("messages")
+                .document(chatId)
+                .collection("chat")
+                .whereEqualTo("toUserId", uid)
+                .whereEqualTo("read", false)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        doc.getReference().update("read", true)
+                                .addOnFailureListener(e -> Log.e("ChatFragment", "Error marking as read: " + e.getMessage()));
+                    }
+                    // רענון הודעות לאחר עדכון
+                    startMessageListener();
+                })
+                .addOnFailureListener(e -> Log.e("ChatFragment", "Error fetching unread messages: " + e.getMessage()));
     }
 
     private void startMessageListener() {

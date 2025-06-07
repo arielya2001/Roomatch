@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.example.roomatch.R;
+import com.example.roomatch.view.fragments.ChatsFragment;
 import com.example.roomatch.view.fragments.OwnerApartmentsFragment;
 import com.example.roomatch.view.fragments.SeekerHomeFragment;
 import com.example.roomatch.view.fragments.ProfileFragment;
@@ -105,27 +106,38 @@ public class MainActivity extends AppCompatActivity {
                 replaceFragment(new OwnerApartmentsFragment());
             }
             return true;
+
         } else if (id == R.id.nav_profile) {
             replaceFragment(new ProfileFragment());
             return true;
+
         } else if (id == R.id.nav_back) {
             getSupportFragmentManager().popBackStack();
             return true;
+
         } else if (id == R.id.nav_logout) {
             auth.signOut();
             startActivity(new Intent(this, AuthActivity.class));
             finish();
             return true;
+
         } else if (id == R.id.nav_apartments) {
             replaceFragment(new OwnerApartmentsFragment());
             return true;
+
         } else if (id == R.id.nav_publish_apartment) {
             replaceFragment(new OwnerFragment());
+            return true;
+
+        } else if (id == R.id.nav_chats) {
+            // ✅ תמיכה חדשה ב־ChatsFragment למחפש דירה
+            replaceFragment(new ChatsFragment());
             return true;
         }
 
         return false;
     }
+
 
     private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
