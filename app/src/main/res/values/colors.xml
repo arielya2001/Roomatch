@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- קיימים -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- מותאמים מ־Compose -->
+    <color name="colorPrimary">#6650A4</color> <!-- Purple40 -->
+    <color name="colorPrimaryVariant">#D0BCFF</color> <!-- Purple80 -->
+    <color name="colorSecondary">#625B71</color> <!-- PurpleGrey40 -->
+    <color name="colorSecondaryVariant">#CCC2DC</color> <!-- PurpleGrey80 -->
+    <color name="colorTertiary">#7D5260</color> <!-- Pink40 -->
+    <color name="colorTertiaryVariant">#EFB8C8</color> <!-- Pink80 -->
+    <color name="colorError">#B00020</color> <!-- כבר היה, השארנו -->
+
+    <!-- רקע ניתן ללחיצה (למניעת ?attr/selectableItemBackground) -->
+    <color name="selectableItemBackground">@android:color/transparent</color>
+</resources>

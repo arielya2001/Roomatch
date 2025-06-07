@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white"
+    android:layout_marginBottom="8dp"
+    android:elevation="2dp">
+
+    <TextView
+        android:id="@+id/textViewName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="שם: ..."
+        android:textSize="16sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/textViewAge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="גיל: ..."
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/textViewLifestyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="סגנון חיים: ..."
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/textViewInterests"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="תחומי עניין: ..."
+        android:textSize="14sp" />
+</LinearLayout>

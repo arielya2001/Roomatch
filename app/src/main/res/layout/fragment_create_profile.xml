@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    android:layoutDirection="rtl">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:text="צור פרופיל"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:paddingBottom="16dp"/>
+
+        <EditText
+            android:id="@+id/editFullName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="שם מלא"
+            android:inputType="textPersonName"/>
+
+        <EditText
+            android:id="@+id/editAge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="גיל"
+            android:inputType="number"/>
+
+        <EditText
+            android:id="@+id/editGender"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="מגדר"/>
+
+        <EditText
+            android:id="@+id/editLifestyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="סגנון חיים"/>
+
+        <EditText
+            android:id="@+id/editInterests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="תחומי עניין"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="סוג משתמש"
+            android:paddingTop="16dp"
+            android:textStyle="bold"/>
+
+        <!-- RadioGroup לסוג משתמש -->
+        <RadioGroup
+            android:id="@+id/userTypeGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <RadioButton
+                android:id="@+id/radioSeeker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="מחפש דירה" />
+
+            <RadioButton
+                android:id="@+id/radioOwner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="בעל דירה" />
+        </RadioGroup>
+
+        <Button
+            android:id="@+id/buttonSaveProfile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="שמור פרופיל"
+            android:layout_marginTop="24dp"/>
+    </LinearLayout>
+</ScrollView>

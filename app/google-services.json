@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "730704673974",
+    "project_id": "roomatch-694a8",
+    "storage_bucket": "roomatch-694a8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730704673974:android:af85c8c5d2f6b8e5ff3a17",
+        "android_client_info": {
+          "package_name": "com.example.roomatch"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "730704673974-j15jecmdnc0r4ni1esv1sbkfuupenr2e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.roomatch",
+            "certificate_hash": "bb7d51e05e1e85f882592f0c19e1cb4aec61911c"
+          }
+        },
+        {
+          "client_id": "730704673974-780s2lhe0nq00euabaekqe90kvn9s6og.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASnPm4dSVPIi9kBDfI3Nb1AEwmUDwKYtY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "730704673974-780s2lhe0nq00euabaekqe90kvn9s6og.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
