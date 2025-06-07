@@ -105,13 +105,22 @@ public class OwnerFragment extends Fragment {
 
     private void publishApartment() {
         String address = addressEditText.getText().toString();
-        String price = priceEditText.getText().toString();
-        String roommates = roommatesEditText.getText().toString();
+        String priceStr = priceEditText.getText().toString();
+        String roommatesStr = roommatesEditText.getText().toString();
         String description = descriptionEditText.getText().toString();
         String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
 
-        if (uid == null || address.isEmpty() || price.isEmpty()) {
+        if (uid == null || address.isEmpty() || priceStr.isEmpty() || roommatesStr.isEmpty()) {
             Toast.makeText(getContext(), "נא למלא את כל השדות", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int price, roommatesNeeded;
+        try {
+            price = Integer.parseInt(priceStr);
+            roommatesNeeded = Integer.parseInt(roommatesStr);
+        } catch (NumberFormatException e) {
+            Toast.makeText(getContext(), "מחיר ושותפים חייבים להיות מספרים", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -120,7 +129,7 @@ public class OwnerFragment extends Fragment {
             apt.put("ownerId", uid);
             apt.put("address", address);
             apt.put("price", price);
-            apt.put("roommatesNeeded", roommates);
+            apt.put("roommatesNeeded", roommatesNeeded);
             apt.put("description", description);
             apt.put("imageUrl", imageUrl);
 
@@ -147,6 +156,7 @@ public class OwnerFragment extends Fragment {
             uploadAndSave.run();
         }
     }
+
 
     private void resetForm() {
         addressEditText.setText("");

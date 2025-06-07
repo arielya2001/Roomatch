@@ -48,10 +48,10 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
     public void onBindViewHolder(@NonNull PartnerViewHolder holder, int position) {
         Map<String, Object> partner = partnerList.get(position);
 
-        String name = partner.getOrDefault("fullName", "לא ידוע").toString();
-        String age = partner.getOrDefault("age", "לא צוין").toString();
-        String interests = partner.getOrDefault("interests", "לא צוין").toString();
-        String lifestyle = partner.getOrDefault("lifestyle", "לא צוין").toString();
+        String name = safeToString(partner.get("fullName"), "לא ידוע");
+        String age = safeToString(partner.get("age"), "לא צוין");
+        String interests = safeToString(partner.get("interests"), "לא צוין");
+        String lifestyle = safeToString(partner.get("lifestyle"), "לא צוין");
 
         holder.textName.setText("שם: " + name);
         holder.textAge.setText("גיל: " + age);
@@ -90,5 +90,9 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
             buttonViewProfile = itemView.findViewById(R.id.buttonViewProfile);
             buttonReport = itemView.findViewById(R.id.buttonReport);
         }
+    }
+
+    private String safeToString(Object value, String defaultValue) {
+        return (value != null) ? value.toString() : defaultValue;
     }
 }

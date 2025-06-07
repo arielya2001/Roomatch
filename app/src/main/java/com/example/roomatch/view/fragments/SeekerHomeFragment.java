@@ -1,18 +1,16 @@
 package com.example.roomatch.view.fragments;
 
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.Button;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
-
+import androidx.fragment.app.FragmentTransaction;
 import com.example.roomatch.R;
 
 public class SeekerHomeFragment extends Fragment {
+
+    private Button btnFindApartments, btnFindPartners;
 
     public SeekerHomeFragment() {}
 
@@ -29,21 +27,25 @@ public class SeekerHomeFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Button btnFindApartments = view.findViewById(R.id.btnFindApartments);
-        Button btnFindPartners = view.findViewById(R.id.btnFindPartners);
+        btnFindApartments = view.findViewById(R.id.btnFindApartments);
+        btnFindPartners = view.findViewById(R.id.btnFindPartners);
 
-        btnFindApartments.setOnClickListener(v ->
-                requireActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer, new ApartmentSearchFragment())
-                        .addToBackStack(null)
-                        .commit()
-        );
+        btnFindApartments.setOnClickListener(v -> {
+            FragmentTransaction ft = requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction();
+            ft.replace(R.id.fragmentContainer, new ApartmentSearchFragment());
+            ft.addToBackStack(null);
+            ft.commit();
+        });
 
-        btnFindPartners.setOnClickListener(v ->
-                requireActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer, new PartnerFragment())
-                        .addToBackStack(null)
-                        .commit()
-        );
+        btnFindPartners.setOnClickListener(v -> {
+            FragmentTransaction ft = requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction();
+            ft.replace(R.id.fragmentContainer, new PartnerFragment());
+            ft.addToBackStack(null);
+            ft.commit();
+        });
     }
 }
