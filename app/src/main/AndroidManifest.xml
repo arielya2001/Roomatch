@@ -2,6 +2,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.roomatch">
 
+    <!-- ⬇️ הוספת הרשאות -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -13,7 +17,6 @@
         android:theme="@style/Theme.Roomatch"
         tools:targetApi="31">
 
-        <!-- ⬇️ הוספה חשובה! -->
         <activity
             android:name=".view.activities.AuthActivity"
             android:exported="true">
@@ -23,7 +26,6 @@
             </intent-filter>
         </activity>
 
-        <!-- אפשר גם להוסיף את MainActivity בלי intent-filter אם אתה קורא לה אחרי login -->
         <activity android:name=".view.activities.MainActivity" />
     </application>
 

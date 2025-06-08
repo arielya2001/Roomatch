@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Toolbar עליון -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
@@ -15,29 +16,84 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:title="דירות שלי">
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:title="דירות שלי"
+            app:titleTextColor="@android:color/white">
 
             <ImageButton
                 android:id="@+id/buttonChats"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:src="@android:drawable/ic_dialog_email"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="צ'אטים"
                 android:layout_gravity="end"
                 android:padding="8dp" />
-
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- Search bar -->
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchViewOwner"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:queryHint="חפש לפי עיר, רחוב או תיאור"
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:iconifiedByDefault="false"
+        android:layout_margin="8dp" />
+
+    <!-- פילטרים -->
+    <LinearLayout
+        android:id="@+id/filterLayoutOwner"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginBottom="4dp"
+        app:layout_constraintTop_toBottomOf="@id/searchViewOwner"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <Spinner
+            android:id="@+id/spinnerOwnerFilterField"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp" />
+
+        <Spinner
+            android:id="@+id/spinnerOwnerOrder"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/buttonOwnerFilter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="סנן"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/buttonOwnerClear"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="נקה" />
+    </LinearLayout>
+
+    <!-- רשימת הדירות -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewOwnerApartments"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
+        android:scrollbars="vertical"
+        android:contentDescription="רשימת הדירות שלי"
+        app:layout_constraintTop_toBottomOf="@id/filterLayoutOwner"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:scrollbars="vertical"
-        android:contentDescription="רשימת הדירות שלי" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

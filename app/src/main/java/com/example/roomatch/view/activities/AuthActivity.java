@@ -9,8 +9,14 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.roomatch.R;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import com.google.android.gms.auth.api.signin.*;
+import com.google.android.gms.common.api.ApiException;
+import com.google.firebase.auth.*;
+
 
 import java.util.HashMap;
 
@@ -21,8 +27,13 @@ public class AuthActivity extends AppCompatActivity {
     private TextView switchModeText, titleText;
     private boolean isLoginMode = true;
 
+    private static final int RC_SIGN_IN = 9001;
+    private GoogleSignInClient googleSignInClient;
+
     private FirebaseAuth auth;
     private FirebaseFirestore db;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +41,16 @@ public class AuthActivity extends AppCompatActivity {
         setContentView(R.layout.activity_auth);
 
         auth = FirebaseAuth.getInstance();
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id)) // נמצא ב־strings.xml
+                .requestEmail()
+                .build();
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        findViewById(R.id.customGoogleButton).setOnClickListener(v -> signInWithGoogle());
+
+
         db = FirebaseFirestore.getInstance();
 
         editEmail = findViewById(R.id.editEmail);
@@ -67,6 +88,76 @@ public class AuthActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void signInWithGoogle() {
+        googleSignInClient.signOut().addOnCompleteListener(task -> {
+            Intent signInIntent = googleSignInClient.getSignInIntent();
+            startActivityForResult(signInIntent, RC_SIGN_IN);
+        });
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RC_SIGN_IN) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                firebaseAuthWithGoogle(account);
+            } catch (ApiException e) {
+                Toast.makeText(this, "שגיאה בהתחברות עם גוגל", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
+        AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
+        auth.signInWithCredential(credential)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        String uid = auth.getCurrentUser().getUid();
+                        db.collection("users").document(uid).get().addOnSuccessListener(snapshot -> {
+                            if (!snapshot.exists()) {
+                                // משתמש חדש – צור מסמך ריק בפרופיל
+                                HashMap<String, Object> userData = new HashMap<>();
+                                userData.put("username", acct.getDisplayName());
+                                userData.put("userType", "");
+
+                                db.collection("users").document(uid)
+                                        .set(userData)
+                                        .addOnSuccessListener(unused -> {
+                                            // רק אחרי שהמסמך נוצר, טען אותו מחדש לוודא שהוא קיים
+                                            db.collection("users").document(uid).get()
+                                                    .addOnSuccessListener(createdSnapshot -> {
+                                                        if (createdSnapshot.exists()) {
+                                                            Toast.makeText(this, "נרשמת בהצלחה עם גוגל", Toast.LENGTH_SHORT).show();
+                                                            startActivity(new Intent(this, MainActivity.class)
+                                                                    .putExtra("fragment", "create_profile"));
+                                                            finish();
+                                                        } else {
+                                                            Toast.makeText(this, "שגיאה: לא נוצר משתמש חדש", Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    });
+                                        })
+                                        .addOnFailureListener(e ->
+                                                Toast.makeText(this, "שגיאה ביצירת משתמש", Toast.LENGTH_SHORT).show()
+                                        );
+
+                            } else {
+                                // משתמש קיים – המשך רגיל
+                                startMain();
+                            }
+                        });
+                    } else {
+                        Toast.makeText(this, "שגיאה באימות עם גוגל", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+
+
 
     private void updateMode() {
         if (isLoginMode) {

@@ -33,23 +33,117 @@
             android:hint="גיל"
             android:inputType="number"/>
 
-        <EditText
-            android:id="@+id/editGender"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="מגדר"/>
+            android:text="מין"
+            android:layout_marginTop="8dp" />
 
-        <EditText
-            android:id="@+id/editLifestyle"
-            android:layout_width="match_parent"
+        <RadioGroup
+            android:id="@+id/genderGroup"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="סגנון חיים"/>
+            android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/editInterests"
+            <RadioButton
+                android:id="@+id/radioMale"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="זכר" />
+
+            <RadioButton
+                android:id="@+id/radioFemale"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="נקבה" />
+
+            <RadioButton
+                android:id="@+id/radioOther"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="אחר / לא רוצה לשתף" />
+        </RadioGroup>
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="סגנון חיים:"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <LinearLayout
+            android:id="@+id/lifestyleCheckboxes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="תחומי עניין"/>
+            android:orientation="vertical">
+
+            <CheckBox android:id="@+id/checkboxClean"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="נקי" />
+
+            <CheckBox android:id="@+id/checkboxSmoker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="מעשן" />
+
+            <CheckBox android:id="@+id/checkboxNightOwl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="חיית לילה" />
+
+            <CheckBox android:id="@+id/checkboxQuiet"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="שקט" />
+
+            <CheckBox android:id="@+id/checkboxParty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="אוהב מסיבות" />
+        </LinearLayout>
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="תחומי עניין:"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <LinearLayout
+            android:id="@+id/interestsCheckboxes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <CheckBox android:id="@+id/checkboxMusic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="מוזיקה" />
+
+            <CheckBox android:id="@+id/checkboxSports"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ספורט" />
+
+            <CheckBox android:id="@+id/checkboxTravel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="טיולים" />
+
+            <CheckBox android:id="@+id/checkboxCooking"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="בישול" />
+
+            <CheckBox android:id="@+id/checkboxReading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="קריאה" />
+        </LinearLayout>
+
 
         <TextView
             android:layout_width="wrap_content"

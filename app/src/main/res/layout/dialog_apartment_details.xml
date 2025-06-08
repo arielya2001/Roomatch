@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- תמונת הדירה -->
+        <ImageView
+            android:id="@+id/apartmentImageView"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:layout_marginBottom="12dp" />
+
+        <!-- עיר -->
+        <TextView
+            android:id="@+id/cityTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="עיר:"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- רחוב -->
+        <TextView
+            android:id="@+id/streetTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="רחוב:"
+            android:layout_marginTop="4dp" />
+
+        <!-- מספר בית -->
+        <TextView
+            android:id="@+id/houseNumberTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="מספר בית:"
+            android:layout_marginTop="4dp" />
+
+        <!-- מחיר -->
+        <TextView
+            android:id="@+id/priceTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="מחיר:"
+            android:layout_marginTop="8dp" />
+
+        <!-- שותפים דרושים -->
+        <TextView
+            android:id="@+id/roommatesTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="שותפים דרושים:"
+            android:layout_marginTop="4dp" />
+
+        <!-- תיאור -->
+        <TextView
+            android:id="@+id/descriptionTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="תיאור:"
+            android:layout_marginTop="8dp" />
+
+        <!-- כפתור שליחת הודעה -->
+        <Button
+            android:id="@+id/messageButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="שלח הודעה לבעל הדירה"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
+</ScrollView>
