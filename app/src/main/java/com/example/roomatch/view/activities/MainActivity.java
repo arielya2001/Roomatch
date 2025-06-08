@@ -48,7 +48,26 @@ public class MainActivity extends AppCompatActivity {
         bottomNav.setOnItemSelectedListener(this::onNavigationItemSelected);
         bottomNav.setVisibility(BottomNavigationView.GONE);
 
-        checkUserProfile(currentUser.getUid());
+        // בדיקה אם יש פרמטר מ-CreateProfileFragment
+        String initialFragment = getIntent().getStringExtra("fragment");
+        if (initialFragment != null) {
+            switch (initialFragment) {
+                case "owner_apartments":
+                    replaceFragment(new OwnerApartmentsFragment());
+                    setupBottomNav("owner");
+                    break;
+                case "seeker_home":
+                    replaceFragment(new SeekerHomeFragment());
+                    setupBottomNav("seeker");
+                    break;
+                case "create_profile":
+                    replaceFragment(new CreateProfileFragment());
+                    break;
+            }
+        }
+         else {
+            checkUserProfile(currentUser.getUid());
+        }
     }
 
     private void checkUserProfile(String uid) {
@@ -71,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
                     setupBottomNav(userType);
 
                     if ("owner".equals(userType)) {
-                        replaceFragment(new OwnerApartmentsFragment()); // ← נקודת פתיחה חדשה!
+                        replaceFragment(new OwnerApartmentsFragment());
                     } else {
                         replaceFragment(new SeekerHomeFragment());
                     }
@@ -111,10 +130,6 @@ public class MainActivity extends AppCompatActivity {
             replaceFragment(new ProfileFragment());
             return true;
 
-        } else if (id == R.id.nav_back) {
-            getSupportFragmentManager().popBackStack();
-            return true;
-
         } else if (id == R.id.nav_logout) {
             auth.signOut();
             startActivity(new Intent(this, AuthActivity.class));
@@ -130,7 +145,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
 
         } else if (id == R.id.nav_chats) {
-            // ✅ תמיכה חדשה ב־ChatsFragment למחפש דירה
             replaceFragment(new ChatsFragment());
             return true;
         }
@@ -138,12 +152,11 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-
     private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, fragment)
-                .addToBackStack(null) // כדי שכפתור BACK יעבוד כמו שצריך
+                .addToBackStack(null)
                 .commit();
     }
 }

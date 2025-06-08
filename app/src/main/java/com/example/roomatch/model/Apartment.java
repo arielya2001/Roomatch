@@ -1,7 +1,10 @@
 package com.example.roomatch.model;
 
 public class Apartment {
-    private String address;
+    private String city;
+    private String street;
+    private int houseNumber;
+
     private int price;
     private String description;
     private int roommatesNeeded;
@@ -10,30 +13,33 @@ public class Apartment {
 
     private String id;
 
-
-    // Constructor ריק – נדרש על ידי Firebase
+    // קונסטרקטור ריק – נדרש על ידי Firebase
     public Apartment() {}
 
-    // Constructor מלא
-    public Apartment(String address, int price, String description,
+    // קונסטרקטור מלא
+    public Apartment(String city, String street, int houseNumber, int price, String description,
                      int roommatesNeeded, String ownerId, String imageUrl) {
-        this.address = address;
+        this.city = city;
+        this.street = street;
+        this.houseNumber = houseNumber;
         this.price = price;
         this.description = description;
         this.roommatesNeeded = roommatesNeeded;
         this.ownerId = ownerId;
         this.imageUrl = imageUrl;
     }
-    public String getId() {
-        return id;
-    }
-    public void setId(String id) {
-        this.id = id;
-    }
 
     // Getters
-    public String getAddress() {
-        return address;
+    public String getCity() {
+        return city;
+    }
+
+    public String getStreet() {
+        return street;
+    }
+
+    public int getHouseNumber() {
+        return houseNumber;
     }
 
     public int getPrice() {
@@ -56,9 +62,21 @@ public class Apartment {
         return imageUrl;
     }
 
+    public String getId() {
+        return id;
+    }
+
     // Setters
-    public void setAddress(String address) {
-        this.address = address;
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    public void setHouseNumber(int houseNumber) {
+        this.houseNumber = houseNumber;
     }
 
     public void setPrice(int price) {
@@ -79,5 +97,14 @@ public class Apartment {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    // אופציונלי – אם רוצים כתובת אחת כמחרוזת
+    public String getFullAddress() {
+        return "עיר: " + city + ", רחוב: " + street + ", מס' " + houseNumber;
     }
 }

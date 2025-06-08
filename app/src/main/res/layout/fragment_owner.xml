@@ -18,10 +18,24 @@
             android:textStyle="bold" />
 
         <EditText
-            android:id="@+id/editTextAddress"
-            android:hint="כתובת"
+            android:id="@+id/editTextCity"
+            android:hint="עיר"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/editTextStreet"
+            android:hint="רחוב"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/editTextHouseNumber"
+            android:hint="מספר בית"
+            android:inputType="number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
 
         <EditText
             android:id="@+id/editTextPrice"

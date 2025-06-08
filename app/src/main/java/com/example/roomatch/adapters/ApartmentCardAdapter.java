@@ -3,6 +3,7 @@ package com.example.roomatch.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -16,7 +17,8 @@ import java.util.Map;
 public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdapter.ApartmentViewHolder> {
 
     public interface OnApartmentClickListener {
-        void onClick(Map<String, Object> apartment);
+        void onViewApartmentClick(Map<String, Object> apartment);
+        void onEditApartmentClick(Map<String, Object> apartment);
     }
 
     private final List<Map<String, Object>> apartments;
@@ -39,16 +41,26 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
     public void onBindViewHolder(@NonNull ApartmentViewHolder holder, int position) {
         Map<String, Object> apartment = apartments.get(position);
 
-        holder.address.setText("כתובת: " + apartment.get("address"));
-        holder.price.setText("מחיר: " + apartment.get("price") + " ₪");
+        // שליפת שדות בודדים במקום כתובת אחת
+        String city = apartment.get("city") != null ? apartment.get("city").toString() : "לא זמין";
+        String street = apartment.get("street") != null ? apartment.get("street").toString() : "לא זמין";
+        String houseNumber = apartment.get("houseNumber") != null ? apartment.get("houseNumber").toString() : "לא זמין";
+        String price = apartment.get("price") != null ? apartment.get("price").toString() + " ₪" : "לא זמין";
 
-        // ❌ הסרה של הודעה חדשה
-        // boolean hasMessages = Boolean.TRUE.equals(apartment.get("hasMessages"));
-        // holder.messageBadge.setVisibility(hasMessages ? View.VISIBLE : View.GONE);
+        holder.city.setText("עיר: " + city);
+        holder.street.setText("רחוב: " + street);
+        holder.houseNumber.setText("מספר בית: " + houseNumber);
+        holder.price.setText("מחיר: " + price);
 
-        holder.itemView.setOnClickListener(v -> {
+        holder.buttonViewApartment.setOnClickListener(v -> {
             if (listener != null) {
-                listener.onClick(apartment);
+                listener.onViewApartmentClick(apartment);
+            }
+        });
+
+        holder.buttonEditApartment.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onEditApartmentClick(apartment);
             }
         });
     }
@@ -59,13 +71,17 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
     }
 
     static class ApartmentViewHolder extends RecyclerView.ViewHolder {
-        TextView address, price; // ❌ הסרנו messageBadge
+        TextView city, street, houseNumber, price;
+        Button buttonViewApartment, buttonEditApartment;
 
         public ApartmentViewHolder(@NonNull View itemView) {
             super(itemView);
-            address = itemView.findViewById(R.id.textViewApartmentAddress);
+            city = itemView.findViewById(R.id.textViewApartmentCity);
+            street = itemView.findViewById(R.id.textViewApartmentStreet);
+            houseNumber = itemView.findViewById(R.id.textViewApartmentHouseNumber);
             price = itemView.findViewById(R.id.textViewApartmentPrice);
-            // ❌ לא צריך: messageBadge = itemView.findViewById(R.id.textViewMessageBadge);
+            buttonViewApartment = itemView.findViewById(R.id.buttonViewApartment);
+            buttonEditApartment = itemView.findViewById(R.id.buttonEditApartment);
         }
     }
 }

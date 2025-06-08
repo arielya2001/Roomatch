@@ -44,17 +44,20 @@
             android:text="תחומי עניין: "
             android:textSize="18sp" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="הודעות:"
-            android:textSize="20sp"
-            android:paddingTop="12dp" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewUserMessages"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"/>
+
+        <Button
+            android:id="@+id/buttonUpdateProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="עדכון פרטים אישיים"
+            android:layout_marginTop="16dp"
+            android:layout_gravity="center" />
+
     </LinearLayout>
 </ScrollView>

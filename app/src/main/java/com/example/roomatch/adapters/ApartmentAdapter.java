@@ -40,7 +40,10 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
     @Override
     public void onBindViewHolder(@NonNull ApartmentViewHolder holder, int position) {
         Apartment apt = apartmentList.get(position);
-        holder.locationTextView.setText("כתובת: " + apt.getAddress());
+
+        holder.cityTextView.setText("עיר: " + apt.getCity());
+        holder.streetTextView.setText("רחוב: " + apt.getStreet());
+        holder.houseNumberTextView.setText("מספר: " + apt.getHouseNumber());
         holder.priceTextView.setText("מחיר: " + apt.getPrice() + " ש\"ח");
         holder.roommatesTextView.setText("שותפים דרושים: " + apt.getRoommatesNeeded());
 
@@ -57,13 +60,16 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
     }
 
     static class ApartmentViewHolder extends RecyclerView.ViewHolder {
-        TextView locationTextView, priceTextView, roommatesTextView;
+        TextView cityTextView, streetTextView, houseNumberTextView, priceTextView, roommatesTextView;
 
         public ApartmentViewHolder(@NonNull View itemView) {
             super(itemView);
-            locationTextView = itemView.findViewById(R.id.locationTextView);
+            cityTextView = itemView.findViewById(R.id.cityTextView);
+            streetTextView = itemView.findViewById(R.id.streetTextView);
+            houseNumberTextView = itemView.findViewById(R.id.houseNumberTextView);
             priceTextView = itemView.findViewById(R.id.priceTextView);
             roommatesTextView = itemView.findViewById(R.id.roommatesTextView);
         }
     }
 }
+

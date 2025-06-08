@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/labelFullName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="שם מלא:"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/editFullName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="הזן שם מלא"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/labelAge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="גיל:"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/editAge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="הזן גיל"
+        android:inputType="number"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/labelGender"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="מגדר:"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/editGender"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="הזן מגדר"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/labelLifestyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="סגנון חיים:"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/editLifestyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="הזן סגנון חיים"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/labelInterests"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="תחומי עניין:"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/editInterests"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="הזן תחומי עניין"
+        android:lines="2" />
+
+</LinearLayout>

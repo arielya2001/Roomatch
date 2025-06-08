@@ -15,11 +15,6 @@
         android:title="הפרופיל שלי" />
 
     <item
-        android:id="@+id/nav_back"
-        android:icon="@android:drawable/ic_media_previous"
-        android:title="חזור" />
-
-    <item
         android:id="@+id/nav_logout"
         android:icon="@drawable/baseline_logout_24"
         android:title="התנתקות"/>

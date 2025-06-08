@@ -13,9 +13,8 @@ import com.example.roomatch.R;
 
 public class ApartmentDetailsFragment extends Fragment {
 
-    public static final String ARG_APARTMENT = "apartment";
-    private String address, description, imageUrl, ownerId, apartmentId; // הוספנו apartmentId
-    private int price, roommatesNeeded;
+    private String city, street, imageUrl, ownerId, apartmentId, description;
+    private int houseNumber, price, roommatesNeeded;
 
     public static ApartmentDetailsFragment newInstance(Bundle apartmentData) {
         ApartmentDetailsFragment fragment = new ApartmentDetailsFragment();
@@ -36,33 +35,43 @@ public class ApartmentDetailsFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // קבלת נתונים
+        // שליפת נתונים מה־Bundle
         if (getArguments() != null) {
-            address = getArguments().getString("address");
+            city = getArguments().getString("city");
+            street = getArguments().getString("street");
+            houseNumber = getArguments().getInt("houseNumber");
             description = getArguments().getString("description");
             imageUrl = getArguments().getString("imageUrl");
             ownerId = getArguments().getString("ownerId");
-            apartmentId = getArguments().getString("apartmentId"); // חדש
+            apartmentId = getArguments().getString("apartmentId");
             price = getArguments().getInt("price");
             roommatesNeeded = getArguments().getInt("roommatesNeeded");
         }
 
-        // הצגת נתונים
-        TextView addressTV = view.findViewById(R.id.addressTextView);
+        // חיבור אל רכיבי ה־XML
+        TextView cityTV = view.findViewById(R.id.cityTextView);
+        TextView streetTV = view.findViewById(R.id.streetTextView);
+        TextView houseNumTV = view.findViewById(R.id.houseNumberTextView);
         TextView priceTV = view.findViewById(R.id.priceTextView);
         TextView roommatesTV = view.findViewById(R.id.roommatesTextView);
         TextView descriptionTV = view.findViewById(R.id.descriptionTextView);
         ImageView imageView = view.findViewById(R.id.apartmentImageView);
         Button messageBtn = view.findViewById(R.id.messageButton);
 
-        addressTV.setText("כתובת: " + address);
+        // הצגת הנתונים
+        cityTV.setText("עיר: " + city);
+        streetTV.setText("רחוב: " + street);
+        houseNumTV.setText("מספר בית: " + houseNumber);
         priceTV.setText("מחיר: " + price + " ₪");
         roommatesTV.setText("שותפים דרושים: " + roommatesNeeded);
         descriptionTV.setText("תיאור: " + description);
 
-        if (!TextUtils.isEmpty(imageUrl)) {
-            Glide.with(requireContext()).load(imageUrl).into(imageView);
-        }
+        Glide.with(requireContext())
+                .load(!TextUtils.isEmpty(imageUrl) ? imageUrl : null)
+                .placeholder(R.drawable.placeholder_image)
+                .error(R.drawable.placeholder_image)
+                .into(imageView);
+
 
         messageBtn.setOnClickListener(v -> {
             if (ownerId == null || ownerId.isEmpty()) {
@@ -70,8 +79,7 @@ public class ApartmentDetailsFragment extends Fragment {
                 return;
             }
 
-            // פתיחת הצ'אט עם בעל הדירה, כולל מזהה הדירה
-            ChatFragment chatFragment = new ChatFragment(ownerId, apartmentId); // ← נשלח גם את מזהה הדירה
+            ChatFragment chatFragment = new ChatFragment(ownerId, apartmentId);
 
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()

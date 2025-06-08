@@ -2,16 +2,16 @@ package com.example.roomatch.view.fragments;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.*;
 import android.widget.*;
 import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.*;
-import com.example.roomatch.adapters.ApartmentCardAdapter;
-import com.example.roomatch.adapters.MessageAdapter;
 
+import android.Manifest;
 import com.example.roomatch.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.*;
@@ -21,7 +21,8 @@ import java.util.*;
 
 public class OwnerFragment extends Fragment {
 
-    private EditText addressEditText, priceEditText, roommatesEditText, descriptionEditText;
+    private EditText cityEditText, streetEditText, houseNumberEditText;
+    private EditText priceEditText, roommatesEditText, descriptionEditText;
     private Button selectImageButton, publishButton;
     private ImageView imageView;
     private Uri imageUri;
@@ -49,7 +50,9 @@ public class OwnerFragment extends Fragment {
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
 
-        addressEditText = view.findViewById(R.id.editTextAddress);
+        cityEditText = view.findViewById(R.id.editTextCity);
+        streetEditText = view.findViewById(R.id.editTextStreet);
+        houseNumberEditText = view.findViewById(R.id.editTextHouseNumber);
         priceEditText = view.findViewById(R.id.editTextPrice);
         roommatesEditText = view.findViewById(R.id.editTextRoommates);
         descriptionEditText = view.findViewById(R.id.editTextDescription);
@@ -60,14 +63,39 @@ public class OwnerFragment extends Fragment {
         selectImageButton.setOnClickListener(v -> openFileChooser());
 
         publishButton.setOnClickListener(v -> publishApartment());
-
     }
 
     private void openFileChooser() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (requireContext().checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, 102);
+                return;
+            }
+        } else {
+            if (requireContext().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 103);
+                return;
+            }
+        }
+
+        openGallery(); // אם יש הרשאה, פתח את הגלריה
+    }
+    private void openGallery() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
         startActivityForResult(intent, 101);
     }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if ((requestCode == 102 || requestCode == 103) && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openGallery(); // אם המשתמש אישר — פתח גלריה
+        } else {
+            Toast.makeText(getContext(), "נדרשת הרשאה לגשת לתמונות", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -79,30 +107,45 @@ public class OwnerFragment extends Fragment {
     }
 
     private void publishApartment() {
-        String address = addressEditText.getText().toString();
-        String priceStr = priceEditText.getText().toString();
-        String roommatesStr = roommatesEditText.getText().toString();
-        String description = descriptionEditText.getText().toString();
+        String city = cityEditText.getText().toString().trim();
+        String street = streetEditText.getText().toString().trim();
+        String houseNumStr = houseNumberEditText.getText().toString().trim();
+        String priceStr = priceEditText.getText().toString().trim();
+        String roommatesStr = roommatesEditText.getText().toString().trim();
+        String description = descriptionEditText.getText().toString().trim();
         String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
 
-        if (uid == null || address.isEmpty() || priceStr.isEmpty() || roommatesStr.isEmpty()) {
+        if (uid == null || city.isEmpty() || street.isEmpty() || houseNumStr.isEmpty()
+                || priceStr.isEmpty() || roommatesStr.isEmpty() || description.isEmpty()) {
             Toast.makeText(getContext(), "נא למלא את כל השדות", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        int price, roommatesNeeded;
+
+
+        int price, roommatesNeeded, houseNumber;
         try {
             price = Integer.parseInt(priceStr);
             roommatesNeeded = Integer.parseInt(roommatesStr);
+            houseNumber = Integer.parseInt(houseNumStr);
         } catch (NumberFormatException e) {
-            Toast.makeText(getContext(), "מחיר ושותפים חייבים להיות מספרים", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "מספרים לא תקינים בשדות כמות/מחיר/מספר בית", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        if (price < 0 || roommatesNeeded < 0 || houseNumber < 0) {
+            Toast.makeText(getContext(), "שדות מספריים חייבים להיות חיוביים", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String fullAddress = "עיר: " + city + ", רחוב: " + street + ", מספר: " + houseNumber;
 
         Runnable uploadAndSave = () -> {
             Map<String, Object> apt = new HashMap<>();
             apt.put("ownerId", uid);
-            apt.put("address", address);
+            apt.put("city", city);
+            apt.put("street", street);
+            apt.put("houseNumber", houseNumber);
             apt.put("price", price);
             apt.put("roommatesNeeded", roommatesNeeded);
             apt.put("description", description);
@@ -131,9 +174,10 @@ public class OwnerFragment extends Fragment {
         }
     }
 
-
     private void resetForm() {
-        addressEditText.setText("");
+        cityEditText.setText("");
+        streetEditText.setText("");
+        houseNumberEditText.setText("");
         priceEditText.setText("");
         roommatesEditText.setText("");
         descriptionEditText.setText("");
