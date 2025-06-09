@@ -4,79 +4,124 @@
     android:layout_height="match_parent">
 
     <LinearLayout
-        android:orientation="vertical"
-        android:padding="16dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="#EAF3FB"
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:id="@+id/textView3"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:text="פרסום דירה חדשה"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:text="כתובת" />
 
-        <EditText
-            android:id="@+id/editTextCity"
-            android:hint="עיר"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/editTextStreet"
-            android:hint="רחוב"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            <EditText
+                android:id="@+id/editTextHouseNumber"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="מספר בית"
+                android:inputType="number" />
 
-        <EditText
-            android:id="@+id/editTextHouseNumber"
-            android:hint="מספר בית"
-            android:inputType="number"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            <EditText
+                android:id="@+id/editTextStreet"
+                android:layout_width="50dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hint="רחוב" />
+
+            <EditText
+                android:id="@+id/editTextCity"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="עיר" />
+        </LinearLayout>
 
 
         <EditText
             android:id="@+id/editTextPrice"
-            android:hint="מחיר (₪)"
-            android:inputType="number"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:hint="מחיר (₪)"
+            android:inputType="number" />
 
         <EditText
             android:id="@+id/editTextRoommates"
-            android:hint="מספר שותפים דרוש"
-            android:inputType="number"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:hint="מספר שותפים דרוש"
+            android:inputType="number" />
 
         <EditText
             android:id="@+id/editTextDescription"
-            android:hint="תיאור הדירה"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <Button
-            android:id="@+id/buttonSelectImage"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="בחר תמונה" />
+            android:hint="תיאור הדירה" />
 
         <ImageView
             android:id="@+id/imageViewPreview"
             android:layout_width="match_parent"
             android:layout_height="180dp"
-            android:scaleType="centerCrop"
             android:layout_marginTop="8dp"
-            android:background="#DDD"/>
+            android:background="#DDD"
+            android:scaleType="centerCrop" />
 
-        <Button
-            android:id="@+id/buttonPublish"
-            android:text="פרסם דירה"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"/>
+            android:layout_height="47dp"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/camera"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="bottom"
+                android:layout_margin="5dp"
+                android:background="@mipmap/ic_camera_foreground" />
+
+            <Button
+                android:id="@+id/buttonSelectImage"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="bottom"
+                android:layout_margin="5dp"
+                android:layout_marginTop="12dp"
+                android:background="@mipmap/ic_files_foreground" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/cancel"
+                style="@style/button_style"
+                android:layout_width="50dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="bottom"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:text="ביטול" />
+
+            <Button
+                android:id="@+id/buttonPublish"
+                style="@style/button_style"
+                android:layout_width="50dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="10"
+                android:text="פרסם דירה" />
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>
