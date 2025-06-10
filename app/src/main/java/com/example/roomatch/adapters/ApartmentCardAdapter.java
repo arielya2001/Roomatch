@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -47,10 +48,10 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
         String houseNumber = apartment.get("houseNumber") != null ? apartment.get("houseNumber").toString() : "לא זמין";
         String price = apartment.get("price") != null ? apartment.get("price").toString() + " ₪" : "לא זמין";
 
-        holder.city.setText("עיר: " + city);
-        holder.street.setText("רחוב: " + street);
-        holder.houseNumber.setText("מספר בית: " + houseNumber);
-        holder.price.setText("מחיר: " + price);
+        holder.city.setText(city);
+        holder.street.setText(street);
+        holder.houseNumber.setText(houseNumber+"");
+        holder.price.setText(" חודש /"+price);
 
         holder.buttonViewApartment.setOnClickListener(v -> {
             if (listener != null) {
@@ -72,7 +73,8 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
 
     static class ApartmentViewHolder extends RecyclerView.ViewHolder {
         TextView city, street, houseNumber, price;
-        Button buttonViewApartment, buttonEditApartment;
+        Button buttonViewApartment;
+         ImageButton buttonEditApartment;
 
         public ApartmentViewHolder(@NonNull View itemView) {
             super(itemView);

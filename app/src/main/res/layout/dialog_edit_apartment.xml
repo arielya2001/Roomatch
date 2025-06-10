@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Theme.Roomatch"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#EAF3FB"
     android:orientation="vertical"
     android:padding="16dp">
 
     <!-- עיר -->
     <TextView
+        style="@style/Theme.Roomatch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="כתובת"
@@ -21,6 +22,7 @@
 
         <TextView
             android:id="@+id/textView4"
+            style="@style/Theme.Roomatch"
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -35,6 +37,7 @@
 
         <TextView
             android:id="@+id/textView6"
+            style="@style/Theme.Roomatch"
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -49,6 +52,7 @@
 
         <EditText
             android:id="@+id/editHouseNumber"
+            style="@style/Theme.Roomatch"
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
@@ -59,6 +63,7 @@
 
         <EditText
             android:id="@+id/editStreet"
+            style="@style/Theme.Roomatch"
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
@@ -68,6 +73,7 @@
 
         <EditText
             android:id="@+id/editCity"
+            style="@style/Theme.Roomatch"
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:layout_gravity="left"

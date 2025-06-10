@@ -8,6 +8,19 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="Navy_blue">#1A2E45</color>
+    <color name="Sky_blue">#3BAFDA</color>
+    <color name="background_white">#f9fafb</color>
+    <color name="card_white">#FFFFFF</color>
+    <color name="input_grey">#6B7280</color>
+    <color name="text_grey">#111827</color>
+    <color name="text_grey_secondary">#6B7280</color>
+    <color name="border_color">#D1D5DB</color>
+    <color name="amber_200">#FFE082</color>
+    <color name="amber_700">#FFA000</color>
+    <color name="dark_background">#121212</color>
+    <color name="dark_surface">#1E1E1E</color>
+    <color name="gray">#BBBBBB</color>
 
     <!-- מותאמים מ־Compose -->
     <color name="colorPrimary">#6650A4</color> <!-- Purple40 -->
