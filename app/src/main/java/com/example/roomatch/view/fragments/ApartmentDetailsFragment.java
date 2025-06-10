@@ -61,7 +61,7 @@ public class ApartmentDetailsFragment extends Fragment {
         // הצגת הנתונים
         cityTV.setText(city);
         streetTV.setText(street);
-        houseNumTV.setText( houseNumber);
+        houseNumTV.setText( houseNumber+"");
         priceTV.setText( price + " ₪ / חודש");
         roommatesTV.setText( roommatesNeeded+ " מקומות פנויים ");
         descriptionTV.setText("תיאור: " + description);
