@@ -59,11 +59,11 @@ public class ApartmentDetailsFragment extends Fragment {
         Button messageBtn = view.findViewById(R.id.messageButton);
 
         // הצגת הנתונים
-        cityTV.setText("עיר: " + city);
-        streetTV.setText("רחוב: " + street);
-        houseNumTV.setText("מספר בית: " + houseNumber);
-        priceTV.setText("מחיר: " + price + " ₪");
-        roommatesTV.setText("שותפים דרושים: " + roommatesNeeded);
+        cityTV.setText(city);
+        streetTV.setText(street);
+        houseNumTV.setText( houseNumber);
+        priceTV.setText( price + " ₪ / חודש");
+        roommatesTV.setText( roommatesNeeded+ " מקומות פנויים ");
         descriptionTV.setText("תיאור: " + description);
 
         Glide.with(requireContext())

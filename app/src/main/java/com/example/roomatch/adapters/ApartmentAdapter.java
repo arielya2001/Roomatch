@@ -41,10 +41,10 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
     public void onBindViewHolder(@NonNull ApartmentViewHolder holder, int position) {
         Apartment apt = apartmentList.get(position);
 
-        holder.cityTextView.setText("עיר: " + apt.getCity());
-        holder.streetTextView.setText("רחוב: " + apt.getStreet());
-        holder.houseNumberTextView.setText("מספר: " + apt.getHouseNumber());
-        holder.priceTextView.setText("מחיר: " + apt.getPrice() + " ש\"ח");
+        holder.cityTextView.setText(apt.getCity());
+        holder.streetTextView.setText(apt.getStreet());
+        holder.houseNumberTextView.setText(apt.getHouseNumber()+"");
+        holder.priceTextView.setText(" חודש/ "+"₪"+apt.getPrice() );
         holder.roommatesTextView.setText("שותפים דרושים: " + apt.getRoommatesNeeded());
 
         holder.itemView.setOnClickListener(v -> {
