@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -26,19 +27,30 @@
         android:layout_marginTop="8dp" />
 
     <!-- כפתור סינון -->
-    <Button
-        android:id="@+id/buttonFilter"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="סנן"
-        android:layout_marginTop="8dp" />
+        android:layout_margin="2dp"
+        android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/buttonClearFilter"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="נקה סינון"
-        android:layout_marginTop="8dp" />
+        <Button
+            android:id="@+id/buttonFilter"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="2dp"
+            android:background="@mipmap/ic_filter_foreground"
+            android:text="Button" />
+
+        <Button
+            android:id="@+id/buttonClearFilter"
+            style="@style/Theme.Roomatch"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_margin="2dp"
+            android:background="@android:drawable/ic_menu_close_clear_cancel"
+            android:text="נקה סינון" />
+
+    </LinearLayout>
 
     <androidx.appcompat.widget.SearchView
         android:id="@+id/searchView"
