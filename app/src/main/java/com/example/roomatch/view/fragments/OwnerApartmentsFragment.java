@@ -1,10 +1,7 @@
 package com.example.roomatch.view.fragments;
 
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.*;
 import android.widget.*;
 import androidx.annotation.*;
@@ -106,15 +103,15 @@ public class OwnerApartmentsFragment extends Fragment {
             }
         });
 
-
         Toolbar toolbar = view.findViewById(R.id.toolbar);
         if (toolbar != null) {
-            ImageButton chatsButton = toolbar.findViewById(R.id.buttonChats);
-            chatsButton.setOnClickListener(v -> {
-                ChatsFragment chatsFragment = new ChatsFragment();
+            ImageButton publishButton = toolbar.findViewById(R.id.buttonChats); // Reuse same ID for now
+            publishButton.setImageResource(android.R.drawable.ic_menu_add); // Set "+" icon
+            publishButton.setOnClickListener(v -> {
+                OwnerFragment ownerFragment = new OwnerFragment();
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
-                        .replace(R.id.fragmentContainer, chatsFragment)
+                        .replace(R.id.fragmentContainer, ownerFragment)
                         .addToBackStack(null)
                         .commit();
             });
@@ -199,7 +196,6 @@ public class OwnerApartmentsFragment extends Fragment {
         TextView descriptionTextView = dialogView.findViewById(R.id.descriptionTextView);
         Button messageButton = dialogView.findViewById(R.id.messageButton);
 
-        // נתונים מהדירה
         String city = (String) apt.get("city");
         String street = (String) apt.get("street");
         String description = (String) apt.get("description");
@@ -207,8 +203,8 @@ public class OwnerApartmentsFragment extends Fragment {
         int price = apt.get("price") != null ? ((Number) apt.get("price")).intValue() : 0;
         int roommates = apt.get("roommatesNeeded") != null ? ((Number) apt.get("roommatesNeeded")).intValue() : 0;
         String imageUrl = (String) apt.get("imageUrl");
+        String ownerId = (String) apt.get("ownerId");
 
-        // הצגת הנתונים
         cityTextView.setText("עיר: " + city);
         streetTextView.setText("רחוב: " + street);
         houseNumberTextView.setText("מספר בית: " + houseNumber);
@@ -219,21 +215,23 @@ public class OwnerApartmentsFragment extends Fragment {
         if (imageUrl != null && !imageUrl.isEmpty()) {
             Glide.with(this).load(imageUrl).into(apartmentImageView);
         } else {
-            apartmentImageView.setImageResource(R.drawable.placeholder_image); // תמונה ברירת מחדל אם אין
+            apartmentImageView.setImageResource(R.drawable.placeholder_image);
         }
 
-        // כפתור שליחת הודעה (אפשר לשים כאן מעבר לצ'אט בעתיד)
-        messageButton.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "כאן יהיה מעבר לצ'אט עם בעל הדירה 😊", Toast.LENGTH_SHORT).show();
-        });
+        String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        if (currentUid != null && currentUid.equals(ownerId)) {
+            messageButton.setVisibility(View.GONE);
+        } else {
+            messageButton.setOnClickListener(v -> {
+                Toast.makeText(getContext(), "כאן יהיה מעבר לצ'אט עם בעל הדירה 😊", Toast.LENGTH_SHORT).show();
+            });
+        }
 
         new AlertDialog.Builder(getContext())
                 .setView(dialogView)
                 .setPositiveButton("סגור", null)
                 .show();
     }
-
-
 
     private void showEditApartmentDialog(Map<String, Object> apt) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -248,7 +246,6 @@ public class OwnerApartmentsFragment extends Fragment {
         EditText editDescription = dialogView.findViewById(R.id.editDescription);
         EditText editRoommatesNeeded = dialogView.findViewById(R.id.editRoommatesNeeded);
 
-        // מילוי ערכים קיימים
         editCity.setText((String) apt.get("city"));
         editStreet.setText((String) apt.get("street"));
         editHouseNumber.setText(String.valueOf(apt.get("houseNumber")));
@@ -285,7 +282,7 @@ public class OwnerApartmentsFragment extends Fragment {
                                         .update(updates)
                                         .addOnSuccessListener(aVoid -> {
                                             Toast.makeText(getContext(), "דירה עודכנה בהצלחה", Toast.LENGTH_SHORT).show();
-                                            loadApartments(); // רענון הרשימה
+                                            loadApartments();
                                         })
                                         .addOnFailureListener(e -> Toast.makeText(getContext(), "שגיאה בעדכון הדירה", Toast.LENGTH_SHORT).show());
                             } else {
@@ -302,5 +299,4 @@ public class OwnerApartmentsFragment extends Fragment {
 
         builder.create().show();
     }
-
 }

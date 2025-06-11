@@ -24,10 +24,4 @@
         android:paddingTop="12dp"
         android:contentDescription="רשימת שותפים פוטנציאליים"
         tools:ignore="SpeakableTextPresentCheck" />
-
-    <Button
-        android:id="@+id/buttonLogout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="התנתק" />
 </LinearLayout>

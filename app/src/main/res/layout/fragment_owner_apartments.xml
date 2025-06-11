@@ -27,9 +27,9 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="end"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="צ'אטים"
+                android:contentDescription="פרסום דירה"
                 android:padding="8dp"
-                android:src="@android:drawable/ic_dialog_email" />
+                android:src="@android:drawable/ic_menu_add" />
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 

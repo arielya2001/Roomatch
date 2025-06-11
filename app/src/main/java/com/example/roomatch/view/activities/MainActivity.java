@@ -11,12 +11,15 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.example.roomatch.R;
+import com.example.roomatch.view.fragments.ApartmentSearchFragment;
 import com.example.roomatch.view.fragments.ChatsFragment;
 import com.example.roomatch.view.fragments.OwnerApartmentsFragment;
+import com.example.roomatch.view.fragments.PartnerFragment;
 import com.example.roomatch.view.fragments.SeekerHomeFragment;
 import com.example.roomatch.view.fragments.ProfileFragment;
 import com.example.roomatch.view.fragments.CreateProfileFragment;
 import com.example.roomatch.view.fragments.OwnerFragment;
+import com.example.roomatch.view.fragments.SeekerMainFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -50,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
         // בדיקה אם יש פרמטר מ-CreateProfileFragment
         String initialFragment = getIntent().getStringExtra("fragment");
+
         if (initialFragment != null) {
             switch (initialFragment) {
                 case "owner_apartments":
@@ -63,6 +67,12 @@ public class MainActivity extends AppCompatActivity {
                 case "create_profile":
                     replaceFragment(new CreateProfileFragment());
                     break;
+
+                case "menu_apartments":
+                    replaceFragment(new ApartmentSearchFragment());
+                    setupBottomNav("seeker");
+                    break;
+
             }
         }
          else {
@@ -92,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                     if ("owner".equals(userType)) {
                         replaceFragment(new OwnerApartmentsFragment());
                     } else {
-                        replaceFragment(new SeekerHomeFragment());
+                        replaceFragment(new ApartmentSearchFragment());
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -117,16 +127,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-
-        if (id == R.id.nav_home) {
-            if ("seeker".equals(userType)) {
-                replaceFragment(new SeekerHomeFragment());
-            } else {
-                replaceFragment(new OwnerApartmentsFragment());
-            }
-            return true;
-
-        } else if (id == R.id.nav_profile) {
+        if (id == R.id.nav_profile) {
             replaceFragment(new ProfileFragment());
             return true;
 
@@ -140,17 +141,22 @@ public class MainActivity extends AppCompatActivity {
             replaceFragment(new OwnerApartmentsFragment());
             return true;
 
-        } else if (id == R.id.nav_publish_apartment) {
-            replaceFragment(new OwnerFragment());
+        }  else if (id == R.id.nav_chats) {
+            replaceFragment(new ChatsFragment());
             return true;
 
-        } else if (id == R.id.nav_chats) {
-            replaceFragment(new ChatsFragment());
+        } else if (id == R.id.menu_apartments) {
+            replaceFragment(new ApartmentSearchFragment());
+            return true;
+
+        } else if (id == R.id.menu_partners) {
+            replaceFragment(new PartnerFragment());
             return true;
         }
 
         return false;
     }
+
 
     private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
