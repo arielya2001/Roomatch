@@ -38,7 +38,7 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:id="@+id/imageView2"
+                android:id="@+id/apartmentImageView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 app:srcCompat="@drawable/placeholder_image" />
@@ -152,14 +152,14 @@
         </LinearLayout>
     </LinearLayout>
 
-    <Button
-        android:id="@+id/buttonViewApartment"
-        style="@style/button_style"
-        android:layout_width="387dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:layout_marginTop="8dp"
-        android:layout_weight="1"
-        android:text="צפייה בדירה" />
+<!--    <Button-->
+<!--        android:id="@+id/buttonViewApartment"-->
+<!--        style="@style/button_style"-->
+<!--        android:layout_width="387dp"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_margin="5dp"-->
+<!--        android:layout_marginTop="8dp"-->
+<!--        android:layout_weight="1"-->
+<!--        android:text="צפייה בדירה" />-->
 
 </LinearLayout>

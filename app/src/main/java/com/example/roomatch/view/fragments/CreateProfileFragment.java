@@ -3,6 +3,7 @@ package com.example.roomatch.view.fragments;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,14 +25,13 @@ import java.util.Map;
 
 public class CreateProfileFragment extends Fragment {
 
-    private EditText editFullName, editAge, editGender, editLifestyle, editInterests;
-    private RadioGroup userTypeGroup;
+    private EditText editFullName, editAge;
+    private RadioGroup userTypeGroup, genderGroup;
     private Button saveProfileButton;
-    private RadioGroup genderGroup;
     private CheckBox checkboxClean, checkboxSmoker, checkboxNightOwl, checkboxQuiet, checkboxParty;
     private CheckBox checkboxMusic, checkboxSports, checkboxTravel, checkboxCooking, checkboxReading;
-
-
+    private TextView lifestyleLabel, interestsLabel;
+    private LinearLayout lifestyleCheckboxes, interestsCheckboxes;
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -47,8 +47,7 @@ public class CreateProfileFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         auth = FirebaseAuth.getInstance();
@@ -69,8 +68,52 @@ public class CreateProfileFragment extends Fragment {
         checkboxReading = view.findViewById(R.id.checkboxReading);
         userTypeGroup = view.findViewById(R.id.userTypeGroup);
         saveProfileButton = view.findViewById(R.id.buttonSaveProfile);
+        lifestyleLabel = view.findViewById(R.id.lifestyleLabel);
+        interestsLabel = view.findViewById(R.id.interestsLabel);
+        lifestyleCheckboxes = view.findViewById(R.id.lifestyleCheckboxes);
+        interestsCheckboxes = view.findViewById(R.id.interestsCheckboxes);
+
+        // Set initial visibility to GONE
+        if (lifestyleLabel != null) {
+            lifestyleLabel.setVisibility(View.GONE);
+        } else {
+            Log.e("CreateProfileFragment", "lifestyleLabel is null");
+        }
+        if (interestsLabel != null) {
+            interestsLabel.setVisibility(View.GONE);
+        } else {
+            Log.e("CreateProfileFragment", "interestsLabel is null");
+        }
+        if (lifestyleCheckboxes != null) {
+            lifestyleCheckboxes.setVisibility(View.GONE);
+        } else {
+            Log.e("CreateProfileFragment", "lifestyleCheckboxes is null");
+        }
+        if (interestsCheckboxes != null) {
+            interestsCheckboxes.setVisibility(View.GONE);
+        } else {
+            Log.e("CreateProfileFragment", "interestsCheckboxes is null");
+        }
 
         saveProfileButton.setOnClickListener(v -> saveProfile());
+
+        userTypeGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (lifestyleLabel == null || interestsLabel == null || lifestyleCheckboxes == null || interestsCheckboxes == null) {
+                Log.e("CreateProfileFragment", "One or more views are null");
+                return;
+            }
+            if (checkedId == R.id.radioSeeker) {
+                lifestyleLabel.setVisibility(View.VISIBLE);
+                interestsLabel.setVisibility(View.VISIBLE);
+                lifestyleCheckboxes.setVisibility(View.VISIBLE);
+                interestsCheckboxes.setVisibility(View.VISIBLE);
+            } else {
+                lifestyleLabel.setVisibility(View.GONE);
+                interestsLabel.setVisibility(View.GONE);
+                lifestyleCheckboxes.setVisibility(View.GONE);
+                interestsCheckboxes.setVisibility(View.GONE);
+            }
+        });
     }
 
     private void saveProfile() {
@@ -98,7 +141,8 @@ public class CreateProfileFragment extends Fragment {
         if (checkboxQuiet.isChecked()) lifestyleList.add("שקט");
         if (checkboxParty.isChecked()) lifestyleList.add("אוהב מסיבות");
 
-        String lifestyle = TextUtils.join(", ", lifestyleList); // שמירה כמחרוזת
+        String lifestyle = TextUtils.join(", ", lifestyleList);
+
         List<String> interestList = new ArrayList<>();
         if (checkboxMusic.isChecked()) interestList.add("מוזיקה");
         if (checkboxSports.isChecked()) interestList.add("ספורט");
@@ -106,7 +150,7 @@ public class CreateProfileFragment extends Fragment {
         if (checkboxCooking.isChecked()) interestList.add("בישול");
         if (checkboxReading.isChecked()) interestList.add("קריאה");
 
-        String interests = TextUtils.join(", ", interestList); // מחרוזת מופרדת בפסיקים
+        String interests = TextUtils.join(", ", interestList);
 
         // בדיקת שם
         if (fullName.isEmpty() || fullName.length() < 2) {
@@ -152,7 +196,6 @@ public class CreateProfileFragment extends Fragment {
                 );
     }
 
-
     private Integer tryParseInt(String value) {
         try {
             return Integer.parseInt(value);
@@ -163,10 +206,15 @@ public class CreateProfileFragment extends Fragment {
 
     private void navigateToMainActivity(String userType) {
         Intent intent = new Intent(getActivity(), MainActivity.class);
-        intent.putExtra("fragment", userType.equals("owner") ? "owner_apartments" : "seeker_home");
+        if (userType.equals("owner")) {
+            intent.putExtra("fragment", "owner_apartments");
+        } else {
+            intent.putExtra("fragment", "menu_apartments");  // ← השם החדש
+        }
         startActivity(intent);
         if (getActivity() != null) {
-            getActivity().finish(); // סגירת הפעילות הנוכחית
+            getActivity().finish();
         }
     }
+
 }
