@@ -21,7 +21,6 @@ public class PartnerFragment extends Fragment {
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private RecyclerView partnersRecyclerView;
-    private Button logoutButton;
     private PartnerAdapter adapter;
 
     private final List<Map<String, Object>> partners = new ArrayList<>();
@@ -45,7 +44,6 @@ public class PartnerFragment extends Fragment {
         auth = FirebaseAuth.getInstance();
 
         partnersRecyclerView = view.findViewById(R.id.recyclerViewPartners);
-        logoutButton = view.findViewById(R.id.buttonLogout);
 
         adapter = new PartnerAdapter(partners,
                 new PartnerAdapter.OnProfileClickListener() {
@@ -63,11 +61,6 @@ public class PartnerFragment extends Fragment {
 
         partnersRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         partnersRecyclerView.setAdapter(adapter);
-
-        logoutButton.setOnClickListener(v -> {
-            auth.signOut();
-            Toast.makeText(getContext(), "התנתקת", Toast.LENGTH_SHORT).show();
-        });
 
         loadPartners();
     }

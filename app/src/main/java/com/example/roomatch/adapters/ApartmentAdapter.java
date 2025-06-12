@@ -4,11 +4,13 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.roomatch.R;
 import com.example.roomatch.model.Apartment;
 
@@ -47,6 +49,13 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
         holder.priceTextView.setText(" חודש/ "+"₪"+apt.getPrice() );
         holder.roommatesTextView.setText("שותפים דרושים: " + apt.getRoommatesNeeded());
 
+        if (apt.getImageUrl() != null && !apt.getImageUrl().isEmpty()) {
+            Glide.with(context)
+                    .load(apt.getImageUrl())
+                    .placeholder(R.drawable.placeholder_image)
+                    .into(holder.apartmentImageView);
+        }
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onApartmentClick(apt);
@@ -60,10 +69,12 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
     }
 
     static class ApartmentViewHolder extends RecyclerView.ViewHolder {
+        ImageView apartmentImageView;
         TextView cityTextView, streetTextView, houseNumberTextView, priceTextView, roommatesTextView;
 
         public ApartmentViewHolder(@NonNull View itemView) {
             super(itemView);
+            apartmentImageView = itemView.findViewById(R.id.apartmentImageView);
             cityTextView = itemView.findViewById(R.id.cityTextView);
             streetTextView = itemView.findViewById(R.id.streetTextView);
             houseNumberTextView = itemView.findViewById(R.id.houseNumberTextView);
@@ -71,5 +82,6 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
             roommatesTextView = itemView.findViewById(R.id.roommatesTextView);
         }
     }
+
 }
 

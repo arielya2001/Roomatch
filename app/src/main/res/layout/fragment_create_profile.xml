@@ -64,19 +64,21 @@
                 android:text="אחר / לא רוצה לשתף" />
         </RadioGroup>
 
-
         <TextView
+            android:id="@+id/lifestyleLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="סגנון חיים:"
             android:textStyle="bold"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/lifestyleCheckboxes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <CheckBox android:id="@+id/checkboxClean"
                 android:layout_width="wrap_content"
@@ -104,19 +106,21 @@
                 android:text="אוהב מסיבות" />
         </LinearLayout>
 
-
         <TextView
+            android:id="@+id/interestsLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="תחומי עניין:"
             android:textStyle="bold"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/interestsCheckboxes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <CheckBox android:id="@+id/checkboxMusic"
                 android:layout_width="wrap_content"
@@ -144,7 +148,6 @@
                 android:text="קריאה" />
         </LinearLayout>
 
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -152,7 +155,6 @@
             android:paddingTop="16dp"
             android:textStyle="bold"/>
 
-        <!-- RadioGroup לסוג משתמש -->
         <RadioGroup
             android:id="@+id/userTypeGroup"
             android:layout_width="match_parent"

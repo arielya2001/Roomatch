@@ -10,6 +10,7 @@ import android.view.*;
 import android.widget.*;
 import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
 import com.example.roomatch.R;
@@ -155,6 +156,12 @@ public class OwnerFragment extends Fragment {
                     .addOnSuccessListener(docRef -> {
                         Toast.makeText(getContext(), "הדירה פורסמה", Toast.LENGTH_SHORT).show();
                         resetForm();
+
+                        // מעבר למסך "הדירות שלי"
+                        FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
+                        transaction.replace(R.id.fragmentContainer, new OwnerApartmentsFragment());
+                        transaction.addToBackStack(null);
+                        transaction.commit();
                     })
                     .addOnFailureListener(e -> Toast.makeText(getContext(), "שגיאה בפרסום", Toast.LENGTH_SHORT).show());
         };

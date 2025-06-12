@@ -5,11 +5,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.roomatch.R;
 
 import java.util.List;
@@ -53,11 +55,21 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
         holder.houseNumber.setText(houseNumber+"");
         holder.price.setText(" חודש /"+price);
 
-        holder.buttonViewApartment.setOnClickListener(v -> {
+        String imageUrl = apartment.get("imageUrl") != null ? apartment.get("imageUrl").toString() : "";
+
+        if (!imageUrl.isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(imageUrl)
+                    .placeholder(R.drawable.placeholder_image)
+                    .into(holder.apartmentImageView);
+        }
+
+        holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onViewApartmentClick(apartment);
             }
         });
+
 
         holder.buttonEditApartment.setOnClickListener(v -> {
             if (listener != null) {
@@ -75,14 +87,16 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
         TextView city, street, houseNumber, price;
         Button buttonViewApartment;
          ImageButton buttonEditApartment;
+        ImageView apartmentImageView;
+
 
         public ApartmentViewHolder(@NonNull View itemView) {
             super(itemView);
+            apartmentImageView = itemView.findViewById(R.id.apartmentImageView);
             city = itemView.findViewById(R.id.textViewApartmentCity);
             street = itemView.findViewById(R.id.textViewApartmentStreet);
             houseNumber = itemView.findViewById(R.id.textViewApartmentHouseNumber);
             price = itemView.findViewById(R.id.textViewApartmentPrice);
-            buttonViewApartment = itemView.findViewById(R.id.buttonViewApartment);
             buttonEditApartment = itemView.findViewById(R.id.buttonEditApartment);
         }
     }

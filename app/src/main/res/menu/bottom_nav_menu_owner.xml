@@ -4,9 +4,9 @@
         android:icon="@android:drawable/ic_menu_agenda"
         android:title="הדירות שלי" />
     <item
-        android:id="@+id/nav_publish_apartment"
-        android:icon="@drawable/baseline_add_home_work_24"
-        android:title="פרסום דירה" />
+        android:id="@+id/nav_chats"
+        android:icon="@android:drawable/ic_dialog_email"
+        android:title="הצ'אטים שלי" />
 
     <item
         android:id="@+id/nav_profile"
