@@ -45,8 +45,8 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
 
         holder.cityTextView.setText(apt.getCity());
         holder.streetTextView.setText(apt.getStreet());
-        holder.houseNumberTextView.setText(apt.getHouseNumber()+"");
-        holder.priceTextView.setText(" חודש/ "+"₪"+apt.getPrice() );
+        holder.houseNumberTextView.setText(apt.getHouseNumber() + "");
+        holder.priceTextView.setText(" חודש/ " + "₪" + apt.getPrice());
         holder.roommatesTextView.setText("שותפים דרושים: " + apt.getRoommatesNeeded());
 
         if (apt.getImageUrl() != null && !apt.getImageUrl().isEmpty()) {
@@ -65,7 +65,12 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
 
     @Override
     public int getItemCount() {
-        return apartmentList.size();
+        return apartmentList != null ? apartmentList.size() : 0;
+    }
+
+    public void updateApartments(List<Apartment> newApartments) {
+        this.apartmentList = newApartments;
+        notifyDataSetChanged();
     }
 
     static class ApartmentViewHolder extends RecyclerView.ViewHolder {
@@ -82,6 +87,4 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
             roommatesTextView = itemView.findViewById(R.id.roommatesTextView);
         }
     }
-
 }
-

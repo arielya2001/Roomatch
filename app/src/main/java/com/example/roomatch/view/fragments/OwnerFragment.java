@@ -1,6 +1,5 @@
 package com.example.roomatch.view.fragments;
 
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -10,27 +9,29 @@ import android.view.*;
 import android.widget.*;
 import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.Manifest;
 import com.example.roomatch.R;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.*;
-import com.google.firebase.storage.*;
+import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.viewmodel.AppViewModelFactory;
+import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
+import com.google.firebase.storage.FirebaseStorage;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public class OwnerFragment extends Fragment {
 
-    private EditText cityEditText, streetEditText, houseNumberEditText;
-    private EditText priceEditText, roommatesEditText, descriptionEditText;
-    private Button selectImageButton, publishButton;
-    private ImageView imageView;
-    private Uri imageUri;
-    private String imageUrl = "";
-    private FirebaseFirestore db;
-    private FirebaseAuth auth;
-    private FirebaseStorage storage;
+    EditText cityEditText, streetEditText, houseNumberEditText;
+    EditText priceEditText, roommatesEditText, descriptionEditText;
+    Button selectImageButton, publishButton;
+    ImageView imageView;
+    Uri imageUri;
+
+    FirebaseStorage storage;
+    OwnerApartmentsViewModel viewModel;
 
     public OwnerFragment() {}
 
@@ -43,13 +44,17 @@ public class OwnerFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        auth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
+
+        // ViewModel מחובר לריפוזיטורי
+        ApartmentRepository repository = new ApartmentRepository();
+        Map<Class<? extends ViewModel>, Supplier<? extends ViewModel>> creators = new HashMap<>();
+        creators.put(OwnerApartmentsViewModel.class, () -> new OwnerApartmentsViewModel(repository));
+        AppViewModelFactory factory = new AppViewModelFactory(creators);
+        viewModel = new ViewModelProvider(this, factory).get(OwnerApartmentsViewModel.class);
 
         cityEditText = view.findViewById(R.id.editTextCity);
         streetEditText = view.findViewById(R.id.editTextStreet);
@@ -62,8 +67,25 @@ public class OwnerFragment extends Fragment {
         imageView = view.findViewById(R.id.imageViewPreview);
 
         selectImageButton.setOnClickListener(v -> openFileChooser());
-
         publishButton.setOnClickListener(v -> publishApartment());
+
+        // Observers
+        viewModel.getToastMessage().observe(getViewLifecycleOwner(), this::showToast);
+        viewModel.getPublishSuccess().observe(getViewLifecycleOwner(), success -> {
+            if (Boolean.TRUE.equals(success)) {
+                resetForm();
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, new OwnerApartmentsFragment())
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
+    }
+
+    private void showToast(String message) {
+        if (getContext() != null) {
+            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void openFileChooser() {
@@ -79,24 +101,24 @@ public class OwnerFragment extends Fragment {
             }
         }
 
-        openGallery(); // אם יש הרשאה, פתח את הגלריה
+        openGallery();
     }
+
     private void openGallery() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
         startActivityForResult(intent, 101);
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if ((requestCode == 102 || requestCode == 103) && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            openGallery(); // אם המשתמש אישר — פתח גלריה
+            openGallery();
         } else {
-            Toast.makeText(getContext(), "נדרשת הרשאה לגשת לתמונות", Toast.LENGTH_SHORT).show();
+            showToast("נדרשת הרשאה לגשת לתמונות");
         }
     }
-
-
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -114,71 +136,8 @@ public class OwnerFragment extends Fragment {
         String priceStr = priceEditText.getText().toString().trim();
         String roommatesStr = roommatesEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
-        String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
 
-        if (uid == null || city.isEmpty() || street.isEmpty() || houseNumStr.isEmpty()
-                || priceStr.isEmpty() || roommatesStr.isEmpty() || description.isEmpty()) {
-            Toast.makeText(getContext(), "נא למלא את כל השדות", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-
-
-        int price, roommatesNeeded, houseNumber;
-        try {
-            price = Integer.parseInt(priceStr);
-            roommatesNeeded = Integer.parseInt(roommatesStr);
-            houseNumber = Integer.parseInt(houseNumStr);
-        } catch (NumberFormatException e) {
-            Toast.makeText(getContext(), "מספרים לא תקינים בשדות כמות/מחיר/מספר בית", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (price < 0 || roommatesNeeded < 0 || houseNumber < 0) {
-            Toast.makeText(getContext(), "שדות מספריים חייבים להיות חיוביים", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String fullAddress = "עיר: " + city + ", רחוב: " + street + ", מספר: " + houseNumber;
-
-        Runnable uploadAndSave = () -> {
-            Map<String, Object> apt = new HashMap<>();
-            apt.put("ownerId", uid);
-            apt.put("city", city);
-            apt.put("street", street);
-            apt.put("houseNumber", houseNumber);
-            apt.put("price", price);
-            apt.put("roommatesNeeded", roommatesNeeded);
-            apt.put("description", description);
-            apt.put("imageUrl", imageUrl);
-
-            db.collection("apartments").add(apt)
-                    .addOnSuccessListener(docRef -> {
-                        Toast.makeText(getContext(), "הדירה פורסמה", Toast.LENGTH_SHORT).show();
-                        resetForm();
-
-                        // מעבר למסך "הדירות שלי"
-                        FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
-                        transaction.replace(R.id.fragmentContainer, new OwnerApartmentsFragment());
-                        transaction.addToBackStack(null);
-                        transaction.commit();
-                    })
-                    .addOnFailureListener(e -> Toast.makeText(getContext(), "שגיאה בפרסום", Toast.LENGTH_SHORT).show());
-        };
-
-        if (imageUri != null) {
-            String filename = UUID.randomUUID().toString();
-            StorageReference ref = storage.getReference().child("images/" + filename);
-            ref.putFile(imageUri)
-                    .continueWithTask(task -> ref.getDownloadUrl())
-                    .addOnSuccessListener(uri -> {
-                        imageUrl = uri.toString();
-                        uploadAndSave.run();
-                    })
-                    .addOnFailureListener(e -> Toast.makeText(getContext(), "שגיאה בהעלאת תמונה", Toast.LENGTH_SHORT).show());
-        } else {
-            uploadAndSave.run();
-        }
+        viewModel.publishApartment(city, street, houseNumStr, priceStr, roommatesStr, description, imageUri);
     }
 
     private void resetForm() {

@@ -2,19 +2,33 @@ package com.example.roomatch.view.fragments;
 
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.*;
-import android.widget.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.*;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.example.roomatch.R;
+import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.viewmodel.ApartmentDetailsViewModel;
+import com.example.roomatch.viewmodel.AppViewModelFactory;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class ApartmentDetailsFragment extends Fragment {
 
-    private String city, street, imageUrl, ownerId, apartmentId, description;
-    private int houseNumber, price, roommatesNeeded;
+    private ApartmentDetailsViewModel viewModel;
 
     public static ApartmentDetailsFragment newInstance(Bundle apartmentData) {
         ApartmentDetailsFragment fragment = new ApartmentDetailsFragment();
@@ -22,7 +36,6 @@ public class ApartmentDetailsFragment extends Fragment {
         return fragment;
     }
 
-    @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
@@ -35,20 +48,31 @@ public class ApartmentDetailsFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // שליפת נתונים מה־Bundle
-        if (getArguments() != null) {
-            city = getArguments().getString("city");
-            street = getArguments().getString("street");
-            houseNumber = getArguments().getInt("houseNumber");
-            description = getArguments().getString("description");
-            imageUrl = getArguments().getString("imageUrl");
-            ownerId = getArguments().getString("ownerId");
-            apartmentId = getArguments().getString("apartmentId");
-            price = getArguments().getInt("price");
-            roommatesNeeded = getArguments().getInt("roommatesNeeded");
+        // הגדרת Factory עם ApartmentRepository
+        Map<Class<? extends ViewModel>, Supplier<? extends ViewModel>> creators = new HashMap<>();
+        creators.put(ApartmentDetailsViewModel.class, () -> new ApartmentDetailsViewModel(new ApartmentRepository()));
+        AppViewModelFactory factory = new AppViewModelFactory(creators);
+
+        // יצירת ViewModel עם ה-Factory
+        viewModel = new ViewModelProvider(this, factory).get(ApartmentDetailsViewModel.class);
+
+        // אם הדאטה עדיין לא ב-ViewModel, נטען אותה
+        if (viewModel.getApartmentDetails().getValue() == null && getArguments() != null) {
+            Map<String, Object> apt = new HashMap<>();
+            Bundle args = getArguments();
+            apt.put("city", args.getString("city"));
+            apt.put("street", args.getString("street"));
+            apt.put("houseNumber", args.getInt("houseNumber"));
+            apt.put("description", args.getString("description"));
+            apt.put("imageUrl", args.getString("imageUrl"));
+            apt.put("ownerId", args.getString("ownerId"));
+            apt.put("apartmentId", args.getString("apartmentId"));
+            apt.put("price", args.getInt("price"));
+            apt.put("roommatesNeeded", args.getInt("roommatesNeeded"));
+            viewModel.setApartmentDetails(apt);
         }
 
-        // חיבור אל רכיבי ה־XML
+        // קישור רכיבי UI
         TextView cityTV = view.findViewById(R.id.cityTextView);
         TextView streetTV = view.findViewById(R.id.streetTextView);
         TextView houseNumTV = view.findViewById(R.id.houseNumberTextView);
@@ -58,34 +82,41 @@ public class ApartmentDetailsFragment extends Fragment {
         ImageView imageView = view.findViewById(R.id.apartmentImageView);
         Button messageBtn = view.findViewById(R.id.messageButton);
 
-        // הצגת הנתונים
-        cityTV.setText(city);
-        streetTV.setText(street);
-        houseNumTV.setText( houseNumber+"");
-        priceTV.setText( price + " ₪ / חודש");
-        roommatesTV.setText( roommatesNeeded+ " מקומות פנויים ");
-        descriptionTV.setText("תיאור: " + description);
+        // תצוגת הדירה
+        viewModel.getApartmentDetails().observe(getViewLifecycleOwner(), data -> {
+            cityTV.setText((String) data.get("city"));
+            streetTV.setText((String) data.get("street"));
+            houseNumTV.setText(data.get("houseNumber") + "");
+            priceTV.setText(data.get("price") + " ₪ / חודש");
+            roommatesTV.setText(data.get("roommatesNeeded") + " מקומות פנויים ");
+            descriptionTV.setText("תיאור: " + data.get("description"));
 
-        Glide.with(requireContext())
-                .load(!TextUtils.isEmpty(imageUrl) ? imageUrl : null)
-                .placeholder(R.drawable.placeholder_image)
-                .error(R.drawable.placeholder_image)
-                .into(imageView);
+            Glide.with(requireContext())
+                    .load(!TextUtils.isEmpty((String) data.get("imageUrl")) ? data.get("imageUrl") : null)
+                    .placeholder(R.drawable.placeholder_image)
+                    .error(R.drawable.placeholder_image)
+                    .into(imageView);
+        });
 
+        // מעבר לצ'אט
+        messageBtn.setOnClickListener(v -> viewModel.onMessageOwnerClicked());
 
-        messageBtn.setOnClickListener(v -> {
-            if (ownerId == null || ownerId.isEmpty()) {
-                Toast.makeText(getContext(), "שגיאה: לא ניתן ליצור קשר עם בעל הדירה", Toast.LENGTH_SHORT).show();
-                return;
+        viewModel.getNavigateToChatWith().observe(getViewLifecycleOwner(), chatKey -> {
+            if (chatKey != null) {
+                String[] parts = chatKey.split("::");
+                if (parts.length == 2) {
+                    String ownerId = parts[0];
+                    String apartmentId = parts[1];
+                    ChatFragment chatFragment = new ChatFragment(ownerId, apartmentId);
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragmentContainer, chatFragment)
+                            .addToBackStack(null)
+                            .commit();
+                } else {
+                    Toast.makeText(getContext(), "שגיאה בנתוני הצ'אט", Toast.LENGTH_SHORT).show();
+                }
             }
-
-            ChatFragment chatFragment = new ChatFragment(ownerId, apartmentId);
-
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragmentContainer, chatFragment)
-                    .addToBackStack(null)
-                    .commit();
         });
     }
 }

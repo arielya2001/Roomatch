@@ -30,6 +30,7 @@
     <color name="colorTertiary">#7D5260</color> <!-- Pink40 -->
     <color name="colorTertiaryVariant">#EFB8C8</color> <!-- Pink80 -->
     <color name="colorError">#B00020</color> <!-- כבר היה, השארנו -->
+    <color name="errorRed">#F44336</color><!--  או כל גוון שתרצה  -->
 
     <!-- רקע ניתן ללחיצה (למניעת ?attr/selectableItemBackground) -->
     <color name="selectableItemBackground">@android:color/transparent</color>

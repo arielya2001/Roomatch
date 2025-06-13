@@ -147,6 +147,16 @@
                         android:layout_weight="1"
                         android:background="@android:color/transparent"
                         app:srcCompat="@android:drawable/ic_menu_edit" />
+
+                    <!--  מחיקת דירה  -->
+                    <ImageButton
+                        android:id="@+id/buttonDeleteApartment"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@android:color/transparent"
+                        android:contentDescription="@string/delete_apartment"
+                        app:tint="@color/errorRed"
+                        app:srcCompat="@android:drawable/ic_menu_delete" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

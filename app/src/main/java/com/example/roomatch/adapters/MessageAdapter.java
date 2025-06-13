@@ -11,12 +11,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageViewHolder> {
 
-    private final List<Map<String, Object>> messageList;
+    private List<Map<String, Object>> messageList;
     private final OnChatClickListener listener;
 
     public interface OnChatClickListener {
@@ -24,7 +25,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     }
 
     public MessageAdapter(List<Map<String, Object>> messageList, OnChatClickListener listener) {
-        this.messageList = messageList;
+        this.messageList = messageList != null ? messageList : new ArrayList<>();
         this.listener = listener;
     }
 
@@ -39,16 +40,16 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     @Override
     public void onBindViewHolder(@NonNull MessageViewHolder holder, int position) {
         Map<String, Object> msg = messageList.get(position);
-        String text = msg.get("text") != null ? msg.get("text").toString() : "";
-        String fromUser = msg.get("fromUserId") != null ? msg.get("fromUserId").toString() : "";
-        String aptId = msg.get("apartmentId") != null ? msg.get("apartmentId").toString() : "";
+        String text = msg.get("text") != null ? msg.get("text").toString() : "לא זמין";
+        String fromUser = msg.get("fromUserId") != null ? msg.get("fromUserId").toString() : "לא ידוע";
+        String aptId = msg.get("apartmentId") != null ? msg.get("apartmentId").toString() : "לא זמין";
 
         holder.textViewMessage.setText("הודעה: " + text);
         holder.textViewFromUser.setText("מאת: " + fromUser);
         holder.textViewApartmentId.setText("עבור דירה: " + aptId);
 
         holder.buttonOpenChat.setOnClickListener(v -> {
-            if (listener != null) {
+            if (listener != null && !fromUser.isEmpty()) {
                 listener.onChatClick(fromUser);
             }
         });
@@ -56,7 +57,14 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
     @Override
     public int getItemCount() {
-        return messageList.size();
+        return messageList != null ? messageList.size() : 0;
+    }
+
+    public void updateMessages(List<Map<String, Object>> newMessages) {
+        if (newMessages != null) {
+            this.messageList = newMessages;
+            notifyDataSetChanged();
+        }
     }
 
     public static class MessageViewHolder extends RecyclerView.ViewHolder {
