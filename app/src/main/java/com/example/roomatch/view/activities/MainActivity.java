@@ -1,3 +1,4 @@
+// MainActivity.java
 package com.example.roomatch.view.activities;
 
 import android.content.Intent;
@@ -9,8 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-
 import com.example.roomatch.R;
+import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.view.fragments.ApartmentSearchFragment;
 import com.example.roomatch.view.fragments.ChatsFragment;
 import com.example.roomatch.view.fragments.OwnerApartmentsFragment;
@@ -31,23 +32,35 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private BottomNavigationView bottomNav;
     private String userType;
+    private ApartmentRepository apartmentRepository; // משתנה עבור ה-Repository
+
+    public static boolean isTestMode = false; // פה
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        bottomNav = findViewById(R.id.bottom_navigation); // ← מוקדם יותר
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        apartmentRepository = new ApartmentRepository(); // ברירת מחדל
 
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser == null) {
-            startActivity(new Intent(this, AuthActivity.class));
-            finish();
-            return;
+            if (isTestMode) {
+                userType = "owner"; // או "seeker" – תלוי איזה מסך אתה בודק בטסט
+                setupBottomNav(userType);
+                replaceFragment(new OwnerApartmentsFragment()); // תחליף ל־SeekerHomeFragment אם אתה בודק צד מחפש
+                return;
+            } else {
+                startActivity(new Intent(this, AuthActivity.class));
+                finish();
+                return;
+            }
         }
 
-        bottomNav = findViewById(R.id.bottom_navigation);
+
         bottomNav.setOnItemSelectedListener(this::onNavigationItemSelected);
         bottomNav.setVisibility(BottomNavigationView.GONE);
 
@@ -67,20 +80,24 @@ public class MainActivity extends AppCompatActivity {
                 case "create_profile":
                     replaceFragment(new CreateProfileFragment());
                     break;
-
                 case "menu_apartments":
                     replaceFragment(new ApartmentSearchFragment());
                     setupBottomNav("seeker");
                     break;
-
             }
-        }
-         else {
+        } else {
             checkUserProfile(currentUser.getUid());
         }
     }
 
     private void checkUserProfile(String uid) {
+        if (isTestMode) {
+            userType = "owner"; // או "seeker" – תלוי איזה מסך אתה בודק בטסט
+            setupBottomNav(userType);
+            replaceFragment(new OwnerApartmentsFragment()); // תחליף ל־SeekerHomeFragment אם אתה בודק צד מחפש
+            return;
+        }
+
         db.collection("users").document(uid).get()
                 .addOnSuccessListener(document -> {
                     if (!document.exists()) {
@@ -113,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+
     private void setupBottomNav(String userType) {
         bottomNav.getMenu().clear();
 
@@ -130,33 +148,26 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.nav_profile) {
             replaceFragment(new ProfileFragment());
             return true;
-
         } else if (id == R.id.nav_logout) {
             auth.signOut();
             startActivity(new Intent(this, AuthActivity.class));
             finish();
             return true;
-
         } else if (id == R.id.nav_apartments) {
             replaceFragment(new OwnerApartmentsFragment());
             return true;
-
-        }  else if (id == R.id.nav_chats) {
+        } else if (id == R.id.nav_chats) {
             replaceFragment(new ChatsFragment());
             return true;
-
         } else if (id == R.id.menu_apartments) {
             replaceFragment(new ApartmentSearchFragment());
             return true;
-
         } else if (id == R.id.menu_partners) {
             replaceFragment(new PartnerFragment());
             return true;
         }
-
         return false;
     }
-
 
     private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();

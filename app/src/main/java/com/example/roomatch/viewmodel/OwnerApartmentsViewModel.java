@@ -18,7 +18,7 @@ import java.util.Objects;
 
 public class OwnerApartmentsViewModel extends ViewModel {
 
-    private final ApartmentRepository repository;
+    private ApartmentRepository repository;
     private final MutableLiveData<List<Map<String, Object>>> allApartments = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<List<Map<String, Object>>> filteredApartments = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
@@ -26,6 +26,9 @@ public class OwnerApartmentsViewModel extends ViewModel {
 
     public OwnerApartmentsViewModel(ApartmentRepository repository) {
         this.repository = repository;
+    }
+    public void setTestRepository(ApartmentRepository testRepo) {
+        this.repository = testRepo;
     }
 
     // LiveData Getters
@@ -196,4 +199,10 @@ public class OwnerApartmentsViewModel extends ViewModel {
 
         return null;
     }
+
+    // ב־OwnerApartmentsFragment או ב־OwnerApartmentsViewModel
+    public void setTestingConditions(ApartmentRepository testRepo) {
+        this.repository = testRepo;
+    }
+
 }
