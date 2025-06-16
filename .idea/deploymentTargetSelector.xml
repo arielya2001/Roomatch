@@ -19,9 +19,6 @@
       <SelectionState runConfigName="publishApartment_displaysSuccessToast()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="updateApartment_displaysSuccessToast()">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="editApartment_displaysUpdatedData()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>

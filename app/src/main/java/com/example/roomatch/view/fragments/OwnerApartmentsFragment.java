@@ -73,6 +73,8 @@ public class OwnerApartmentsFragment extends Fragment {
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                TextView testTextView = view.findViewById(R.id.textViewTestMessage);
+                testTextView.setText(message);
             }
         });
 

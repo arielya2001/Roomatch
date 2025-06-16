@@ -294,29 +294,20 @@ public class OwnerApartmentsViewModel extends ViewModel {
         this.allApartments = apartmentsLiveData; // משתנה שמקביל ל־getApartments או apartmentsList שלך
     }
     public void addTestApartment(Map<String, Object> dummy) {
-        List<Map<String, Object>> current = filteredApartments.getValue();
-        if (current == null) {
-            Log.d("ViewModel", "🔧 filteredApartments was null, initializing new list.");
-            current = new ArrayList<>();
-        }
+        List<Map<String, Object>> currentFiltered = filteredApartments.getValue();
+        if (currentFiltered == null) currentFiltered = new ArrayList<>();
+        currentFiltered = new ArrayList<>(currentFiltered);
+        currentFiltered.add(dummy);
+        filteredApartments.setValue(currentFiltered);
 
-        Log.d("ViewModel", "📋 Current apartments before add:");
-        for (Map<String, Object> apt : current) {
-            Log.d("ViewModel", " - ID: " + apt.get("id") + ", City: " + apt.get("city"));
-        }
-
-        current = new ArrayList<>(current); // יצירת עותק כדי לא לשנות את הרשימה הקיימת ישירות
-        current.add(dummy);
-
-        Log.d("ViewModel", "➕ Adding dummy apartment: ID=" + dummy.get("id") + ", City=" + dummy.get("city"));
-
-        filteredApartments.setValue(current);
-
-        Log.d("ViewModel", "📋 Apartments after add:");
-        for (Map<String, Object> apt : current) {
-            Log.d("ViewModel", " - ID: " + apt.get("id") + ", City: " + apt.get("city"));
-        }
+        // 👇 הוספה גם לרשימה הראשית!
+        List<Map<String, Object>> currentAll = allApartments.getValue();
+        if (currentAll == null) currentAll = new ArrayList<>();
+        currentAll = new ArrayList<>(currentAll);
+        currentAll.add(dummy);
+        allApartments.setValue(currentAll);
     }
+
     public void clearApartmentsForTest() {
         Log.d("ViewModel", "🧹 Clearing test apartments...");
         filteredApartments.setValue(new ArrayList<>());

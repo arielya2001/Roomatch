@@ -79,6 +79,14 @@
             android:layout_marginEnd="4dp"
             android:text="סנן" />
 
+        <TextView
+            android:id="@+id/textViewTestMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:text="" />
+
+
         <Button
             android:id="@+id/buttonOwnerClear"
             style="@style/button_style"
