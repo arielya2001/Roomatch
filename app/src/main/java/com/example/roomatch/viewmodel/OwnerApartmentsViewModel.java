@@ -1,17 +1,20 @@
 package com.example.roomatch.viewmodel;
 
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.view.activities.MainActivity;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -19,14 +22,17 @@ import java.util.Objects;
 public class OwnerApartmentsViewModel extends ViewModel {
 
     private ApartmentRepository repository;
-    private final MutableLiveData<List<Map<String, Object>>> allApartments = new MutableLiveData<>(new ArrayList<>());
+    private MutableLiveData<List<Map<String, Object>>> allApartments = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<List<Map<String, Object>>> filteredApartments = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
     private final MutableLiveData<Boolean> publishSuccess = new MutableLiveData<>();
 
+    private boolean isTesting = false;
+
     public OwnerApartmentsViewModel(ApartmentRepository repository) {
         this.repository = repository;
     }
+
     public void setTestRepository(ApartmentRepository testRepo) {
         this.repository = testRepo;
     }
@@ -46,18 +52,31 @@ public class OwnerApartmentsViewModel extends ViewModel {
     }
 
     public void loadApartments(String ownerId) {
+        if (ownerId == null) {
+            Log.e("OwnerApartmentsViewModel", "ownerId is null");
+            toastMessage.setValue("ownerId is null");
+            return;
+        }
+        Log.d("OwnerApartmentsViewModel", "Loading apartments for ownerId: " + ownerId);
         repository.getApartmentsByOwnerId(ownerId).addOnSuccessListener(snapshot -> {
+            Log.d("OwnerApartmentsViewModel", "Snapshot received: " + (snapshot != null ? snapshot.getDocuments().size() : 0) + " documents");
             List<Map<String, Object>> list = new ArrayList<>();
-            for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                Map<String, Object> data = doc.getData();
-                if (data != null) {
-                    data.put("id", doc.getId());
-                    list.add(data);
+            if (snapshot != null) {
+                for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                    Map<String, Object> data = doc.getData();
+                    if (data != null) {
+                        data.put("id", doc.getId());
+                        list.add(data);
+                    }
                 }
             }
             allApartments.setValue(list);
             filteredApartments.setValue(new ArrayList<>(list));
-        }).addOnFailureListener(e -> toastMessage.setValue("שגיאה בטעינת הדירות"));
+            Log.d("OwnerApartmentsViewModel", "Filtered apartments updated with size: " + list.size());
+        }).addOnFailureListener(e -> {
+            Log.e("OwnerApartmentsViewModel", "Error loading apartments: " + e.getMessage());
+            toastMessage.setValue("שגיאה בטעינת הדירות: " + e.getMessage());
+        });
     }
 
     public void applyFilter(String field, boolean ascending) {
@@ -91,7 +110,7 @@ public class OwnerApartmentsViewModel extends ViewModel {
         String validationError = validateInputs(city, street, houseNumStr, priceStr, roommatesStr, description);
         if (validationError != null) {
             toastMessage.setValue(validationError);
-            publishSuccess.setValue(false); // עדכון מיידי במקרה של אימות כשל
+            publishSuccess.setValue(false);
             return;
         }
 
@@ -102,12 +121,12 @@ public class OwnerApartmentsViewModel extends ViewModel {
             roommatesNeeded = Integer.parseInt(roommatesStr);
             if (houseNumber < 0 || price < 0 || roommatesNeeded < 0) {
                 toastMessage.setValue("שדות מספריים חייבים להיות חיוביים");
-                publishSuccess.setValue(false); // עדכון מיידי במקרה של מספר שלילי
+                publishSuccess.setValue(false);
                 return;
             }
         } catch (NumberFormatException e) {
             toastMessage.setValue("מספרים לא תקינים בשדות כמות/מחיר/מספר בית");
-            publishSuccess.setValue(false); // עדכון מיידי במקרה של חריגה
+            publishSuccess.setValue(false);
             return;
         }
 
@@ -115,11 +134,11 @@ public class OwnerApartmentsViewModel extends ViewModel {
                 .addOnSuccessListener(docRef -> {
                     toastMessage.setValue("הדירה פורסמה");
                     publishSuccess.setValue(true);
-                    loadApartments(getCurrentUserId()); // Refresh the list
+                    loadApartments(getCurrentUserId());
                 })
                 .addOnFailureListener(e -> {
                     toastMessage.setValue("שגיאה בפרסום: " + e.getMessage());
-                    publishSuccess.setValue(false); // עדכון במקרה של כשל אסינכרוני
+                    publishSuccess.setValue(false);
                 });
     }
 
@@ -128,7 +147,7 @@ public class OwnerApartmentsViewModel extends ViewModel {
         String validationError = validateInputs(city, street, houseNumStr, priceStr, roommatesStr, description);
         if (validationError != null) {
             toastMessage.setValue(validationError);
-            publishSuccess.setValue(false); // עדכון מיידי במקרה של אימות כשל
+            publishSuccess.setValue(false);
             return;
         }
 
@@ -139,12 +158,12 @@ public class OwnerApartmentsViewModel extends ViewModel {
             roommatesNeeded = Integer.parseInt(roommatesStr);
             if (houseNumber < 0 || price < 0 || roommatesNeeded < 0) {
                 toastMessage.setValue("שדות מספריים חייבים להיות חיוביים");
-                publishSuccess.setValue(false); // עדכון מיידי במקרה של מספר שלילי
+                publishSuccess.setValue(false);
                 return;
             }
         } catch (NumberFormatException e) {
             toastMessage.setValue("מספרים לא תקינים בשדות כמות/מחיר/מספר בית");
-            publishSuccess.setValue(false); // עדכון מיידי במקרה של חריגה
+            publishSuccess.setValue(false);
             return;
         }
 
@@ -152,7 +171,14 @@ public class OwnerApartmentsViewModel extends ViewModel {
                 .addOnSuccessListener(aVoid -> {
                     toastMessage.setValue("דירה עודכנה בהצלחה");
                     publishSuccess.setValue(true);
-                    loadApartments(getCurrentUserId()); // Refresh the list
+
+                    if (MainActivity.isTestMode) {
+                        // עדכון ידני ברשימת הדירות כשאנחנו במצב טסט
+                        updateApartmentInList(apartmentId, city, street, houseNumber, price, roommatesNeeded, description);
+                    } else {
+                        // במצב רגיל טען מחדש מה־Firestore
+                        loadApartments(getCurrentUserId());
+                    }
                 })
                 .addOnFailureListener(e -> {
                     if (e instanceof IllegalArgumentException) {
@@ -160,15 +186,64 @@ public class OwnerApartmentsViewModel extends ViewModel {
                     } else {
                         toastMessage.setValue("שגיאה בעדכון: " + e.getMessage());
                     }
-                    publishSuccess.setValue(false); // עדכון במקרה של כשל אסינכרוני
+                    publishSuccess.setValue(false);
                 });
+
     }
+    public void updateApartmentInList(String apartmentId, String city, String street, int houseNumber,
+                                      int price, int roommatesNeeded, String description) {
+        List<Map<String, Object>> currentList = filteredApartments.getValue();
+        if (currentList == null) {
+            Log.w("ViewModel", "⚠ filteredApartments.getValue() returned null");
+            return;
+        }
+
+        Log.d("ViewModel", "🔍 Starting updateApartmentInList for ID: " + apartmentId);
+        Log.d("ViewModel", "📋 Current apartments before update:");
+        for (Map<String, Object> apt : currentList) {
+            Log.d("ViewModel", " - ID: " + apt.get("id") + ", City: " + apt.get("city"));
+        }
+
+        List<Map<String, Object>> updatedList = new ArrayList<>();
+        boolean updated = false;
+
+        for (Map<String, Object> apt : currentList) {
+            if (apartmentId.equals(apt.get("id"))) {
+                Map<String, Object> updatedApt = new HashMap<>(apt);
+                updatedApt.put("city", city);
+                updatedApt.put("street", street);
+                updatedApt.put("houseNumber", houseNumber);
+                updatedApt.put("price", price);
+                updatedApt.put("roommatesNeeded", roommatesNeeded);
+                updatedApt.put("description", description);
+                updatedList.add(updatedApt);
+                updated = true;
+
+                Log.d("ViewModel", "✅ Updated apartment: " + updatedApt);
+            } else {
+                updatedList.add(apt);
+            }
+        }
+
+        filteredApartments.setValue(updatedList);
+
+        Log.d("ViewModel", updated
+                ? "🟢 Apartment updated and filteredApartments set."
+                : "🔴 No matching apartment ID found – nothing updated.");
+
+        Log.d("ViewModel", "📋 Updated apartments after update:");
+        for (Map<String, Object> apt : updatedList) {
+            Log.d("ViewModel", " - ID: " + apt.get("id") + ", City: " + apt.get("city"));
+        }
+    }
+
+
 
     public void deleteApartment(String apartmentId) {
         repository.deleteApartment(apartmentId)
                 .addOnSuccessListener(aVoid -> {
                     toastMessage.setValue("הדירה נמחקה");
-                    loadApartments(getCurrentUserId()); // Refresh the list
+                    loadApartments(getCurrentUserId());
                 })
                 .addOnFailureListener(e -> toastMessage.setValue("שגיאה במחיקה: " + e.getMessage()));
     }
@@ -203,6 +278,52 @@ public class OwnerApartmentsViewModel extends ViewModel {
     // ב־OwnerApartmentsFragment או ב־OwnerApartmentsViewModel
     public void setTestingConditions(ApartmentRepository testRepo) {
         this.repository = testRepo;
+        this.isTesting = true;
+        // איפוס הנתונים אם רלוונטי
+        this.allApartments.setValue(new ArrayList<>());
+        this.filteredApartments.setValue(new ArrayList<>());
     }
+
+    // שיטה חדשה לעדכון filteredApartments מבחוץ
+    public void setFilteredApartments(List<Map<String, Object>> apartments) {
+        filteredApartments.setValue(apartments);
+    }
+
+    public void setDummyApartments(List<Map<String, Object>> dummyApartments) {
+        MutableLiveData<List<Map<String, Object>>> apartmentsLiveData = new MutableLiveData<>(dummyApartments);
+        this.allApartments = apartmentsLiveData; // משתנה שמקביל ל־getApartments או apartmentsList שלך
+    }
+    public void addTestApartment(Map<String, Object> dummy) {
+        List<Map<String, Object>> current = filteredApartments.getValue();
+        if (current == null) {
+            Log.d("ViewModel", "🔧 filteredApartments was null, initializing new list.");
+            current = new ArrayList<>();
+        }
+
+        Log.d("ViewModel", "📋 Current apartments before add:");
+        for (Map<String, Object> apt : current) {
+            Log.d("ViewModel", " - ID: " + apt.get("id") + ", City: " + apt.get("city"));
+        }
+
+        current = new ArrayList<>(current); // יצירת עותק כדי לא לשנות את הרשימה הקיימת ישירות
+        current.add(dummy);
+
+        Log.d("ViewModel", "➕ Adding dummy apartment: ID=" + dummy.get("id") + ", City=" + dummy.get("city"));
+
+        filteredApartments.setValue(current);
+
+        Log.d("ViewModel", "📋 Apartments after add:");
+        for (Map<String, Object> apt : current) {
+            Log.d("ViewModel", " - ID: " + apt.get("id") + ", City: " + apt.get("city"));
+        }
+    }
+    public void clearApartmentsForTest() {
+        Log.d("ViewModel", "🧹 Clearing test apartments...");
+        filteredApartments.setValue(new ArrayList<>());
+    }
+
+
+
+
 
 }

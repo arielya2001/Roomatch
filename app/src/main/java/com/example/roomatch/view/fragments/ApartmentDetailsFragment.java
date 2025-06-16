@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.bumptech.glide.Glide;
 import com.example.roomatch.R;
 import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.view.activities.MainActivity;
 import com.example.roomatch.viewmodel.ApartmentDetailsViewModel;
 import com.example.roomatch.viewmodel.AppViewModelFactory;
 
@@ -50,7 +51,7 @@ public class ApartmentDetailsFragment extends Fragment {
 
         // הגדרת Factory עם ApartmentRepository
         Map<Class<? extends ViewModel>, Supplier<? extends ViewModel>> creators = new HashMap<>();
-        creators.put(ApartmentDetailsViewModel.class, () -> new ApartmentDetailsViewModel(new ApartmentRepository()));
+        creators.put(ApartmentDetailsViewModel.class, () -> new ApartmentDetailsViewModel(new ApartmentRepository(MainActivity.isTestMode)));
         AppViewModelFactory factory = new AppViewModelFactory(creators);
 
         // יצירת ViewModel עם ה-Factory

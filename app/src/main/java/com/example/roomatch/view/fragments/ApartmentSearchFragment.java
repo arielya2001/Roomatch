@@ -15,6 +15,7 @@ import com.example.roomatch.R;
 import com.example.roomatch.adapters.ApartmentAdapter;
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.view.activities.MainActivity;
 import com.example.roomatch.viewmodel.ApartmentSearchViewModel;
 
 import java.util.*;
@@ -64,7 +65,7 @@ public class ApartmentSearchFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         // ViewModel
-        ApartmentRepository repository = new ApartmentRepository();
+        ApartmentRepository repository = new ApartmentRepository(MainActivity.isTestMode);
         viewModel = new ApartmentSearchViewModel(repository);
 
         viewModel.getApartments().observe(getViewLifecycleOwner(), list -> {

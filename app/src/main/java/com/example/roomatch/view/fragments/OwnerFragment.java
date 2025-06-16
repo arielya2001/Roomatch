@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 import android.Manifest;
 import com.example.roomatch.R;
 import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.view.activities.MainActivity;
 import com.example.roomatch.viewmodel.AppViewModelFactory;
 import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
 import com.google.firebase.storage.FirebaseStorage;
@@ -50,9 +51,9 @@ public class OwnerFragment extends Fragment {
         storage = FirebaseStorage.getInstance();
 
         // ViewModel מחובר לריפוזיטורי
-        ApartmentRepository repository = new ApartmentRepository();
+        ApartmentRepository repo = new ApartmentRepository(MainActivity.isTestMode);
         Map<Class<? extends ViewModel>, Supplier<? extends ViewModel>> creators = new HashMap<>();
-        creators.put(OwnerApartmentsViewModel.class, () -> new OwnerApartmentsViewModel(repository));
+        creators.put(OwnerApartmentsViewModel.class, () -> new OwnerApartmentsViewModel(repo));
         AppViewModelFactory factory = new AppViewModelFactory(creators);
         viewModel = new ViewModelProvider(this, factory).get(OwnerApartmentsViewModel.class);
 
@@ -150,4 +151,5 @@ public class OwnerFragment extends Fragment {
         imageUri = null;
         imageView.setImageDrawable(null);
     }
+
 }

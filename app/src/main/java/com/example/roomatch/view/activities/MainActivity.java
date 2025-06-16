@@ -3,6 +3,7 @@ package com.example.roomatch.view.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -44,20 +45,25 @@ public class MainActivity extends AppCompatActivity {
         bottomNav = findViewById(R.id.bottom_navigation); // ← מוקדם יותר
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-        apartmentRepository = new ApartmentRepository(); // ברירת מחדל
+        apartmentRepository = new ApartmentRepository(MainActivity.isTestMode); // ברירת מחדל
 
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser == null) {
             if (isTestMode) {
-                userType = "owner"; // או "seeker" – תלוי איזה מסך אתה בודק בטסט
+                userType = "owner"; // או "seeker" לפי הצורך
                 setupBottomNav(userType);
-                replaceFragment(new OwnerApartmentsFragment()); // תחליף ל־SeekerHomeFragment אם אתה בודק צד מחפש
-                return;
+
+                String initialFragment = getIntent().getStringExtra("fragment");
+                if ("seeker_home".equals(initialFragment)) {
+                    replaceFragment(new SeekerHomeFragment());
+                } else {
+                    replaceFragment(new OwnerApartmentsFragment());
+                }
             } else {
                 startActivity(new Intent(this, AuthActivity.class));
                 finish();
-                return;
             }
+            return;
         }
 
 
@@ -91,13 +97,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkUserProfile(String uid) {
-        if (isTestMode) {
-            userType = "owner"; // או "seeker" – תלוי איזה מסך אתה בודק בטסט
-            setupBottomNav(userType);
-            replaceFragment(new OwnerApartmentsFragment()); // תחליף ל־SeekerHomeFragment אם אתה בודק צד מחפש
-            return;
-        }
-
+        Log.d("MainActivity", "Checking user profile for uid: " + uid);
         db.collection("users").document(uid).get()
                 .addOnSuccessListener(document -> {
                     if (!document.exists()) {
@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     userType = document.getString("userType");
+                    Log.d("MainActivity", "User type: " + userType);
 
                     if (userType == null || userType.isEmpty()) {
                         replaceFragment(new CreateProfileFragment());
@@ -123,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
+                    Log.e("MainActivity", "Error loading profile: " + e.getMessage());
                     Toast.makeText(MainActivity.this, "שגיאה בטעינת פרופיל", Toast.LENGTH_SHORT).show();
                     auth.signOut();
                     startActivity(new Intent(MainActivity.this, AuthActivity.class));

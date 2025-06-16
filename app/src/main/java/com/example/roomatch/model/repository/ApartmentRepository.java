@@ -20,9 +20,25 @@ import java.util.UUID;
 
 public class ApartmentRepository {
 
-    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private final FirebaseStorage storage = FirebaseStorage.getInstance();
-    private final FirebaseAuth auth = FirebaseAuth.getInstance();
+    private FirebaseFirestore db = null; // לא מאתחל בטעינה ראשונית
+    private FirebaseStorage storage = null; // לא מאתחל בטעינה ראשונית
+    private FirebaseAuth auth = null; // לא מאתחל בטעינה ראשונית
+    private boolean isTestingMode = false;
+
+    public ApartmentRepository() {
+        this(false); // delegate לקונסטרקטור הראשי
+    }
+
+
+    // TEST MODE
+    public ApartmentRepository(boolean isTestingMode) {
+        this.isTestingMode = isTestingMode;
+        if (!isTestingMode) {
+            this.db = FirebaseFirestore.getInstance();
+            this.storage = FirebaseStorage.getInstance();
+            this.auth = FirebaseAuth.getInstance();
+        }
+    }
 
     /**
      * יוצר מפת דירה עם פרטים מלאים.
@@ -48,6 +64,9 @@ public class ApartmentRepository {
     public Task<DocumentReference> publishApartment(String ownerId, String city, String street,
                                                     int houseNumber, int price, int roommatesNeeded,
                                                     String description, Uri imageUri) {
+        if (isTestingMode || db == null) {
+            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
+        }
         Map<String, Object> apt = createApartmentMap(ownerId, city, street, houseNumber, price,
                 roommatesNeeded, description, "");
         return uploadApartmentWithImageIfNeeded(apt, imageUri);
@@ -57,6 +76,9 @@ public class ApartmentRepository {
      * מעלה דירה עם תמונה אם יש.
      */
     public Task<DocumentReference> uploadApartmentWithImageIfNeeded(Map<String, Object> apt, Uri imageUri) {
+        if (isTestingMode || storage == null) {
+            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם storage לא מאותחל
+        }
         if (imageUri != null) {
             String filename = UUID.randomUUID().toString();
             StorageReference ref = storage.getReference().child("images/" + filename);
@@ -81,6 +103,9 @@ public class ApartmentRepository {
      * שולף את כל הדירות הקיימות.
      */
     public Task<QuerySnapshot> getApartments() {
+        if (isTestingMode || db == null) {
+            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
+        }
         return db.collection("apartments").get();
     }
 
@@ -88,6 +113,9 @@ public class ApartmentRepository {
      * שולף דירות לפי מזהה בעלים.
      */
     public Task<QuerySnapshot> getApartmentsByOwnerId(String ownerId) {
+        if (isTestingMode || db == null) {
+            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
+        }
         return db.collection("apartments").whereEqualTo("ownerId", ownerId).get();
     }
 
@@ -97,6 +125,9 @@ public class ApartmentRepository {
     public Task<Void> updateApartment(String apartmentId, String ownerId, String city, String street,
                                       int houseNumber, int price, int roommatesNeeded,
                                       String description, Uri imageUri) {
+        if (isTestingMode || db == null) {
+            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
+        }
         Map<String, Object> updatedApt = createApartmentMap(ownerId, city, street, houseNumber,
                 price, roommatesNeeded, description, "");
         return updateApartment(apartmentId, updatedApt, imageUri);
@@ -106,6 +137,9 @@ public class ApartmentRepository {
      * מעדכן דירה עם מפה מוכנה מראש.
      */
     public Task<Void> updateApartment(String apartmentId, Map<String, Object> updatedApt, Uri imageUri) {
+        if (isTestingMode || db == null) {
+            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
+        }
         DocumentReference docRef = db.collection("apartments").document(apartmentId);
         return docRef.get().continueWithTask(task -> {
             if (!task.isSuccessful() || !task.getResult().exists()) {
@@ -132,6 +166,9 @@ public class ApartmentRepository {
      * מוחק דירה לפי מזהה.
      */
     public Task<Void> deleteApartment(String apartmentId) {
+        if (isTestingMode || db == null) {
+            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
+        }
         return db.collection("apartments").document(apartmentId).delete();
     }
 
@@ -139,6 +176,9 @@ public class ApartmentRepository {
      * מחזיר את מזהה המשתמש המחובר הנוכחי.
      */
     public String getCurrentUserId() {
+        if (isTestingMode || auth == null) {
+            return "test-user-id"; // מחזיר מזהה מזויף אם במצב בדיקה או אם auth לא מאותחל
+        }
         return auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
     }
 
@@ -146,6 +186,9 @@ public class ApartmentRepository {
      * שולף דירות ממוינות לפי שדה מסוים.
      */
     public Task<QuerySnapshot> getApartmentsOrderedBy(String field, Query.Direction direction) {
+        if (isTestingMode || db == null) {
+            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
+        }
         return db.collection("apartments")
                 .orderBy(field, direction)
                 .get();
@@ -155,9 +198,11 @@ public class ApartmentRepository {
      * שולף את פרטי הדירה לפי מזהה ספציפי.
      */
     public Task<DocumentSnapshot> getApartmentDetails(String apartmentId) {
+        if (isTestingMode || db == null) {
+            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
+        }
         return db.collection("apartments")
                 .document(apartmentId)
                 .get();
     }
-
 }
