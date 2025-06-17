@@ -13,19 +13,14 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.example.roomatch.R;
-import com.example.roomatch.model.repository.ApartmentRepository;
-import com.example.roomatch.view.activities.MainActivity;
-import com.example.roomatch.viewmodel.ApartmentDetailsViewModel;
+import com.example.roomatch.viewmodel.ViewModelFactoryProvider;
+import com.example.roomatch.model.Apartment;
 import com.example.roomatch.viewmodel.AppViewModelFactory;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Supplier;
+import com.example.roomatch.viewmodel.ApartmentDetailsViewModel;
 
 public class ApartmentDetailsFragment extends Fragment {
 
@@ -49,28 +44,15 @@ public class ApartmentDetailsFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // הגדרת Factory עם ApartmentRepository
-        Map<Class<? extends ViewModel>, Supplier<? extends ViewModel>> creators = new HashMap<>();
-        creators.put(ApartmentDetailsViewModel.class, () -> new ApartmentDetailsViewModel(new ApartmentRepository(MainActivity.isTestMode)));
-        AppViewModelFactory factory = new AppViewModelFactory(creators);
-
-        // יצירת ViewModel עם ה-Factory
+        // שימוש ב-AppViewModelFactory ממקום מרכזי
+        AppViewModelFactory factory = ViewModelFactoryProvider.createFactory();
         viewModel = new ViewModelProvider(this, factory).get(ApartmentDetailsViewModel.class);
 
-        // אם הדאטה עדיין לא ב-ViewModel, נטען אותה
         if (viewModel.getApartmentDetails().getValue() == null && getArguments() != null) {
-            Map<String, Object> apt = new HashMap<>();
-            Bundle args = getArguments();
-            apt.put("city", args.getString("city"));
-            apt.put("street", args.getString("street"));
-            apt.put("houseNumber", args.getInt("houseNumber"));
-            apt.put("description", args.getString("description"));
-            apt.put("imageUrl", args.getString("imageUrl"));
-            apt.put("ownerId", args.getString("ownerId"));
-            apt.put("apartmentId", args.getString("apartmentId"));
-            apt.put("price", args.getInt("price"));
-            apt.put("roommatesNeeded", args.getInt("roommatesNeeded"));
-            viewModel.setApartmentDetails(apt);
+            Apartment apartment = (Apartment) getArguments().getSerializable("apartment");
+            if (apartment != null) {
+                viewModel.setApartmentDetails(apartment);
+            }
         }
 
         // קישור רכיבי UI
@@ -84,16 +66,16 @@ public class ApartmentDetailsFragment extends Fragment {
         Button messageBtn = view.findViewById(R.id.messageButton);
 
         // תצוגת הדירה
-        viewModel.getApartmentDetails().observe(getViewLifecycleOwner(), data -> {
-            cityTV.setText((String) data.get("city"));
-            streetTV.setText((String) data.get("street"));
-            houseNumTV.setText(data.get("houseNumber") + "");
-            priceTV.setText(data.get("price") + " ₪ / חודש");
-            roommatesTV.setText(data.get("roommatesNeeded") + " מקומות פנויים ");
-            descriptionTV.setText("תיאור: " + data.get("description"));
+        viewModel.getApartmentDetails().observe(getViewLifecycleOwner(), apartment -> {
+            cityTV.setText(apartment.getCity());
+            streetTV.setText(apartment.getStreet());
+            houseNumTV.setText(String.valueOf(apartment.getHouseNumber()));
+            priceTV.setText(apartment.getPrice() + " ₪ / חודש");
+            roommatesTV.setText(apartment.getRoommatesNeeded() + " מקומות פנויים ");
+            descriptionTV.setText("תיאור: " + apartment.getDescription());
 
             Glide.with(requireContext())
-                    .load(!TextUtils.isEmpty((String) data.get("imageUrl")) ? data.get("imageUrl") : null)
+                    .load(!TextUtils.isEmpty(apartment.getImageUrl()) ? apartment.getImageUrl() : null)
                     .placeholder(R.drawable.placeholder_image)
                     .error(R.drawable.placeholder_image)
                     .into(imageView);

@@ -2,6 +2,8 @@ package com.example.roomatch.model.repository;
 
 import android.net.Uri;
 
+import com.example.roomatch.model.Chat;
+import com.example.roomatch.model.Message;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
@@ -12,46 +14,32 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 public class ChatRepository {
 
-    private final FirebaseFirestore db      = FirebaseFirestore.getInstance();
-    private final FirebaseStorage   storage = FirebaseStorage.getInstance();
-    private final FirebaseAuth      auth    = FirebaseAuth.getInstance();
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final FirebaseStorage storage = FirebaseStorage.getInstance();
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
 
-    /**
-     * שולח הודעה בצ'אט ספציפי.
-     */
-    public Task<DocumentReference> sendMessage(String chatId, String fromUserId, String toUserId,
-                                               String apartmentId, String text) {
-        Map<String, Object> message = new HashMap<>();
-        message.put("fromUserId", fromUserId);
-        message.put("toUserId", toUserId);
-        message.put("text", text);
-        message.put("timestamp", System.currentTimeMillis());
-        message.put("apartmentId", apartmentId);
-        message.put("read", fromUserId.equals(toUserId)); // נקרא אם השולח הוא הנמען
+    public Task<DocumentReference> sendMessage(String chatId, Message message) {
+        if (chatId == null || message == null || message.getFromUserId() == null || message.getToUserId() == null) {
+            return Tasks.forException(new IllegalArgumentException("Invalid message parameters"));
+        }
+        message.setTimestamp(System.currentTimeMillis());
+        message.setRead(message.getFromUserId().equals(message.getToUserId()));
         return db.collection("messages")
                 .document(chatId)
                 .collection("chat")
                 .add(message);
     }
 
-    /**
-     * שולח הודעה עם תמונה (אם קיימת).
-     */
-    public Task<DocumentReference> sendMessageWithImage(String chatId, String fromUserId, String toUserId,
-                                                        String apartmentId, String text, Uri imageUri) {
-        Map<String, Object> message = new HashMap<>();
-        message.put("fromUserId", fromUserId);
-        message.put("toUserId", toUserId);
-        message.put("text", text);
-        message.put("timestamp", System.currentTimeMillis());
-        message.put("apartmentId", apartmentId);
-        message.put("read", fromUserId.equals(toUserId));
+    public Task<DocumentReference> sendMessageWithImage(String chatId, Message message, Uri imageUri) {
+        if (chatId == null || message == null || message.getFromUserId() == null || message.getToUserId() == null) {
+            return Tasks.forException(new IllegalArgumentException("Invalid message parameters"));
+        }
+        message.setTimestamp(System.currentTimeMillis());
+        message.setRead(message.getFromUserId().equals(message.getToUserId()));
 
         if (imageUri != null) {
             String filename = UUID.randomUUID().toString();
@@ -65,7 +53,7 @@ public class ChatRepository {
                     })
                     .continueWithTask(task -> {
                         if (task.isSuccessful()) {
-                            message.put("imageUrl", task.getResult().toString());
+                            message.setImageUrl(task.getResult().toString());
                         }
                         return db.collection("messages")
                                 .document(chatId)
@@ -80,20 +68,20 @@ public class ChatRepository {
         }
     }
 
-    /**
-     * שולף את כל ההודעות בצ'אט ספציפי עם האזנה בזמן אמת.
-     */
     public Query getChatMessagesQuery(String chatId) {
+        if (chatId == null) {
+            throw new IllegalArgumentException("Chat ID cannot be null");
+        }
         return db.collection("messages")
                 .document(chatId)
                 .collection("chat")
                 .orderBy("timestamp", Query.Direction.ASCENDING);
     }
 
-    /**
-     * מסמן הודעות כנקראות עבור משתמש ספציפי.
-     */
     public Task<Void> markMessagesAsRead(String chatId, String userId) {
+        if (chatId == null || userId == null) {
+            return Tasks.forException(new IllegalArgumentException("Invalid chatId or userId"));
+        }
         return db.collection("messages")
                 .document(chatId)
                 .collection("chat")
@@ -111,19 +99,20 @@ public class ChatRepository {
                 });
     }
 
-    /**
-     * שולף את רשימת הצ'אטים עבור משתמש ספציפי.
-     */
     public Task<QuerySnapshot> getChatsForUser(String userId) {
+        if (userId == null) {
+            return Tasks.forException(new IllegalArgumentException("User ID cannot be null"));
+        }
         return db.collectionGroup("chat")
                 .whereEqualTo("toUserId", userId)
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get();
     }
-    /**
-     * שולף הודעות בצ'אט עם הגבלה לפגינציה.
-     */
+
     public Query getPaginatedChatMessagesQuery(String chatId, int limit) {
+        if (chatId == null) {
+            throw new IllegalArgumentException("Chat ID cannot be null");
+        }
         return db.collection("messages")
                 .document(chatId)
                 .collection("chat")

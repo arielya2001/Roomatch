@@ -17,11 +17,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.PartnerAdapter;
+import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.viewmodel.PartnerViewModel;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class PartnerFragment extends Fragment {
 
@@ -49,64 +48,62 @@ public class PartnerFragment extends Fragment {
         partnersRecyclerView = view.findViewById(R.id.recyclerViewPartners);
 
         adapter = new PartnerAdapter(new ArrayList<>(),
-                new PartnerAdapter.OnProfileClickListener() {
-                    @Override
-                    public void onProfileClick(Map<String, Object> partner) {
-                        viewModel.showProfileDialog(partner); // נשלח אירוע ל-ViewModel
-                    }
-                },
-                new PartnerAdapter.OnReportClickListener() {
-                    @Override
-                    public void onReportClick(String fullName) {
-                        viewModel.showReportDialog(fullName); // נשלח אירוע ל-ViewModel
-                    }
-                });
+                partner -> viewModel.showProfileDialog(partner),
+                partner -> viewModel.showReportDialog(partner.getFullName()));
 
         partnersRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         partnersRecyclerView.setAdapter(adapter);
 
-        // צפייה ברשימת שותפים
         viewModel.getPartners().observe(getViewLifecycleOwner(), partners -> {
             if (partners != null) {
-                adapter.updatePartners(partners); // תלוי בשיטה ב-PartnerAdapter
+                adapter.updatePartners(partners);
             }
         });
 
-        // צפייה בהודעות Toast
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
 
-        // טיפול בהצגת דיאלוגי פרופיל
-        viewModel.getPartners().observe(getViewLifecycleOwner(), partners -> {
-            // כאן ניתן להוסיף לוגיקה להצגת דיאלוג אם יש שינוי, אבל נעביר את זה ל-OnProfileClick
+        viewModel.getShowProfileDialog().observe(getViewLifecycleOwner(), partner -> {
+            if (partner != null) {
+                showProfileDialog(partner);
+            }
+        });
+
+        viewModel.getShowReportDialog().observe(getViewLifecycleOwner(), fullName -> {
+            if (fullName != null) {
+                showReportDialog(fullName);
+            }
         });
     }
 
-    // שיטות להצגת דיאלוגים (מועברות מה-ViewModel ל-Fragment)
-    public void showProfileDialog(Map<String, Object> partner) {
-        String profile = "גיל: " + partner.getOrDefault("age", "לא צוין") +
-                "\nמגדר: " + partner.getOrDefault("gender", "לא צוין") +
-                "\nתחומי עניין: " + partner.getOrDefault("interests", "לא צוין") +
-                "\nסגנון חיים: " + partner.getOrDefault("lifestyle", "לא צוין");
+    private void showProfileDialog(UserProfile partner) {
+        String profile = "גיל: " + (partner.getAge() > 0 ? partner.getAge() : "לא צוין") +
+                "\nמגדר: " + (partner.getGender() != null ? partner.getGender() : "לא צוין") +
+                "\nתחומי עניין: " + (partner.getInterests() != null ? partner.getInterests() : "לא צוין") +
+                "\nסגנון חיים: " + (partner.getLifestyle() != null ? partner.getLifestyle() : "לא צוין");
 
         new AlertDialog.Builder(getContext())
-                .setTitle("פרופיל: " + partner.getOrDefault("fullName", "לא ידוע"))
+                .setTitle("פרופיל: " + (partner.getFullName() != null ? partner.getFullName() : "לא ידוע"))
                 .setMessage(profile)
                 .setPositiveButton("סגור", null)
                 .show();
     }
 
-    public void showReportDialog(String fullName) {
+    private void showReportDialog(String fullName) {
         final EditText input = new EditText(getContext());
         new AlertDialog.Builder(getContext())
                 .setTitle("דווח על " + fullName)
                 .setView(input)
                 .setPositiveButton("שלח", (dialog, which) -> {
-                    String reason = input.getText().toString();
-                    Toast.makeText(getContext(), "דיווח נשלח על " + fullName + ": " + reason, Toast.LENGTH_SHORT).show();
+                    String reason = input.getText().toString().trim();
+                    if (!reason.isEmpty()) {
+                        Toast.makeText(getContext(), "דיווח נשלח על " + fullName + ": " + reason, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getContext(), "נא להזין סיבה לדיווח", Toast.LENGTH_SHORT).show();
+                    }
                 })
                 .setNegativeButton("ביטול", null)
                 .show();

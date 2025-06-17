@@ -3,35 +3,39 @@ package com.example.roomatch.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
+import com.example.roomatch.model.UserProfile;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerViewHolder> {
 
     @FunctionalInterface
     public interface OnProfileClickListener {
-        void onProfileClick(Map<String, Object> partner);
+        void onProfileClick(UserProfile partner);
     }
 
     @FunctionalInterface
     public interface OnReportClickListener {
-        void onReportClick(String fullName);
+        void onReportClick(UserProfile partner);
     }
 
-    private final List<Map<String, Object>> partnerList;
+    private List<UserProfile> partnerList;
     private final OnProfileClickListener profileListener;
     private final OnReportClickListener reportListener;
 
-    public PartnerAdapter(List<Map<String, Object>> partnerList,
+    public PartnerAdapter(List<UserProfile> partnerList,
                           OnProfileClickListener profileListener,
                           OnReportClickListener reportListener) {
-        this.partnerList = partnerList;
+        this.partnerList = partnerList != null ? new ArrayList<>(partnerList) : new ArrayList<>();
         this.profileListener = profileListener;
         this.reportListener = reportListener;
     }
@@ -46,12 +50,12 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
 
     @Override
     public void onBindViewHolder(@NonNull PartnerViewHolder holder, int position) {
-        Map<String, Object> partner = partnerList.get(position);
+        UserProfile partner = partnerList.get(position);
 
-        String name = safeToString(partner.get("fullName"), "לא ידוע");
-        String age = safeToString(partner.get("age"), "לא צוין");
-        String interests = safeToString(partner.get("interests"), "לא צוין");
-        String lifestyle = safeToString(partner.get("lifestyle"), "לא צוין");
+        String name = partner.getFullName() != null ? partner.getFullName() : "לא ידוע";
+        String age = String.valueOf(partner.getAge() != 0 ? partner.getAge() : "לא צוין");
+        String interests = partner.getInterests() != null ? partner.getInterests() : "לא צוין";
+        String lifestyle = partner.getLifestyle() != null ? partner.getLifestyle() : "לא צוין";
 
         holder.textName.setText("שם: " + name);
         holder.textAge.setText("גיל: " + age);
@@ -66,12 +70,20 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
 
         holder.buttonViewProfile.setOnClickListener(v -> profileListener.onProfileClick(partner));
 
-        holder.buttonReport.setOnClickListener(v -> reportListener.onReportClick(name));
+        holder.buttonReport.setOnClickListener(v -> reportListener.onReportClick(partner));
     }
 
     @Override
     public int getItemCount() {
         return partnerList.size();
+    }
+
+    public void updatePartners(List<UserProfile> newPartners) {
+        partnerList.clear();
+        if (newPartners != null) {
+            partnerList.addAll(newPartners);
+        }
+        notifyDataSetChanged();
     }
 
     static class PartnerViewHolder extends RecyclerView.ViewHolder {
@@ -91,15 +103,4 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
             buttonReport = itemView.findViewById(R.id.buttonReport);
         }
     }
-
-    private String safeToString(Object value, String defaultValue) {
-        return (value != null) ? value.toString() : defaultValue;
-    }
-
-    public void updatePartners(List<Map<String, Object>> newPartners) {
-        partnerList.clear();
-        partnerList.addAll(newPartners);
-        notifyDataSetChanged();
-    }
-
 }

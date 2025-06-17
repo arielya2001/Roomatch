@@ -4,55 +4,59 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.model.repository.UserRepository;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class PartnerViewModel extends ViewModel {
 
-    /* -------- Repository אחד שאחראי על כל פעולות‑המשתמש -------- */
     private final UserRepository repository = new UserRepository();
+    private final MutableLiveData<List<UserProfile>> partners = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
+    private final MutableLiveData<UserProfile> showProfileDialog = new MutableLiveData<>();
+    private final MutableLiveData<String> showReportDialog = new MutableLiveData<>();
 
-    /* -------- LiveData -------- */
-    private final MutableLiveData<List<Map<String, Object>>> partners     = new MutableLiveData<>(new ArrayList<>());
-    private final MutableLiveData<String>                    toastMessage = new MutableLiveData<>();
+    public LiveData<List<UserProfile>> getPartners() { return partners; }
+    public LiveData<String> getToastMessage() { return toastMessage; }
+    public LiveData<UserProfile> getShowProfileDialog() { return showProfileDialog; }
+    public LiveData<String> getShowReportDialog() { return showReportDialog; }
 
-    /* -------- Getters -------- */
-    public LiveData<List<Map<String, Object>>> getPartners()   { return partners; }
-    public LiveData<String>                    getToastMessage(){ return toastMessage; }
+    public PartnerViewModel() {
+        loadPartners();
+    }
 
-    /* -------- ctor -------- */
-    public PartnerViewModel() { loadPartners(); }
-
-    /* ------------------------------------------------------------------ */
     private void loadPartners() {
-
         String uid = repository.getCurrentUserId();
-        if (uid == null) { toastMessage.setValue("שגיאה: משתמש לא מחובר"); return; }
+        if (uid == null) {
+            toastMessage.setValue("שגיאה: משתמש לא מחובר");
+            return;
+        }
 
-        /* “שותפים” = כל משתמשי seeker‑partner חוץ ממני */
         repository.getPartners()
                 .addOnSuccessListener(query -> {
-                    List<Map<String, Object>> list = new ArrayList<>();
-                    query.forEach(doc -> {
+                    List<UserProfile> list = new ArrayList<>();
+                    for (DocumentSnapshot doc : query.getDocuments()) {
                         if (!doc.getId().equals(uid)) {
-                            Map<String, Object> data = doc.getData();
-                            if (data != null) {
-                                data.put("id", doc.getId());
-                                list.add(data);
+                            UserProfile profile = doc.toObject(UserProfile.class);
+                            if (profile != null) {
+                                list.add(profile);
                             }
                         }
-                    });
+                    }
                     partners.setValue(list);
                 })
                 .addOnFailureListener(e ->
                         toastMessage.setValue("שגיאה בטעינת שותפים: " + e.getMessage()));
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  הטיפול בדיאלוגים נשאר ב‑Fragment; כאן רק נוכל לזרוק אירועים */
-    public void showProfileDialog(Map<String,Object> partner) { /* נשלח אירוע – יטופל ב‑UI */ }
-    public void showReportDialog (String fullName)            { /* idem */ }
+    public void showProfileDialog(UserProfile partner) {
+        showProfileDialog.setValue(partner);
+    }
+
+    public void showReportDialog(String fullName) {
+        showReportDialog.setValue(fullName);
+    }
 }

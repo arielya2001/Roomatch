@@ -10,22 +10,22 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
+import com.example.roomatch.model.Message;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageViewHolder> {
 
-    private List<Map<String, Object>> messageList;
+    private List<Message> messageList;
     private final OnChatClickListener listener;
 
     public interface OnChatClickListener {
-        void onChatClick(String fromUserId);
+        void onChatClick(Message message);
     }
 
-    public MessageAdapter(List<Map<String, Object>> messageList, OnChatClickListener listener) {
-        this.messageList = messageList != null ? messageList : new ArrayList<>();
+    public MessageAdapter(List<Message> messageList, OnChatClickListener listener) {
+        this.messageList = messageList != null ? new ArrayList<>(messageList) : new ArrayList<>();
         this.listener = listener;
     }
 
@@ -39,10 +39,11 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
     @Override
     public void onBindViewHolder(@NonNull MessageViewHolder holder, int position) {
-        Map<String, Object> msg = messageList.get(position);
-        String text = msg.get("text") != null ? msg.get("text").toString() : "לא זמין";
-        String fromUser = msg.get("fromUserId") != null ? msg.get("fromUserId").toString() : "לא ידוע";
-        String aptId = msg.get("apartmentId") != null ? msg.get("apartmentId").toString() : "לא זמין";
+        Message msg = messageList.get(position);
+
+        String text = msg.getText() != null ? msg.getText() : "לא זמין";
+        String fromUser = msg.getFromUserId() != null ? msg.getFromUserId() : "לא ידוע";
+        String aptId = msg.getApartmentId() != null ? msg.getApartmentId() : "לא זמין";
 
         holder.textViewMessage.setText("הודעה: " + text);
         holder.textViewFromUser.setText("מאת: " + fromUser);
@@ -50,7 +51,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
         holder.buttonOpenChat.setOnClickListener(v -> {
             if (listener != null && !fromUser.isEmpty()) {
-                listener.onChatClick(fromUser);
+                listener.onChatClick(msg);
             }
         });
     }
@@ -60,9 +61,9 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         return messageList != null ? messageList.size() : 0;
     }
 
-    public void updateMessages(List<Map<String, Object>> newMessages) {
+    public void updateMessages(List<Message> newMessages) {
         if (newMessages != null) {
-            this.messageList = newMessages;
+            this.messageList = new ArrayList<>(newMessages);
             notifyDataSetChanged();
         }
     }

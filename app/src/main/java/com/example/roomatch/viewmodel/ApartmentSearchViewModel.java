@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.repository.ApartmentRepository;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
@@ -30,32 +29,14 @@ public class ApartmentSearchViewModel extends ViewModel {
     }
 
     public void loadApartments() {
-        repository.getApartments().addOnSuccessListener(snapshot -> {
-            List<Apartment> list = new ArrayList<>();
-            for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                Apartment apt = doc.toObject(Apartment.class);
-                if (apt != null) {
-                    apt.setId(doc.getId());
-                    list.add(apt);
-                }
-            }
-            apartments.setValue(list);
-        }).addOnFailureListener(e -> toastMessage.setValue("שגיאה בטעינת הדירות"));
+        repository.getApartments()
+                .addOnSuccessListener(list -> apartments.setValue(list))
+                .addOnFailureListener(e -> toastMessage.setValue("שגיאה בטעינת הדירות"));
     }
 
     public void applyFilter(String field, boolean ascending) {
         repository.getApartmentsOrderedBy(field, ascending ? Query.Direction.ASCENDING : Query.Direction.DESCENDING)
-                .addOnSuccessListener(snapshot -> {
-                    List<Apartment> list = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        Apartment apt = doc.toObject(Apartment.class);
-                        if (apt != null) {
-                            apt.setId(doc.getId());
-                            list.add(apt);
-                        }
-                    }
-                    apartments.setValue(list);
-                })
+                .addOnSuccessListener(list -> apartments.setValue(list))
                 .addOnFailureListener(e -> toastMessage.setValue("שגיאה בסינון"));
     }
 

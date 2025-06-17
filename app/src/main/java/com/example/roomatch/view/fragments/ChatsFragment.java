@@ -21,17 +21,12 @@ import com.example.roomatch.model.repository.UserRepository;
 import com.example.roomatch.viewmodel.ChatViewModel;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class ChatsFragment extends Fragment {
 
-    /* ---------- UI ---------- */
-    private RecyclerView   recyclerView;
-    private SearchView     searchView;
+    private RecyclerView recyclerView;
+    private SearchView searchView;
     private ChatListAdapter adapter;
-
-    /* ---------- VM ---------- */
     private ChatViewModel viewModel;
 
     public ChatsFragment() {}
@@ -48,7 +43,7 @@ public class ChatsFragment extends Fragment {
     public void onViewCreated(@NonNull View v, @Nullable Bundle s) {
         super.onViewCreated(v, s);
 
-        /* ----------- ViewModel ----------- */
+        // ViewModel
         viewModel = new ViewModelProvider(this, new ViewModelProvider.Factory() {
             @NonNull @Override
             @SuppressWarnings("unchecked")
@@ -57,61 +52,56 @@ public class ChatsFragment extends Fragment {
             }
         }).get(ChatViewModel.class);
 
-        /* ----------- RecyclerView ----------- */
+        // RecyclerView
         recyclerView = v.findViewById(R.id.recyclerViewChats);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        adapter = new ChatListAdapter(
-                viewModel.getChats().getValue() != null ? viewModel.getChats().getValue()
-                        : new ArrayList<>(),
-                this::openChat
-        );
+        adapter = new ChatListAdapter(new ArrayList<>(), this::openChat);
         recyclerView.setAdapter(adapter);
 
-        /* ----------- SearchView ----------- */
+        // SearchView
         searchView = v.findViewById(R.id.searchViewChats);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override public boolean onQueryTextSubmit(String q)  { viewModel.filterChats(q);  return true; }
-            @Override public boolean onQueryTextChange(String q) { viewModel.filterChats(q);  return true; }
-        });
-
-        /* ----------- LiveData observers ----------- */
-        viewModel.getChats().observe(getViewLifecycleOwner(), chats -> {
-            if (chats != null) {
-                adapter.updateChats(chats);
-                if (chats.isEmpty())
-                    Toast.makeText(getContext(), "אין צ'אטים זמינים", Toast.LENGTH_SHORT).show();
+            @Override public boolean onQueryTextSubmit(String q) {
+                viewModel.filterChats(q);
+                return true;
+            }
+            @Override public boolean onQueryTextChange(String q) {
+                viewModel.filterChats(q);
+                return true;
             }
         });
 
-        viewModel.getToastMessage().observe(getViewLifecycleOwner(),
-                msg -> { if (msg != null) Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show(); });
+        // LiveData observers
+        viewModel.getChats().observe(getViewLifecycleOwner(), chats -> {
+            if (chats != null) {
+                adapter.updateChats(chats);
+                if (chats.isEmpty() && viewModel.getChats().getValue() == null) {
+                    Toast.makeText(getContext(), "אין צ'אטים זמינים", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
-        /* ----------- טען צ'אטים ----------- */
+        viewModel.getToastMessage().observe(getViewLifecycleOwner(), msg -> {
+            if (msg != null) {
+                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // טען צ'אטים
         viewModel.loadChats();
     }
 
-    /* ---------- פתיחת צ'אט ---------- */
     private void openChat(String fromUserId, String apartmentId) {
         String me = viewModel.getCurrentUserId();
         if (me == null) {
             Toast.makeText(getContext(), "שגיאה: משתמש לא מחובר", Toast.LENGTH_SHORT).show();
             return;
         }
-        // יצירת ChatFragment (chatId מחושב גם בתוך‑הפרגמנט עצמו)
         ChatFragment cf = new ChatFragment(fromUserId, apartmentId);
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragmentContainer, cf)
                 .addToBackStack(null)
                 .commit();
-    }
-
-    /** chatId עקבי – לא הכרחי כאן (ה‑ViewModel מחליף), אך נשמר למקרה שתצטרך */
-    private String generateConsistentChatId(String u1, String u2, String aptId) {
-        List<String> ids = new ArrayList<>();
-        ids.add(u1); ids.add(u2);
-        Collections.sort(ids);
-        return ids.get(0) + "_" + ids.get(1) + "_" + aptId;
     }
 }

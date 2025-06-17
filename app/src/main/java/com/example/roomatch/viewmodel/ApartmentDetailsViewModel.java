@@ -4,15 +4,13 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.repository.ApartmentRepository;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class ApartmentDetailsViewModel extends ViewModel {
 
     private final ApartmentRepository repository;
-    private final MutableLiveData<Map<String, Object>> apartmentDetails = new MutableLiveData<>();
+    private final MutableLiveData<Apartment> apartmentDetails = new MutableLiveData<>();
     private final MutableLiveData<String> navigateToChatWith = new MutableLiveData<>();
 
     public ApartmentDetailsViewModel(ApartmentRepository repository) {
@@ -21,35 +19,28 @@ public class ApartmentDetailsViewModel extends ViewModel {
 
     public void loadApartmentDetails(String apartmentId) {
         repository.getApartmentDetails(apartmentId)
-                .addOnSuccessListener(snapshot -> {
-                    if (snapshot.exists()) {
-                        Map<String, Object> data = snapshot.getData();
-                        if (data != null) {
-                            data.put("apartmentId", snapshot.getId());
-                            apartmentDetails.setValue(data);
-                        }
+                .addOnSuccessListener(apartment -> {
+                    if (apartment != null) {
+                        apartmentDetails.setValue(apartment);
                     } else {
-                        apartmentDetails.setValue(new HashMap<>());
+                        apartmentDetails.setValue(null);
                     }
                 })
-                .addOnFailureListener(e -> apartmentDetails.setValue(new HashMap<>()));
+                .addOnFailureListener(e -> apartmentDetails.setValue(null));
     }
 
-    public void setApartmentDetails(Map<String, Object> details) {
-        apartmentDetails.setValue(details);
+    public void setApartmentDetails(Apartment apartment) {
+        apartmentDetails.setValue(apartment);
     }
 
-    public LiveData<Map<String, Object>> getApartmentDetails() {
+    public LiveData<Apartment> getApartmentDetails() {
         return apartmentDetails;
     }
 
     public void onMessageOwnerClicked() {
-        if (apartmentDetails.getValue() == null) return;
-        String ownerId = (String) apartmentDetails.getValue().get("ownerId");
-        String apartmentId = (String) apartmentDetails.getValue().get("apartmentId");
-
-        if (ownerId != null && !ownerId.isEmpty()) {
-            navigateToChatWith.setValue(ownerId + "::" + apartmentId);
+        Apartment apartment = apartmentDetails.getValue();
+        if (apartment != null && apartment.getOwnerId() != null && !apartment.getOwnerId().isEmpty()) {
+            navigateToChatWith.setValue(apartment.getOwnerId() + "::" + apartment.getId());
         }
     }
 

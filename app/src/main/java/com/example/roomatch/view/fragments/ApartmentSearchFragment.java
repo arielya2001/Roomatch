@@ -1,8 +1,13 @@
 package com.example.roomatch.view.fragments;
 
 import android.os.Bundle;
-import android.view.*;
-import android.widget.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,10 +20,12 @@ import com.example.roomatch.R;
 import com.example.roomatch.adapters.ApartmentAdapter;
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.repository.ApartmentRepository;
-import com.example.roomatch.view.activities.MainActivity;
 import com.example.roomatch.viewmodel.ApartmentSearchViewModel;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ApartmentSearchFragment extends Fragment {
 
@@ -65,7 +72,7 @@ public class ApartmentSearchFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         // ViewModel
-        ApartmentRepository repository = new ApartmentRepository(MainActivity.isTestMode);
+        ApartmentRepository repository = new ApartmentRepository();
         viewModel = new ApartmentSearchViewModel(repository);
 
         viewModel.getApartments().observe(getViewLifecycleOwner(), list -> {
@@ -131,15 +138,7 @@ public class ApartmentSearchFragment extends Fragment {
 
     private void openApartmentDetails(Apartment apt) {
         Bundle bundle = new Bundle();
-        bundle.putString("city", apt.getCity());
-        bundle.putString("street", apt.getStreet());
-        bundle.putInt("houseNumber", apt.getHouseNumber());
-        bundle.putString("description", apt.getDescription());
-        bundle.putString("imageUrl", apt.getImageUrl());
-        bundle.putString("ownerId", apt.getOwnerId());
-        bundle.putInt("price", apt.getPrice());
-        bundle.putInt("roommatesNeeded", apt.getRoommatesNeeded());
-        bundle.putString("apartmentId", apt.getId());
+        bundle.putSerializable("apartment", apt);
 
         ApartmentDetailsFragment fragment = ApartmentDetailsFragment.newInstance(bundle);
 

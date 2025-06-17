@@ -6,6 +6,7 @@ import android.widget.Button;
 import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+
 import com.example.roomatch.R;
 
 public class SeekerHomeFragment extends Fragment {
@@ -30,22 +31,16 @@ public class SeekerHomeFragment extends Fragment {
         btnFindApartments = view.findViewById(R.id.btnFindApartments);
         btnFindPartners = view.findViewById(R.id.btnFindPartners);
 
-        btnFindApartments.setOnClickListener(v -> {
-            FragmentTransaction ft = requireActivity()
-                    .getSupportFragmentManager()
-                    .beginTransaction();
-            ft.replace(R.id.fragmentContainer, new ApartmentSearchFragment());
-            ft.addToBackStack(null);
-            ft.commit();
-        });
+        btnFindApartments.setOnClickListener(v -> navigateToFragment(new ApartmentSearchFragment()));
+        btnFindPartners.setOnClickListener(v -> navigateToFragment(new PartnerFragment()));
+    }
 
-        btnFindPartners.setOnClickListener(v -> {
-            FragmentTransaction ft = requireActivity()
-                    .getSupportFragmentManager()
-                    .beginTransaction();
-            ft.replace(R.id.fragmentContainer, new PartnerFragment());
-            ft.addToBackStack(null);
-            ft.commit();
-        });
+    private void navigateToFragment(Fragment fragment) {
+        FragmentTransaction ft = requireActivity()
+                .getSupportFragmentManager()
+                .beginTransaction();
+        ft.replace(R.id.fragmentContainer, fragment);
+        ft.addToBackStack(null);
+        ft.commit();
     }
 }

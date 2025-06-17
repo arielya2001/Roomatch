@@ -2,8 +2,8 @@ package com.example.roomatch.model.repository;
 
 import android.net.Uri;
 
+import com.example.roomatch.model.Apartment;
 import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -14,71 +14,27 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class ApartmentRepository {
 
-    private FirebaseFirestore db = null; // לא מאתחל בטעינה ראשונית
-    private FirebaseStorage storage = null; // לא מאתחל בטעינה ראשונית
-    private FirebaseAuth auth = null; // לא מאתחל בטעינה ראשונית
-    private boolean isTestingMode = false;
-
-    public ApartmentRepository() {
-        this(false); // delegate לקונסטרקטור הראשי
-    }
-
-
-    // TEST MODE
-    public ApartmentRepository(boolean isTestingMode) {
-        this.isTestingMode = isTestingMode;
-        if (!isTestingMode) {
-            this.db = FirebaseFirestore.getInstance();
-            this.storage = FirebaseStorage.getInstance();
-            this.auth = FirebaseAuth.getInstance();
-        }
-    }
-
-    /**
-     * יוצר מפת דירה עם פרטים מלאים.
-     */
-    public Map<String, Object> createApartmentMap(String ownerId, String city, String street,
-                                                  int houseNumber, int price, int roommatesNeeded,
-                                                  String description, String imageUrl) {
-        Map<String, Object> apt = new HashMap<>();
-        apt.put("ownerId", ownerId);
-        apt.put("city", city);
-        apt.put("street", street);
-        apt.put("houseNumber", houseNumber);
-        apt.put("price", price);
-        apt.put("roommatesNeeded", roommatesNeeded);
-        apt.put("description", description);
-        apt.put("imageUrl", imageUrl);
-        return apt;
-    }
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final FirebaseStorage storage = FirebaseStorage.getInstance();
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
 
     /**
      * מפרסם דירה חדשה (עם או בלי תמונה).
      */
-    public Task<DocumentReference> publishApartment(String ownerId, String city, String street,
-                                                    int houseNumber, int price, int roommatesNeeded,
-                                                    String description, Uri imageUri) {
-        if (isTestingMode || db == null) {
-            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
-        }
-        Map<String, Object> apt = createApartmentMap(ownerId, city, street, houseNumber, price,
-                roommatesNeeded, description, "");
-        return uploadApartmentWithImageIfNeeded(apt, imageUri);
+    public Task<DocumentReference> publishApartment(Apartment apartment, Uri imageUri) {
+        return uploadApartmentWithImageIfNeeded(apartment, imageUri);
     }
 
     /**
      * מעלה דירה עם תמונה אם יש.
      */
-    public Task<DocumentReference> uploadApartmentWithImageIfNeeded(Map<String, Object> apt, Uri imageUri) {
-        if (isTestingMode || storage == null) {
-            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם storage לא מאותחל
-        }
+    private Task<DocumentReference> uploadApartmentWithImageIfNeeded(Apartment apartment, Uri imageUri) {
         if (imageUri != null) {
             String filename = UUID.randomUUID().toString();
             StorageReference ref = storage.getReference().child("images/" + filename);
@@ -90,56 +46,58 @@ public class ApartmentRepository {
                 return ref.getDownloadUrl();
             }).continueWithTask(task -> {
                 if (task.isSuccessful()) {
-                    apt.put("imageUrl", task.getResult().toString());
+                    apartment.setImageUrl(task.getResult().toString());
                 }
-                return db.collection("apartments").add(apt);
+                return db.collection("apartments").add(apartment);
             });
         } else {
-            return db.collection("apartments").add(apt);
+            return db.collection("apartments").add(apartment);
         }
     }
 
     /**
      * שולף את כל הדירות הקיימות.
      */
-    public Task<QuerySnapshot> getApartments() {
-        if (isTestingMode || db == null) {
-            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
-        }
-        return db.collection("apartments").get();
+    public Task<List<Apartment>> getApartments() {
+        return db.collection("apartments").get().continueWith(task -> {
+            List<Apartment> apartments = new ArrayList<>();
+            if (task.isSuccessful()) {
+                for (DocumentSnapshot doc : task.getResult()) {
+                    Apartment apt = doc.toObject(Apartment.class);
+                    if (apt != null) {
+                        apt.setId(doc.getId());
+                        apartments.add(apt);
+                    }
+                }
+            }
+            return apartments;
+        });
     }
 
     /**
      * שולף דירות לפי מזהה בעלים.
      */
-    public Task<QuerySnapshot> getApartmentsByOwnerId(String ownerId) {
-        if (isTestingMode || db == null) {
-            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
-        }
-        return db.collection("apartments").whereEqualTo("ownerId", ownerId).get();
+    public Task<List<Apartment>> getApartmentsByOwnerId(String ownerId) {
+        return db.collection("apartments").whereEqualTo("ownerId", ownerId).get()
+                .continueWith(task -> {
+                    List<Apartment> apartments = new ArrayList<>();
+                    if (task.isSuccessful()) {
+                        for (DocumentSnapshot doc : task.getResult()) {
+                            Apartment apt = doc.toObject(Apartment.class);
+                            if (apt != null) {
+                                apt.setId(doc.getId());
+                                apartments.add(apt);
+                            }
+                        }
+                    }
+                    return apartments;
+                });
     }
 
     /**
-     * מעדכן דירה קיימת עם פרטי טקסט ותמונה חדשה אם יש.
+     * מעדכן דירה קיימת עם פרטים חדשים ותמונה חדשה אם יש.
      */
-    public Task<Void> updateApartment(String apartmentId, String ownerId, String city, String street,
-                                      int houseNumber, int price, int roommatesNeeded,
-                                      String description, Uri imageUri) {
-        if (isTestingMode || db == null) {
-            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
-        }
-        Map<String, Object> updatedApt = createApartmentMap(ownerId, city, street, houseNumber,
-                price, roommatesNeeded, description, "");
-        return updateApartment(apartmentId, updatedApt, imageUri);
-    }
-
-    /**
-     * מעדכן דירה עם מפה מוכנה מראש.
-     */
-    public Task<Void> updateApartment(String apartmentId, Map<String, Object> updatedApt, Uri imageUri) {
-        if (isTestingMode || db == null) {
-            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
-        }
+    public Task<Void> updateApartment(String apartmentId, Apartment updatedApartment, Uri imageUri) {
         DocumentReference docRef = db.collection("apartments").document(apartmentId);
         return docRef.get().continueWithTask(task -> {
             if (!task.isSuccessful() || !task.getResult().exists()) {
@@ -152,12 +110,12 @@ public class ApartmentRepository {
                         .continueWithTask(uploadTask -> ref.getDownloadUrl())
                         .continueWithTask(downloadTask -> {
                             if (downloadTask.isSuccessful()) {
-                                updatedApt.put("imageUrl", downloadTask.getResult().toString());
+                                updatedApartment.setImageUrl(downloadTask.getResult().toString());
                             }
-                            return docRef.update(updatedApt);
+                            return docRef.set(updatedApartment);
                         });
             } else {
-                return docRef.update(updatedApt);
+                return docRef.set(updatedApartment);
             }
         });
     }
@@ -166,9 +124,6 @@ public class ApartmentRepository {
      * מוחק דירה לפי מזהה.
      */
     public Task<Void> deleteApartment(String apartmentId) {
-        if (isTestingMode || db == null) {
-            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
-        }
         return db.collection("apartments").document(apartmentId).delete();
     }
 
@@ -176,33 +131,47 @@ public class ApartmentRepository {
      * מחזיר את מזהה המשתמש המחובר הנוכחי.
      */
     public String getCurrentUserId() {
-        if (isTestingMode || auth == null) {
-            return "test-user-id"; // מחזיר מזהה מזויף אם במצב בדיקה או אם auth לא מאותחל
-        }
         return auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
     }
 
     /**
      * שולף דירות ממוינות לפי שדה מסוים.
      */
-    public Task<QuerySnapshot> getApartmentsOrderedBy(String field, Query.Direction direction) {
-        if (isTestingMode || db == null) {
-            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
-        }
+    public Task<List<Apartment>> getApartmentsOrderedBy(String field, Query.Direction direction) {
         return db.collection("apartments")
                 .orderBy(field, direction)
-                .get();
+                .get()
+                .continueWith(task -> {
+                    List<Apartment> apartments = new ArrayList<>();
+                    if (task.isSuccessful()) {
+                        for (DocumentSnapshot doc : task.getResult()) {
+                            Apartment apt = doc.toObject(Apartment.class);
+                            if (apt != null) {
+                                apt.setId(doc.getId());
+                                apartments.add(apt);
+                            }
+                        }
+                    }
+                    return apartments;
+                });
     }
 
     /**
      * שולף את פרטי הדירה לפי מזהה ספציפי.
      */
-    public Task<DocumentSnapshot> getApartmentDetails(String apartmentId) {
-        if (isTestingMode || db == null) {
-            return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
-        }
+    public Task<Apartment> getApartmentDetails(String apartmentId) {
         return db.collection("apartments")
                 .document(apartmentId)
-                .get();
+                .get()
+                .continueWith(task -> {
+                    if (task.isSuccessful() && task.getResult().exists()) {
+                        Apartment apt = task.getResult().toObject(Apartment.class);
+                        if (apt != null) {
+                            apt.setId(task.getResult().getId());
+                        }
+                        return apt;
+                    }
+                    return null;
+                });
     }
 }

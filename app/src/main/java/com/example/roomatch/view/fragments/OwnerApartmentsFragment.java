@@ -1,40 +1,41 @@
 package com.example.roomatch.view.fragments;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
+import androidx.appcompat.widget.Toolbar;
 import androidx.annotation.*;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.*;
-import androidx.appcompat.widget.SearchView;
+
 import com.bumptech.glide.Glide;
 import com.example.roomatch.R;
+import com.example.roomatch.viewmodel.ViewModelFactoryProvider;
 import com.example.roomatch.adapters.ApartmentCardAdapter;
-import com.example.roomatch.model.repository.ApartmentRepository;
-import com.example.roomatch.view.activities.MainActivity;
+import com.example.roomatch.model.Apartment;
+import com.example.roomatch.view.activities.AuthActivity;
 import com.example.roomatch.viewmodel.AppViewModelFactory;
 import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
-import androidx.appcompat.widget.Toolbar; // החלף ייבוא זה
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 public class OwnerApartmentsFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private ApartmentCardAdapter adapter;
     private OwnerApartmentsViewModel viewModel;
-    private ApartmentRepository testRepository; // For testing
-    private boolean isTestingMode = false;
-
-    private List<Map<String, Object>> apartmentList = new ArrayList<>(); // For testing dummy data
-
+    private List<Apartment> apartmentList = new ArrayList<>();
     private Spinner spinnerFilterField, spinnerOrder;
     private SearchView searchView;
     private Button buttonFilter, buttonClear;
@@ -55,26 +56,17 @@ public class OwnerApartmentsFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_owner_apartments, container, false);
     }
 
-
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize ViewModel
-        Map<Class<? extends ViewModel>, Supplier<? extends ViewModel>> creators = new HashMap<>();
-        ApartmentRepository repository = isTestingMode && testRepository != null
-                ? testRepository
-                : new ApartmentRepository(MainActivity.isTestMode);
-
-        creators.put(OwnerApartmentsViewModel.class, () -> new OwnerApartmentsViewModel(repository));
-        AppViewModelFactory factory = new AppViewModelFactory(creators);
+        // שימוש ב-AppViewModelFactory ממקום מרכזי
+        AppViewModelFactory factory = ViewModelFactoryProvider.createFactory();
         viewModel = new ViewModelProvider(this, factory).get(OwnerApartmentsViewModel.class);
 
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-                TextView testTextView = view.findViewById(R.id.textViewTestMessage);
-                testTextView.setText(message);
             }
         });
 
@@ -99,17 +91,17 @@ public class OwnerApartmentsFragment extends Fragment {
 
         adapter = new ApartmentCardAdapter(apartmentList, new ApartmentCardAdapter.OnApartmentClickListener() {
             @Override
-            public void onViewApartmentClick(Map<String, Object> apartment) {
+            public void onViewApartmentClick(Apartment apartment) {
                 showApartmentDetails(apartment);
             }
 
             @Override
-            public void onEditApartmentClick(Map<String, Object> apartment) {
+            public void onEditApartmentClick(Apartment apartment) {
                 showEditApartmentDialog(apartment);
             }
 
             @Override
-            public void onDeleteApartmentClick(Map<String, Object> apartment) {
+            public void onDeleteApartmentClick(Apartment apartment) {
                 confirmAndDelete(apartment);
             }
         });
@@ -132,10 +124,10 @@ public class OwnerApartmentsFragment extends Fragment {
             }
         });
 
-        Toolbar toolbar = view.findViewById(R.id.toolbar); // השתמש ב-androidx.appcompat.widget.Toolbar
+        Toolbar toolbar = view.findViewById(R.id.toolbar);
         if (toolbar != null) {
             ImageButton publishButton = toolbar.findViewById(R.id.buttonChats);
-            publishButton.setImageResource(android.R.drawable.ic_menu_add); // Set "+" icon
+            publishButton.setImageResource(android.R.drawable.ic_menu_add);
             publishButton.setOnClickListener(v -> {
                 OwnerFragment ownerFragment = new OwnerFragment();
                 requireActivity().getSupportFragmentManager()
@@ -146,21 +138,24 @@ public class OwnerApartmentsFragment extends Fragment {
             });
         }
 
-        // Load apartments via ViewModel
         viewModel.getFilteredApartments().observe(getViewLifecycleOwner(), apartments -> {
-            apartmentList.clear();
-            if (apartments != null) {
-                apartmentList.addAll(apartments);
-            }
-            adapter.updateApartments(apartmentList);
+            adapter.updateApartments(apartments);
         });
 
-        // Load apartments when fragment is created
-        viewModel.loadApartments(viewModel.getCurrentUserId());
-        if (isTestingMode) {
-            addDummyApartmentForTesting("dummy1", "תל אביב", "דיזנגוף", "10", "4000", "2", "נחמדה מאוד");
+        // בדיקת משתמש מחובר לפני טעינת דירות
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            viewModel.loadApartments(currentUser.getUid());
+        } else {
+            Log.e("OwnerApartmentsFragment", "No user logged in");
+            Toast.makeText(getContext(), "שגיאה: משתמש לא מחובר", Toast.LENGTH_SHORT).show();
+            // ניווט למסך התחברות
+            Intent intent = new Intent(getActivity(), AuthActivity.class);
+            startActivity(intent);
+            if (getActivity() != null) {
+                getActivity().finish();
+            }
         }
-
     }
 
     private void applyFilter() {
@@ -190,7 +185,7 @@ public class OwnerApartmentsFragment extends Fragment {
         }
     }
 
-    private void showApartmentDetails(Map<String, Object> apt) {
+    private void showApartmentDetails(Apartment apt) {
         LayoutInflater inflater = LayoutInflater.from(getContext());
         View dialogView = inflater.inflate(R.layout.dialog_apartment_details, null);
 
@@ -203,30 +198,21 @@ public class OwnerApartmentsFragment extends Fragment {
         TextView descriptionTextView = dialogView.findViewById(R.id.descriptionTextView);
         Button messageButton = dialogView.findViewById(R.id.messageButton);
 
-        String city = (String) apt.get("city");
-        String street = (String) apt.get("street");
-        String description = (String) apt.get("description");
-        int houseNumber = apt.get("houseNumber") != null ? ((Number) apt.get("houseNumber")).intValue() : 0;
-        int price = apt.get("price") != null ? ((Number) apt.get("price")).intValue() : 0;
-        int roommates = apt.get("roommatesNeeded") != null ? ((Number) apt.get("roommatesNeeded")).intValue() : 0;
-        String imageUrl = (String) apt.get("imageUrl");
-        String ownerId = (String) apt.get("ownerId");
+        cityTextView.setText("עיר: " + (apt.getCity() != null ? apt.getCity() : "לא זמין"));
+        streetTextView.setText("רחוב: " + (apt.getStreet() != null ? apt.getStreet() : "לא זמין"));
+        houseNumberTextView.setText("מספר בית: " + apt.getHouseNumber());
+        priceTextView.setText("מחיר: " + apt.getPrice() + " ₪");
+        roommatesTextView.setText("שותפים דרושים: " + apt.getRoommatesNeeded());
+        descriptionTextView.setText("תיאור: " + (apt.getDescription() != null ? apt.getDescription() : "לא זמין"));
 
-        cityTextView.setText("עיר: " + (city != null ? city : "לא זמין"));
-        streetTextView.setText("רחוב: " + (street != null ? street : "לא זמין"));
-        houseNumberTextView.setText("מספר בית: " + houseNumber);
-        priceTextView.setText("מחיר: " + price + " ₪");
-        roommatesTextView.setText("שותפים דרושים: " + roommates);
-        descriptionTextView.setText("תיאור: " + (description != null ? description : "לא זמין"));
-
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            Glide.with(this).load(imageUrl).into(apartmentImageView);
+        if (apt.getImageUrl() != null && !apt.getImageUrl().isEmpty()) {
+            Glide.with(this).load(apt.getImageUrl()).into(apartmentImageView);
         } else {
             apartmentImageView.setImageResource(R.drawable.placeholder_image);
         }
 
         String currentUid = viewModel.getCurrentUserId();
-        if (currentUid != null && currentUid.equals(ownerId)) {
+        if (currentUid != null && currentUid.equals(apt.getOwnerId())) {
             messageButton.setVisibility(View.GONE);
         } else {
             messageButton.setOnClickListener(v -> {
@@ -240,9 +226,7 @@ public class OwnerApartmentsFragment extends Fragment {
                 .show();
     }
 
-    private void showEditApartmentDialog(Map<String, Object> apt) {
-        Log.d("DialogDebug", "Starting showEditApartmentDialog with apartment: " + apt);
-
+    private void showEditApartmentDialog(Apartment apt) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_edit_apartment, null);
@@ -257,35 +241,16 @@ public class OwnerApartmentsFragment extends Fragment {
         Button btnSave = dialogView.findViewById(R.id.btn_save);
         Button btnCancel = dialogView.findViewById(R.id.btn_cancel);
 
-        // וידוא שכל ה-View-ים נמצאו
-        if (editCity == null || editStreet == null || editHouseNumber == null ||
-                editPrice == null || editDescription == null || editRoommatesNeeded == null ||
-                btnSave == null || btnCancel == null) {
-            Log.e("DialogDebug", "One or more views in dialog_edit_apartment layout are null!");
-        } else {
-            Log.d("DialogDebug", "All dialog views initialized successfully.");
-        }
-
-        // מילוי שדות עם ערכים קיימים או ברירת מחדל
-        editCity.setText((String) apt.get("city"));
-        editStreet.setText((String) apt.get("street"));
-        editHouseNumber.setText(apt.get("houseNumber") != null ? String.valueOf(apt.get("houseNumber")) : "");
-        editPrice.setText(apt.get("price") != null ? String.valueOf(apt.get("price")) : "");
-        editDescription.setText((String) apt.get("description"));
-        editRoommatesNeeded.setText(apt.get("roommatesNeeded") != null ? String.valueOf(apt.get("roommatesNeeded")) : "");
-
-        Log.d("DialogDebug", "Fields populated: city=" + editCity.getText() +
-                ", street=" + editStreet.getText() +
-                ", houseNum=" + editHouseNumber.getText() +
-                ", price=" + editPrice.getText() +
-                ", description=" + editDescription.getText() +
-                ", roommates=" + editRoommatesNeeded.getText());
+        editCity.setText(apt.getCity());
+        editStreet.setText(apt.getStreet());
+        editHouseNumber.setText(String.valueOf(apt.getHouseNumber()));
+        editPrice.setText(String.valueOf(apt.getPrice()));
+        editDescription.setText(apt.getDescription());
+        editRoommatesNeeded.setText(String.valueOf(apt.getRoommatesNeeded()));
 
         AlertDialog dialog = builder.setTitle("עריכת דירה").create();
-        Log.d("DialogDebug", "Dialog created with title: עריכת דירה");
 
         btnSave.setOnClickListener(v -> {
-            Log.d("DialogDebug", "Save button clicked.");
             String newCity = editCity.getText().toString().trim();
             String newStreet = editStreet.getText().toString().trim();
             String houseNumStr = editHouseNumber.getText().toString().trim();
@@ -293,44 +258,26 @@ public class OwnerApartmentsFragment extends Fragment {
             String newDescription = editDescription.getText().toString().trim();
             String roommatesStr = editRoommatesNeeded.getText().toString().trim();
 
-            Log.d("DialogDebug", "Collected data: city=" + newCity +
-                    ", street=" + newStreet +
-                    ", houseNum=" + houseNumStr +
-                    ", price=" + priceStr +
-                    ", description=" + newDescription +
-                    ", roommates=" + roommatesStr);
-
-            // קריאה אחת - ה־ViewModel כבר מטפל ב־isTestMode ובעדכון הרשימה
             viewModel.updateApartment(
-                    (String) apt.get("id"),
+                    apt.getId(),
                     newCity,
                     newStreet,
                     houseNumStr,
                     priceStr,
                     roommatesStr,
                     newDescription,
-                    null  // אם אין שינוי בתמונה
+                    null
             );
-
-            Log.d("DialogDebug", "Calling viewModel.updateApartment with ID: " + apt.get("id"));
             dialog.dismiss();
-            Log.d("DialogDebug", "Dialog dismissed after save.");
         });
 
-        btnCancel.setOnClickListener(v -> {
-            Log.d("DialogDebug", "Cancel button clicked.");
-            dialog.dismiss();
-            Log.d("DialogDebug", "Dialog dismissed after cancel.");
-        });
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
-        Log.d("DialogDebug", "Dialog shown.");
     }
 
-
-    private void confirmAndDelete(Map<String, Object> apt) {
-        String aptId = (String) apt.get("id");
-        if (aptId == null) {
+    private void confirmAndDelete(Apartment apt) {
+        if (apt.getId() == null) {
             showToast("שגיאת מחיקה: מזהה דירה חסר");
             return;
         }
@@ -338,63 +285,20 @@ public class OwnerApartmentsFragment extends Fragment {
         new AlertDialog.Builder(getContext())
                 .setTitle("מחיקת דירה")
                 .setMessage("האם למחוק את הדירה לצמיתות?")
-                .setPositiveButton("מחק", (d, i) -> viewModel.deleteApartment(aptId))
+                .setPositiveButton("מחק", (d, i) -> viewModel.deleteApartment(apt.getId()))
                 .setNegativeButton("בטל", null)
                 .show();
     }
-
-    /**
-     * Method to set testing conditions - similar to your friend's approach
-     * This allows us to inject a mock repository for testing
-     */
-    public void setTestingConditions(ApartmentRepository fakeRepo) {
-        this.testRepository = fakeRepo;
-        this.isTestingMode = true;
-
-        // עדכון ה-ViewModel עם ה-repository המזויף וסימון מצב בדיקה
-        if (viewModel != null) {
-            viewModel.setTestRepository(fakeRepo);
-            viewModel.setTestingConditions(fakeRepo); // העברת מצב הבדיקה ל-ViewModel
+    @Override
+    public void onResume() {
+        super.onResume();
+        String uid = viewModel.getCurrentUserId();
+        Log.d("DEBUG", "onResume called. UID = " + uid);
+        if (uid != null) {
+            viewModel.loadApartments(uid);
+            Log.d("DEBUG", "Called loadApartments from onResume");
         }
     }
-
-    /**
-     * Helper method to add dummy apartment data for testing
-     */
-    public void addDummyApartmentForTesting(String id, String city, String street,
-                                            String houseNumber, String price,
-                                            String roommates, String description) {
-        if (isTestingMode) {
-            // Create a dummy apartment object
-            Map<String, Object> dummyApartment = new HashMap<>();
-            dummyApartment.put("id", id);
-            dummyApartment.put("city", city);
-            dummyApartment.put("street", street);
-            dummyApartment.put("houseNumber", houseNumber.isEmpty() ? 0 : Integer.parseInt(houseNumber));
-            dummyApartment.put("price", price.isEmpty() ? 0 : Integer.parseInt(price));
-            dummyApartment.put("roommatesNeeded", roommates.isEmpty() ? 0 : Integer.parseInt(roommates));
-            dummyApartment.put("description", description);
-
-            // Add to your apartment list
-            apartmentList.add(dummyApartment);
-
-            // עדכון ה-ViewModel עם הנתונים הדמה
-            if (viewModel != null) {
-                viewModel.setFilteredApartments(apartmentList); // עדכון ישיר של הרשימה המסוננת
-            }
-
-            // Notify adapter if it exists
-            if (adapter != null) {
-                adapter.updateApartments(apartmentList); // עדכון ישיר של רשימת הדירות
-            }
-        }
-    }
-    public OwnerApartmentsViewModel getViewModel() {
-        return this.viewModel;
-    }
-    // מחיקת כל הדירות (שימושי בטסטים)
-
-
 
 
 }

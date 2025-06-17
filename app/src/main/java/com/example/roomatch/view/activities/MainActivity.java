@@ -1,4 +1,3 @@
-// MainActivity.java
 package com.example.roomatch.view.activities;
 
 import android.content.Intent;
@@ -11,17 +10,17 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+
 import com.example.roomatch.R;
+import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.view.fragments.ApartmentSearchFragment;
 import com.example.roomatch.view.fragments.ChatsFragment;
+import com.example.roomatch.view.fragments.CreateProfileFragment;
 import com.example.roomatch.view.fragments.OwnerApartmentsFragment;
 import com.example.roomatch.view.fragments.PartnerFragment;
-import com.example.roomatch.view.fragments.SeekerHomeFragment;
 import com.example.roomatch.view.fragments.ProfileFragment;
-import com.example.roomatch.view.fragments.CreateProfileFragment;
-import com.example.roomatch.view.fragments.OwnerFragment;
-import com.example.roomatch.view.fragments.SeekerMainFragment;
+import com.example.roomatch.view.fragments.SeekerHomeFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -33,44 +32,27 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private BottomNavigationView bottomNav;
     private String userType;
-    private ApartmentRepository apartmentRepository; // משתנה עבור ה-Repository
-
-    public static boolean isTestMode = false; // פה
-
+    private ApartmentRepository apartmentRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        bottomNav = findViewById(R.id.bottom_navigation); // ← מוקדם יותר
+        bottomNav = findViewById(R.id.bottom_navigation);
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-        apartmentRepository = new ApartmentRepository(MainActivity.isTestMode); // ברירת מחדל
+        apartmentRepository = new ApartmentRepository();
 
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser == null) {
-            if (isTestMode) {
-                userType = "owner"; // או "seeker" לפי הצורך
-                setupBottomNav(userType);
-
-                String initialFragment = getIntent().getStringExtra("fragment");
-                if ("seeker_home".equals(initialFragment)) {
-                    replaceFragment(new SeekerHomeFragment());
-                } else {
-                    replaceFragment(new OwnerApartmentsFragment());
-                }
-            } else {
-                startActivity(new Intent(this, AuthActivity.class));
-                finish();
-            }
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
             return;
         }
-
 
         bottomNav.setOnItemSelectedListener(this::onNavigationItemSelected);
         bottomNav.setVisibility(BottomNavigationView.GONE);
 
-        // בדיקה אם יש פרמטר מ-CreateProfileFragment
         String initialFragment = getIntent().getStringExtra("fragment");
 
         if (initialFragment != null) {
@@ -101,13 +83,23 @@ public class MainActivity extends AppCompatActivity {
         db.collection("users").document(uid).get()
                 .addOnSuccessListener(document -> {
                     if (!document.exists()) {
+                        Log.e("MainActivity", "User profile does not exist for uid: " + uid);
                         auth.signOut();
                         startActivity(new Intent(MainActivity.this, AuthActivity.class));
                         finish();
                         return;
                     }
 
-                    userType = document.getString("userType");
+                    UserProfile userProfile = document.toObject(UserProfile.class);
+                    if (userProfile == null) {
+                        Log.e("MainActivity", "Failed to parse user profile for uid: " + uid);
+                        auth.signOut();
+                        startActivity(new Intent(MainActivity.this, AuthActivity.class));
+                        finish();
+                        return;
+                    }
+
+                    userType = userProfile.getUserType();
                     Log.d("MainActivity", "User type: " + userType);
 
                     if (userType == null || userType.isEmpty()) {
@@ -124,14 +116,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("MainActivity", "Error loading profile: " + e.getMessage());
+                    Log.e("MainActivity", "Error loading profile: " + e.getMessage(), e);
                     Toast.makeText(MainActivity.this, "שגיאה בטעינת פרופיל", Toast.LENGTH_SHORT).show();
                     auth.signOut();
                     startActivity(new Intent(MainActivity.this, AuthActivity.class));
                     finish();
                 });
     }
-
 
     private void setupBottomNav(String userType) {
         bottomNav.getMenu().clear();
