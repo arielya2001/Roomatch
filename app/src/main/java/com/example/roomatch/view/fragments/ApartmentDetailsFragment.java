@@ -96,6 +96,10 @@ public class ApartmentDetailsFragment extends Fragment {
                             .replace(R.id.fragmentContainer, chatFragment)
                             .addToBackStack(null)
                             .commit();
+
+                    // איפוס LiveData כדי למנוע טריגר חוזר
+                    viewModel.clearNavigation();
+
                 } else {
                     Toast.makeText(getContext(), "שגיאה בנתוני הצ'אט", Toast.LENGTH_SHORT).show();
                 }

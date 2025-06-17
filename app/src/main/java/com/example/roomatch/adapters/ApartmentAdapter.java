@@ -49,7 +49,11 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
         holder.priceTextView.setText(" חודש/ " + "₪" + apt.getPrice());
         holder.roommatesTextView.setText("שותפים דרושים: " + apt.getRoommatesNeeded());
 
-        if (apt.getImageUrl() != null && !apt.getImageUrl().isEmpty()) {
+        // ניקוי תמונה קודמת אם אין תמונה חדשה
+        if (apt.getImageUrl() == null || apt.getImageUrl().isEmpty()) {
+            Glide.with(context).clear(holder.apartmentImageView);
+            holder.apartmentImageView.setImageResource(R.drawable.placeholder_image);
+        } else {
             Glide.with(context)
                     .load(apt.getImageUrl())
                     .placeholder(R.drawable.placeholder_image)

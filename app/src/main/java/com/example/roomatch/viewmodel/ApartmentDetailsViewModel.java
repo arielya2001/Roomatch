@@ -47,4 +47,8 @@ public class ApartmentDetailsViewModel extends ViewModel {
     public LiveData<String> getNavigateToChatWith() {
         return navigateToChatWith;
     }
+    public void clearNavigation() {
+        navigateToChatWith.setValue(null);
+    }
+
 }

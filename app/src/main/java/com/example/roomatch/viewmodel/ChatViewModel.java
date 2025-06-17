@@ -1,6 +1,10 @@
 package com.example.roomatch.viewmodel;
 
+import static androidx.test.InstrumentationRegistry.getContext;
+
 import android.net.Uri;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -10,11 +14,14 @@ import com.example.roomatch.model.Chat;
 import com.example.roomatch.model.Message;
 import com.example.roomatch.model.repository.ChatRepository;
 import com.example.roomatch.model.repository.UserRepository;
+import com.example.roomatch.utils.ChatUtil;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ChatViewModel extends ViewModel {
 
@@ -74,6 +81,24 @@ public class ChatViewModel extends ViewModel {
                 .addOnFailureListener(e -> toast.setValue("שגיאה בסימון כנקראו: " + e.getMessage()));
     }
 
+    private List<Chat> allChats = new ArrayList<>();
+
+    public void filterChats(String query) {
+        List<Chat> filtered = new ArrayList<>();
+        String lower = query.toLowerCase();
+
+        for (Chat chat : allChats) {
+            String user = chat.getFromUserName() != null ? chat.getFromUserName().toLowerCase() : "";
+            String apt = chat.getApartmentName() != null ? chat.getApartmentName().toLowerCase() : "";
+            if (user.contains(lower) || apt.contains(lower)) {
+                filtered.add(chat);
+            }
+        }
+
+        chats.setValue(filtered);
+    }
+
+
     public void loadChats() {
         String me = uid();
         if (me == null) {
@@ -81,52 +106,46 @@ public class ChatViewModel extends ViewModel {
             return;
         }
 
-        chatRepo.getChatsForUser(me)
+        chatRepo.getAllChatMessages()  // ← תכף נוסיף את זה בריפוזיטורי
                 .addOnSuccessListener(snapshot -> {
-                    List<Chat> tmp = new ArrayList<>();
+                    Map<String, Chat> chatMap = new HashMap<>();
+
                     for (QueryDocumentSnapshot doc : snapshot) {
-                        Chat chat = doc.toObject(Chat.class);
-                        if (chat == null) continue;
+                        Message msg = doc.toObject(Message.class);
+                        if (msg == null) continue;
 
-                        chat.setId(doc.getId());
-                        String fromUid = chat.getFromUserId();
-                        String aptId = chat.getApartmentId();
-                        if (fromUid == null || aptId == null) continue;
+                        String from = msg.getFromUserId();
+                        String to = msg.getToUserId();
+                        String apt = msg.getApartmentId();
 
-                        // ודא שאין כפילות
-                        boolean exists = tmp.stream()
-                                .anyMatch(c -> c.getFromUserId().equals(fromUid)
-                                        && c.getApartmentId().equals(aptId));
-                        if (exists) continue;
+                        if (from == null || to == null || apt == null) continue;
 
-                        // זמנית: השתמש ב-fromUid ו-aptId כשמות
-                        chat.setFromUserName(fromUid);
-                        chat.setApartmentName(aptId);
-                        tmp.add(chat);
+                        boolean involved = me.equals(from) || me.equals(to);
+                        if (!involved) continue;
+
+                        // מפתח ייחודי לשיחה: לא משנה מי השולח
+                        String chatKey = ChatUtil.generateChatId(from, to, apt);
+                        if (!chatMap.containsKey(chatKey)) {
+                            Chat chat = new Chat();
+                            chat.setFromUserId(!me.equals(from) ? from : to);  // הצד השני!
+                            chat.setApartmentId(apt);
+                            chat.setLastMessage(msg);
+                            chat.setTimestamp(new com.google.firebase.Timestamp(new java.util.Date(msg.getTimestamp())));
+                            chat.setHasUnread(!msg.isRead() && msg.getToUserId().equals(me));
+                            chat.setFromUserName(chat.getFromUserId());
+                            chat.setApartmentName(apt);
+                            chatMap.put(chatKey, chat);
+                        }
                     }
-                    chats.setValue(tmp);
+
+                    chats.setValue(new ArrayList<>(chatMap.values()));
+                    allChats = new ArrayList<>(chatMap.values());  // ← הוספה חשובה!
                 })
-                .addOnFailureListener(e -> toast.setValue("שגיאה בטעינת צ'אטים: " + e.getMessage()));
-    }
+                .addOnFailureListener(e -> {
+                    Log.e("ChatsFragment", "Error loading chats", e); // חשוב – לא רק e.getMessage()
+                    Toast.makeText(getContext(), "שגיאה בטעינת צ'אטים: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });    }
 
-    public void filterChats(String query) {
-        if (query == null) {
-            loadChats();
-            return;
-        }
-
-        String q = query.toLowerCase();
-        List<Chat> current = chats.getValue() == null ? new ArrayList<>() : new ArrayList<>(chats.getValue());
-        List<Chat> filtered = new ArrayList<>();
-        for (Chat c : current) {
-            String sender = c.getFromUserName() != null ? c.getFromUserName().toLowerCase() : "";
-            String aptName = c.getApartmentName() != null ? c.getApartmentName().toLowerCase() : "";
-            if (sender.contains(q) || aptName.contains(q)) {
-                filtered.add(c);
-            }
-        }
-        chats.setValue(filtered);
-    }
 
     public String getCurrentUserId() {
         return uid();

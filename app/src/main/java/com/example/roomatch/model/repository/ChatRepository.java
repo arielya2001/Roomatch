@@ -108,6 +108,10 @@ public class ChatRepository {
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get();
     }
+    public Task<QuerySnapshot> getAllChatMessages() {
+        return db.collectionGroup("chat").orderBy("timestamp", Query.Direction.DESCENDING).get();
+    }
+
 
     public Query getPaginatedChatMessagesQuery(String chatId, int limit) {
         if (chatId == null) {

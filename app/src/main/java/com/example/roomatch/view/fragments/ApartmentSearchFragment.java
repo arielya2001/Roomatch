@@ -100,7 +100,7 @@ public class ApartmentSearchFragment extends Fragment {
 
         // Filters
         buttonFilter.setOnClickListener(v -> applyFilter());
-        buttonClearFilter.setOnClickListener(v -> resetList());
+        buttonClearFilter.setOnClickListener(v -> resetFilter());
 
         // Search
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -115,7 +115,7 @@ public class ApartmentSearchFragment extends Fragment {
             }
         });
 
-        viewModel.loadApartments(); // 🔥 Load initial data
+        viewModel.loadApartments();
     }
 
     private void applyFilter() {
@@ -130,8 +130,8 @@ public class ApartmentSearchFragment extends Fragment {
         }
     }
 
-    private void resetList() {
-        viewModel.resetList(originalApartments);
+    private void resetFilter() {
+        viewModel.resetFilter();
         searchView.setQuery("", false);
         searchView.clearFocus();
     }

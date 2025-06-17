@@ -14,8 +14,11 @@ import org.robolectric.annotation.Config;
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
 
+import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -23,8 +26,8 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
@@ -64,55 +67,73 @@ import java.util.Collections;
  *   as well as network failure cases.
  */
 
-
-// רץ עם Robolectric לטסטים UI/אסינכרוניים, מתעלם מקובץ manifest
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
 public class ApartmentManagementTests {
 
-    // כלל להרצת משימות ב-Thread הראשי לטסטים אסינכרוניים
     @Rule public InstantTaskExecutorRule instantRule = new InstantTaskExecutorRule();
-    // כלל לניהול מוקים (Mocks) עם Mockito
     @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
 
-    // מוק של מחסנית הדירות לטובת הטסטים
     @Mock ApartmentRepository mockRepository;
-    // מופע של ViewModel לטסטים, תלוי ב-mockRepository
     private OwnerApartmentsViewModel viewModel;
 
-    // מתודה שמריצה את ההכנה לפני כל טסט
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this); // מאתחל את המוקים
-        viewModel = new OwnerApartmentsViewModel(mockRepository); // יוצר מופע ViewModel
+        MockitoAnnotations.openMocks(this);
+        viewModel = new OwnerApartmentsViewModel(mockRepository);
 
-        // Stubbing ברירת מחדל ל-getApartmentsByOwnerId, מחזיר רשימה ריקה
-        QuerySnapshot defaultQuerySnapshot = mock(QuerySnapshot.class); // יוצר מוק של QuerySnapshot
-        when(defaultQuerySnapshot.getDocuments()).thenReturn(Collections.emptyList()); // מגדיר תוצאה ריקה
-        when(mockRepository.getApartmentsByOwnerId(anyString())).thenReturn(Tasks.forResult(defaultQuerySnapshot)); // Stubbing עם תוצאה מוצלחת
-
-        // Stubbing ל-getCurrentUserId, מחזיר מזהה משתמש קבוע
+        // Stubbing ל-getCurrentUserId
         when(mockRepository.getCurrentUserId()).thenReturn("testUserId");
 
-        // Stubbing ל-publishApartment, מחזיר תוצאה מוצלחת עם DocumentReference
-        when(mockRepository.publishApartment(anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()))
-                .thenReturn(Tasks.forResult(mock(DocumentReference.class)));
+        // Stubbing ל-getApartmentsByOwnerId עם רשימה ריקה (החזר חדש בהתאם למודל)
+        when(mockRepository.getApartmentsByOwnerId(anyString()))
+                .thenReturn(Tasks.forResult(Collections.emptyList()));
 
-        // Stubbing ל-updateApartment, מחזיר תוצאה מוצלחת עם null (לפי ההגדרה הנוכחית)
-        when(mockRepository.updateApartment(anyString(), anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()))
-                .thenReturn(Tasks.forResult(null));
+        // --------------------------
+        // Stubbing ל-publishApartment
+        // --------------------------
+        DocumentReference mockDocRef = mock(DocumentReference.class);
+        Task<DocumentReference> publishTask = mock(Task.class);
+        when(publishTask.isSuccessful()).thenReturn(true);
+        when(publishTask.getResult()).thenReturn(mockDocRef);
+        doAnswer(invocation -> {
+            OnSuccessListener<DocumentReference> listener = invocation.getArgument(0);
+            listener.onSuccess(mockDocRef);
+            return publishTask;
+        }).when(publishTask).addOnSuccessListener(any(OnSuccessListener.class));
+        when(mockRepository.publishApartment(any(Apartment.class), any(Uri.class)))
+                .thenReturn(publishTask);
 
-        // Stubbing ל-deleteApartment, מחזיר תוצאה מוצלחת (אם כי לא משתמשים בו בטסטים אלה)
-        when(mockRepository.deleteApartment(anyString()))
-                .thenReturn(Tasks.forResult(null));
+        // --------------------------
+        // Stubbing ל-updateApartment
+        // --------------------------
+        Task<Void> updateTask = mock(Task.class);
+        when(updateTask.isSuccessful()).thenReturn(true);
+        when(updateTask.getResult()).thenReturn(null); // מתאים ל־Task<Void>
+        doAnswer(invocation -> {
+            OnSuccessListener<Void> listener = invocation.getArgument(0);
+            listener.onSuccess(null);
+            return updateTask;
+        }).when(updateTask).addOnSuccessListener(any(OnSuccessListener.class));
+        when(mockRepository.updateApartment(anyString(), any(Apartment.class), any(Uri.class)))
+                .thenReturn(updateTask);
 
-        // איפוס מצב ה-LiveData של publishSuccess לפני כל טסט
-        viewModel.setPublishSuccess(false);
+        // --------------------------
+        // Stubbing ל-deleteApartment
+        // --------------------------
+        Task<Void> deleteTask = mock(Task.class);
+        when(deleteTask.isSuccessful()).thenReturn(true);
+        when(deleteTask.getResult()).thenReturn(null);
+        doAnswer(invocation -> {
+            OnSuccessListener<Void> listener = invocation.getArgument(0);
+            listener.onSuccess(null);
+            return deleteTask;
+        }).when(deleteTask).addOnSuccessListener(any(OnSuccessListener.class));
+        when(mockRepository.deleteApartment(anyString())).thenReturn(deleteTask);
+
     }
 
-    // טסט לבדיקת מקרים שונים של פרסום דירה
+
     @Test
     public void testPublishApartment_VariousCases() {
         // מקרה 1: קלט תקין
@@ -125,11 +146,10 @@ public class ApartmentManagementTests {
         Uri imageUri1 = null;
 
         viewModel.publishApartment(city1, street1, houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1);
-        Shadows.shadowOf(Looper.getMainLooper()).idle(); // ממתין לעדכון אסינכרוני
-        assertTrue(viewModel.getPublishSuccess().getValue()); // בודק שהפרסום הצליח
-        assertEquals("הדירה פורסמה", viewModel.getToastMessage().getValue()); // בודק הודעת הצלחה
-        verify(mockRepository, times(1)).publishApartment(anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()); // מאמת שהמתודה נקראה פעם אחת
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        assertTrue(viewModel.getPublishSuccess().getValue());
+        assertEquals("הדירה פורסמה", viewModel.getToastMessage().getValue());
+        verify(mockRepository, times(1)).publishApartment(any(Apartment.class), any(Uri.class));
 
         // מקרה 2: שדה ריק (קלט לא תקין)
         String city2 = "";
@@ -142,20 +162,22 @@ public class ApartmentManagementTests {
 
         viewModel.publishApartment(city2, street2, houseNumStr2, priceStr2, roommatesStr2, description2, imageUri2);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
-        assertFalse(viewModel.getPublishSuccess().getValue()); // בודק שהפרסום נכשל
-        assertEquals("כל השדות חייבים להיות מלאים", viewModel.getToastMessage().getValue()); // בודק הודעת שגיאה
-        verify(mockRepository, times(1)).publishApartment(anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()); // מאמת שלא נקרא שוב
+        assertFalse(viewModel.getPublishSuccess().getValue());
+        assertEquals("כל השדות חייבים להיות מלאים", viewModel.getToastMessage().getValue());
+        verify(mockRepository, times(1)).publishApartment(any(Apartment.class), any(Uri.class));
 
-        // מקרה 3: כשל רשת
-        when(mockRepository.publishApartment(anyString(), anyString(), anyString(), anyInt(), anyInt(), anyInt(), anyString(), any()))
-                .thenReturn(Tasks.forException(new Exception("Network error"))); // משנה Stubbing לכשל
+// מקרה 3: כשל רשת
+        Task<DocumentReference> failPublishTask = Tasks.forException(new Exception("Network error"));
+        when(mockRepository.publishApartment(any(Apartment.class), any(Uri.class)))
+                .thenReturn(failPublishTask);
+
         viewModel.publishApartment(city1, street1, houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
+
         assertFalse(viewModel.getPublishSuccess().getValue());
         assertEquals("שגיאה בפרסום: Network error", viewModel.getToastMessage().getValue());
-        verify(mockRepository, times(2)).publishApartment(anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()); // מאמת שני קריאות
+        verify(mockRepository, times(2)).publishApartment(any(Apartment.class), any(Uri.class));
+
 
         // מקרה 4: מספר שלילי (קלט לא תקין)
         String city4 = "ariel";
@@ -169,12 +191,10 @@ public class ApartmentManagementTests {
         viewModel.publishApartment(city4, street4, houseNumStr4, priceStr4, roommatesStr4, description4, imageUri4);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
         assertFalse(viewModel.getPublishSuccess().getValue());
-        assertEquals("שדות מספריים חייבים להיות חיוביים", viewModel.getToastMessage().getValue());
-        verify(mockRepository, times(2)).publishApartment(anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()); // מאמת שלא נקרא שוב
+        assertEquals("שדות מספריים חיוביים", viewModel.getToastMessage().getValue());
+        verify(mockRepository, times(2)).publishApartment(any(Apartment.class), any(Uri.class));
     }
 
-    // טסט לבדיקת מקרים שונים של עדכון דירה
     @Test
     public void testUpdateApartment_VariousCases() {
         // מקרה 1: קלט תקין
@@ -191,8 +211,7 @@ public class ApartmentManagementTests {
         Shadows.shadowOf(Looper.getMainLooper()).idle();
         assertTrue(viewModel.getPublishSuccess().getValue());
         assertEquals("דירה עודכנה בהצלחה", viewModel.getToastMessage().getValue());
-        verify(mockRepository, times(1)).updateApartment(anyString(), anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()); // מאמת קריאה עם 9 ארגומנטים
+        verify(mockRepository, times(1)).updateApartment(anyString(), any(Apartment.class), any(Uri.class));
 
         // מקרה 2: שדה ריק (קלט לא תקין)
         String apartmentId2 = "testApartmentId";
@@ -208,53 +227,53 @@ public class ApartmentManagementTests {
         Shadows.shadowOf(Looper.getMainLooper()).idle();
         assertFalse(viewModel.getPublishSuccess().getValue());
         assertEquals("כל השדות חייבים להיות מלאים", viewModel.getToastMessage().getValue());
-        verify(mockRepository, times(1)).updateApartment(anyString(), anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()); // מאמת שלא נקרא שוב
+        verify(mockRepository, times(1)).updateApartment(anyString(), any(Apartment.class), any(Uri.class));
 
         // מקרה 3: דירה לא נמצאה
         String apartmentId3 = "nonExistentId";
-        when(mockRepository.updateApartment(anyString(), anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()))
-                .thenReturn(Tasks.forException(new IllegalArgumentException("Apartment not found")));
+        Task<Void> failUpdateTask = mock(Task.class);
+        when(failUpdateTask.isSuccessful()).thenReturn(false);
+        when(failUpdateTask.getException()).thenReturn(new IllegalArgumentException("Apartment not found"));
+        when(mockRepository.updateApartment(anyString(), any(Apartment.class), any(Uri.class))).thenReturn(failUpdateTask);
         viewModel.updateApartment(apartmentId3, city1, street1, houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
         assertFalse(viewModel.getPublishSuccess().getValue());
-        assertEquals("שגיאה: הדירה לא נמצאה", viewModel.getToastMessage().getValue());
-        verify(mockRepository, times(2)).updateApartment(anyString(), anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()); // מאמת שתי קריאות
+        assertEquals("שגיאה בעדכון: Apartment not found", viewModel.getToastMessage().getValue());
+        verify(mockRepository, times(2)).updateApartment(anyString(), any(Apartment.class), any(Uri.class));
 
         // מקרה 4: כשל רשת
-        when(mockRepository.updateApartment(anyString(), anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()))
-                .thenReturn(Tasks.forException(new Exception("Network error")));
+        Task<Void> networkFailTask = Tasks.forException(new Exception("Network error"));
+        when(mockRepository.updateApartment(anyString(), any(Apartment.class), any(Uri.class)))
+                .thenReturn(networkFailTask);
+
         viewModel.updateApartment(apartmentId1, city1, street1, houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
+
         assertFalse(viewModel.getPublishSuccess().getValue());
         assertEquals("שגיאה בעדכון: Network error", viewModel.getToastMessage().getValue());
-        verify(mockRepository, times(3)).updateApartment(anyString(), anyString(), anyString(), anyString(),
-                anyInt(), anyInt(), anyInt(), anyString(), any()); // מאמת שלוש קריאות
+        verify(mockRepository, times(3)).updateApartment(anyString(), any(Apartment.class), any(Uri.class));
+
     }
 
-    // טסט לבדיקת מקרים שונים של טעינת דירות
     @Test
     public void testLoadApartments_VariousCases() {
         // מקרה 1: טעינה מוצלחת עם נתונים
         String ownerId1 = "testUserId";
         QuerySnapshot mockQuerySnapshot1 = mock(QuerySnapshot.class);
         when(mockQuerySnapshot1.getDocuments()).thenReturn(Collections.singletonList(mock(DocumentSnapshot.class)));
-        when(mockRepository.getApartmentsByOwnerId(ownerId1)).thenReturn(Tasks.forResult(mockQuerySnapshot1));
+        when(mockRepository.getApartmentsByOwnerId(ownerId1)).thenReturn(Tasks.forResult(Collections.singletonList(mock(Apartment.class))));
 
         viewModel.loadApartments(ownerId1);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
-        assertNotNull(viewModel.getFilteredApartments().getValue()); // בודק שהרשימה לא ריקה
-        assertEquals(1, viewModel.getFilteredApartments().getValue().size()); // בודק גודל הרשימה
-        assertNull(viewModel.getToastMessage().getValue()); // בודק שאין הודעת שגיאה
+        assertNotNull(viewModel.getFilteredApartments().getValue());
+        assertEquals(1, viewModel.getFilteredApartments().getValue().size());
+        assertNull(viewModel.getToastMessage().getValue());
 
         // מקרה 2: טעינה מוצלחת ללא נתונים
         String ownerId2 = "testUserId";
         QuerySnapshot mockQuerySnapshot2 = mock(QuerySnapshot.class);
         when(mockQuerySnapshot2.getDocuments()).thenReturn(Collections.emptyList());
-        when(mockRepository.getApartmentsByOwnerId(ownerId2)).thenReturn(Tasks.forResult(mockQuerySnapshot2));
+        when(mockRepository.getApartmentsByOwnerId(ownerId2)).thenReturn(Tasks.forResult(Collections.emptyList()));
 
         viewModel.loadApartments(ownerId2);
         Shadows.shadowOf(Looper.getMainLooper()).idle();

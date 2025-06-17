@@ -171,6 +171,10 @@ public class OwnerApartmentsFragment extends Fragment {
 
     private void resetFilter() {
         viewModel.resetFilter();
+        // איפוס ספינרים
+        spinnerFilterField.setSelection(0);
+        spinnerOrder.setSelection(0);
+        // איפוס חיפוש
         searchView.setQuery("", false);
         searchView.clearFocus();
     }

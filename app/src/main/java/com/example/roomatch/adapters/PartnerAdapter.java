@@ -53,12 +53,14 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
         UserProfile partner = partnerList.get(position);
 
         String name = partner.getFullName() != null ? partner.getFullName() : "לא ידוע";
-        String age = String.valueOf(partner.getAge() != 0 ? partner.getAge() : "לא צוין");
+        Integer age = partner.getAge();
+        String ageText = (age != null && age > 0) ? String.valueOf(age) : "לא ידוע";
+
         String interests = partner.getInterests() != null ? partner.getInterests() : "לא צוין";
         String lifestyle = partner.getLifestyle() != null ? partner.getLifestyle() : "לא צוין";
 
         holder.textName.setText("שם: " + name);
-        holder.textAge.setText("גיל: " + age);
+        holder.textAge.setText("גיל: " + ageText);
         holder.textInterests.setText("תחומי עניין: " + interests);
         holder.textLifestyle.setText("סגנון חיים: " + lifestyle);
 
@@ -69,9 +71,9 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
                 Toast.makeText(v.getContext(), "הודעה נשלחה! (כאילו)", Toast.LENGTH_SHORT).show());
 
         holder.buttonViewProfile.setOnClickListener(v -> profileListener.onProfileClick(partner));
-
         holder.buttonReport.setOnClickListener(v -> reportListener.onReportClick(partner));
     }
+
 
     @Override
     public int getItemCount() {

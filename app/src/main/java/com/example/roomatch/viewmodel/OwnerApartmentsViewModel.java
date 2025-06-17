@@ -20,7 +20,7 @@ import java.util.List;
 public class OwnerApartmentsViewModel extends ViewModel {
 
     private final ApartmentRepository repository;
-    private final MutableLiveData<List<Apartment>> allApartments = new MutableLiveData<>(new ArrayList<>());
+    private final List<Apartment> allApartments = new ArrayList<>();
     private final MutableLiveData<List<Apartment>> filteredApartments = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
     private final MutableLiveData<Boolean> publishSuccess = new MutableLiveData<>();
@@ -46,7 +46,8 @@ public class OwnerApartmentsViewModel extends ViewModel {
         }
         repository.getApartmentsByOwnerId(ownerId).addOnSuccessListener(apartments -> {
             Log.d("DEBUG", "Loaded " + apartments.size() + " apartments from repo");
-            allApartments.setValue(apartments);
+            allApartments.clear();
+            allApartments.addAll(apartments);
             filteredApartments.setValue(new ArrayList<>(apartments));
         }).addOnFailureListener(e -> {
             Log.e("OwnerApartmentsViewModel", "Error loading apartments: " + e.getMessage());
@@ -55,7 +56,7 @@ public class OwnerApartmentsViewModel extends ViewModel {
     }
 
     public void applyFilter(String field, boolean ascending) {
-        List<Apartment> apartments = new ArrayList<>(allApartments.getValue());
+        List<Apartment> apartments = new ArrayList<>(allApartments);
         Comparator<Apartment> comparator = (a, b) -> {
             switch (field) {
                 case "city":
@@ -77,13 +78,17 @@ public class OwnerApartmentsViewModel extends ViewModel {
     }
 
     public void resetFilter() {
-        filteredApartments.setValue(new ArrayList<>(allApartments.getValue()));
+        filteredApartments.setValue(new ArrayList<>(allApartments));
     }
 
     public void searchApartments(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            resetFilter();
+            return;
+        }
         List<Apartment> result = new ArrayList<>();
         String q = query.toLowerCase();
-        for (Apartment apt : allApartments.getValue()) {
+        for (Apartment apt : allApartments) {
             if ((apt.getCity() != null && apt.getCity().toLowerCase().contains(q)) ||
                     (apt.getStreet() != null && apt.getStreet().toLowerCase().contains(q)) ||
                     String.valueOf(apt.getHouseNumber()).contains(q) ||

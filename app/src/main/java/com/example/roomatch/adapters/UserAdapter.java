@@ -34,7 +34,8 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         UserProfile user = userList.get(position);
         holder.name.setText("שם: " + (user.getFullName() != null ? user.getFullName() : "לא ידוע"));
-        holder.age.setText("גיל: " + (user.getAge() > 0 ? String.valueOf(user.getAge()) : "לא ידוע"));
+        Integer age = user.getAge();
+        holder.age.setText("גיל: " + (age != null && age > 0 ? age : "לא ידוע"));
         holder.lifestyle.setText("סגנון חיים: " + (user.getLifestyle() != null ? user.getLifestyle() : "לא ידוע"));
         holder.interests.setText("תחומי עניין: " + (user.getInterests() != null ? user.getInterests() : "לא ידוע"));
     }
