@@ -20,10 +20,16 @@ import java.util.List;
 public class OwnerApartmentsViewModel extends ViewModel {
 
     private final ApartmentRepository repository;
-    private final List<Apartment> allApartments = new ArrayList<>();
-    private final MutableLiveData<List<Apartment>> filteredApartments = new MutableLiveData<>(new ArrayList<>());
-    private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
-    private final MutableLiveData<Boolean> publishSuccess = new MutableLiveData<>();
+    private final List<Apartment> allApartments = new ArrayList<>(); //הדירות איך שהן נשלפות מהפיירבייס, רשימה פנימית
+    private final MutableLiveData<List<Apartment>> filteredApartments = new MutableLiveData<>(new ArrayList<>()); // הרשימה שאני מציג בפועל!
+    // משתנה בהתאם לפילטר.. חיפוש/סינון/איפוס
+    //Mutable - לאחסן וגם לעדכן בזמן ריצה את כל המסכים - fragments
+    private final MutableLiveData<String> toastMessage = new MutableLiveData<>(); // שמירת הודעות טקסט שאני מציג למשתמש
+    //toastMessage.setValue("הדירה פורסמה")
+    private final MutableLiveData<Boolean> publishSuccess = new MutableLiveData<>(); //הצליח או נכשל?
+    //אם ההעלאה ל־Firebase הצליחה → publishSuccess.setValue(true)
+    //אם נכשלה → publishSuccess.setValue(false)
+    //צריך לדעת על הצלחה כדי לנקות טופס/לנווט חזרה וכו'
 
     public OwnerApartmentsViewModel(ApartmentRepository repository) {
         this.repository = repository;

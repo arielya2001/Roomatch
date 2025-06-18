@@ -123,7 +123,7 @@ public class OwnerApartmentsFragment extends Fragment {
                 return true;
             }
         });
-
+        //לחצן פרסום דירה
         Toolbar toolbar = view.findViewById(R.id.toolbar);
         if (toolbar != null) {
             ImageButton publishButton = toolbar.findViewById(R.id.buttonChats);
@@ -137,7 +137,7 @@ public class OwnerApartmentsFragment extends Fragment {
                         .commit();
             });
         }
-
+        //תקרא לפונקציה שמחזירה לך את הדירות המעודכנות לפי סינון ואז תקרא לupdate כלומר תנקה את הרשימה הישנה תוסיף חדשה ותעדכן את UI
         viewModel.getFilteredApartments().observe(getViewLifecycleOwner(), apartments -> {
             adapter.updateApartments(apartments);
         });
