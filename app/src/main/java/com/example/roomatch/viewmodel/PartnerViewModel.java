@@ -18,6 +18,8 @@ public class PartnerViewModel extends ViewModel {
     private static final String TAG = "PartnerViewModel"; // תגית לוג ייחודית
     private final UserRepository repository = new UserRepository();
     private final MutableLiveData<List<UserProfile>> partners = new MutableLiveData<>(new ArrayList<>());
+    private final List<UserProfile> allPartners = new ArrayList<>();
+
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
     private final MutableLiveData<UserProfile> showProfileDialog = new MutableLiveData<>();
     private final MutableLiveData<String> showReportDialog = new MutableLiveData<>();
@@ -31,7 +33,7 @@ public class PartnerViewModel extends ViewModel {
         loadPartners();
     }
 
-    private void loadPartners() {
+    public void loadPartners() {
         String uid = repository.getCurrentUserId();
         Log.d(TAG, "Loading partners for userId: " + uid);
         if (uid == null) {
@@ -43,12 +45,14 @@ public class PartnerViewModel extends ViewModel {
         repository.getPartners()
                 .addOnSuccessListener(query -> {
                     List<UserProfile> list = new ArrayList<>();
+                    allPartners.clear(); // ← מנקה לפני טעינה חדשה
                     for (DocumentSnapshot doc : query.getDocuments()) {
                         if (!doc.getId().equals(uid)) {
                             UserProfile profile = doc.toObject(UserProfile.class);
                             if (profile != null) {
                                 profile.setUserId(doc.getId()); // Set the userId from the document ID
                                 list.add(profile);
+                                allPartners.add(profile); // ← שמירה לרשימת מקור
                             }
                         }
                     }
@@ -91,4 +95,68 @@ public class PartnerViewModel extends ViewModel {
             toastMessage.setValue("שגיאה: פרטי משתמש חסרים");
         }
     }
+    public void clearPartnerFilter() {
+        partners.setValue(new ArrayList<>(allPartners));
+    }
+    public void applyPartnerSort(String field, String order) {
+        List<UserProfile> list = new ArrayList<>(allPartners); // ← תמיד עובד על המקור
+
+        list.sort((a, b) -> {
+            int result = 0;
+
+            switch (field) {
+                case "שם":
+                    result = safeCompare(a.getFullName(), b.getFullName());
+                    break;
+                case "גיל":
+                    result = Integer.compare(a.getAge(), b.getAge());
+                    break;
+                case "מגדר":
+                    result = safeCompare(a.getGender(), b.getGender());
+                    break;
+                case "סגנון חיים":
+                    result = safeCompare(a.getLifestyle(), b.getLifestyle());
+                    break;
+                case "תחומי עניין":
+                    result = safeCompare(a.getInterests(), b.getInterests());
+                    break;
+            }
+
+            return order.equals("עולה") ? result : -result;
+        });
+
+        partners.setValue(list);
+    }
+
+    // פונקציית השוואה בטוחה לשדות טקסטואלים
+    private int safeCompare(String a, String b) {
+        if (a == null && b == null) return 0;
+        if (a == null) return -1;
+        if (b == null) return 1;
+        return a.compareToIgnoreCase(b);
+    }
+    public void applyPartnerSearchByName(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            partners.setValue(new ArrayList<>(allPartners));
+            return;
+        }
+
+        String lowered = query.toLowerCase();
+        List<UserProfile> filtered = new ArrayList<>();
+
+        for (UserProfile profile : allPartners) {
+            if (profile.getFullName() != null &&
+                    profile.getFullName().toLowerCase().contains(lowered)) {
+                filtered.add(profile);
+            }
+        }
+
+        partners.setValue(filtered);
+    }
+
+
+
+
+
+
 }

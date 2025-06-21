@@ -5,17 +5,73 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    tools:context=".view.fragments.PartnerFragment">
 
+    <!-- כותרת -->
     <TextView
         android:id="@+id/textViewTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="שותפים פוטנציאליים"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:importantForAccessibility="yes" />
 
+    <!-- שורת סינון -->
+    <LinearLayout
+        android:id="@+id/filterLayoutPartner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical">
+
+        <!-- Spinner שדה סינון -->
+        <Spinner
+            android:id="@+id/spinnerPartnerFilterField"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp" />
+
+        <!-- Spinner סדר -->
+        <Spinner
+            android:id="@+id/spinnerPartnerOrder"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp" />
+
+        <!-- כפתור סינון -->
+        <ImageButton
+            android:id="@+id/buttonPartnerFilter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:src="@mipmap/ic_filter_foreground"
+            android:contentDescription="סנן" />
+
+        <!-- כפתור איפוס -->
+        <ImageButton
+            android:id="@+id/buttonPartnerClear"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:contentDescription="נקה" />
+    </LinearLayout>
+
+    <!-- שורת חיפוש -->
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchViewPartner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:queryHint="חפש לפי שם"
+        android:iconifiedByDefault="false"
+        android:layout_marginTop="8dp" />
+
+    <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewPartners"
         android:layout_width="match_parent"
