@@ -4,6 +4,8 @@ import android.net.Uri;
 
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.Contact;
+import com.example.roomatch.model.GroupChat;
+import com.example.roomatch.model.Message;
 import com.example.roomatch.model.SharedGroup;
 import com.example.roomatch.model.UserProfile;
 import com.google.android.gms.tasks.Task;
@@ -37,6 +39,8 @@ public class ApartmentRepository {
     public Task<DocumentReference> publishApartment(Apartment apartment, Uri imageUri) {
         return uploadApartmentWithImageIfNeeded(apartment, imageUri);
     }
+
+
 
 
     /**
@@ -308,6 +312,18 @@ public class ApartmentRepository {
                     return null;
                 });
     }
+    public Task<String> getUserNameById(String userId) {
+        return db.collection("users")
+                .document(userId)
+                .get()
+                .continueWith(task -> {
+                    if (task.isSuccessful() && task.getResult().exists()) {
+                        return task.getResult().getString("fullName");
+                    }
+                    return "אנונימי";
+                });
+    }
+
 
     public Task<Void> createSharedGroup(List<String> memberIds) {
         String creatorId = getCurrentUserId();
@@ -365,6 +381,160 @@ public class ApartmentRepository {
     public Task<DocumentSnapshot> getUserProfile(String userId) {
         return db.collection("users").document(userId).get();
     }
+
+    public Task<Void> sendGroupMessageAndCreateChat(String ownerId, String apartmentId, String groupId) {
+        String currentUserId = getCurrentUserId();
+        if (currentUserId == null || ownerId == null || apartmentId == null || groupId == null) {
+            return Tasks.forException(new IllegalArgumentException("Missing required parameters"));
+        }
+
+        return getGroupMemberIds(groupId).continueWithTask(task -> {
+            List<String> memberIds = task.getResult();
+            if (memberIds == null) memberIds = new ArrayList<>();
+
+            // יצירת צ'אט קבוצתי
+            Map<String, Object> chatData = new HashMap<>();
+            chatData.put("groupId", groupId);
+            chatData.put("apartmentId", apartmentId);
+            chatData.put("memberIds", memberIds);
+            chatData.put("ownerId", ownerId);
+            chatData.put("createdAt", System.currentTimeMillis());
+
+            return db.collection("group_chats")
+                    .add(chatData)
+                    .continueWithTask(chatTask -> {
+                        if (!chatTask.isSuccessful()) {
+                            throw chatTask.getException();
+                        }
+                        String chatId = chatTask.getResult().getId();
+
+                        // שליחת הודעה ראשונית כחלק מהצ'אט
+                        Map<String, Object> initialMessage = new HashMap<>();
+                        initialMessage.put("groupChatId", chatId);
+                        initialMessage.put("fromUserId", currentUserId);
+                        initialMessage.put("text", "הקבוצה " + getGroupName(groupId) + " פתחה צ'אט לגבי הדירה");
+                        initialMessage.put("timestamp", System.currentTimeMillis());
+
+                        return db.collection("group_messages")
+                                .document(chatId)
+                                .collection("chat")
+                                .add(initialMessage);
+                    })
+                    .continueWithTask(messageTask -> Tasks.forResult(null));
+        });
+    }
+    public Task<List<GroupChat>> getGroupChatsForUser(String userId) {
+        Task<QuerySnapshot> asMemberTask = db.collection("group_chats")
+                .whereArrayContains("memberIds", userId)
+                .get();
+
+        Task<QuerySnapshot> asOwnerTask = db.collection("group_chats")
+                .whereEqualTo("ownerId", userId)
+                .get();
+
+        return Tasks.whenAllSuccess(asMemberTask, asOwnerTask).continueWith(task -> {
+            List<GroupChat> chats = new ArrayList<>();
+
+            QuerySnapshot memberChatsSnapshot = (QuerySnapshot) task.getResult().get(0);
+            QuerySnapshot ownerChatsSnapshot = (QuerySnapshot) task.getResult().get(1);
+
+            for (DocumentSnapshot doc : memberChatsSnapshot) {
+                GroupChat chat = doc.toObject(GroupChat.class);
+                if (chat != null) {
+                    chat.setId(doc.getId());
+                    chats.add(chat);
+                }
+            }
+
+            for (DocumentSnapshot doc : ownerChatsSnapshot) {
+                GroupChat chat = doc.toObject(GroupChat.class);
+                if (chat != null && chats.stream().noneMatch(c -> c.getId().equals(doc.getId()))) {
+                    chat.setId(doc.getId());
+                    chats.add(chat);
+                }
+            }
+
+            return chats;
+        });
+    }
+
+
+    public Task<QuerySnapshot> getGroupChatMessagesForGroupAndApartment(String groupId, String apartmentId) {
+        return db.collection("group_chats")
+                .whereEqualTo("groupId", groupId)
+                .whereEqualTo("apartmentId", apartmentId)
+                .get();
+    }
+
+    /**
+     * שולף את שם הקבוצה.
+     */
+    private Task<String> getGroupName(String groupId) {
+        return db.collection("shared_groups").document(groupId).get()
+                .continueWith(task -> {
+                    if (task.isSuccessful() && task.getResult().exists()) {
+                        return task.getResult().getString("name");
+                    }
+                    return "קבוצה לא ידועה";
+                });
+    }
+
+    private Task<List<String>> getGroupMemberIds(String groupId) {
+        return db.collection("shared_groups").document(groupId).get()
+                .continueWith(task -> {
+                    if (task.isSuccessful() && task.getResult().exists()) {
+                        return (List<String>) task.getResult().get("memberIds");
+                    }
+                    return new ArrayList<>();
+                });
+    }
+
+    /**
+     * שולף הודעות של צ'אט קבוצתי.
+     */
+    public Task<List<Message>> getGroupChatMessages(String groupChatId) {
+        return db.collection("group_messages")
+                .document(groupChatId)
+                .collection("chat")
+                .orderBy("timestamp") // רק כדי שיהיו מסודרות בזמן
+                .get()
+                .continueWith(task -> {
+                    List<Message> messages = new ArrayList<>();
+                    if (task.isSuccessful()) {
+                        for (DocumentSnapshot doc : task.getResult()) {
+                            Message message = doc.toObject(Message.class);
+                            if (message != null) {
+                                message.setId(doc.getId());
+                                messages.add(message);
+                            }
+                        }
+                    }
+                    return messages;
+                });
+    }
+
+
+    /**
+     * שולח הודעה בצ'אט קבוצתי.
+     */
+    public Task<Void> sendGroupChatMessage(String groupChatId, String userId, String text) {
+        Map<String, Object> message = new HashMap<>();
+        message.put("fromUserId", userId);
+        message.put("text", text);
+        message.put("timestamp", System.currentTimeMillis());
+
+        return db.collection("group_messages")
+                .document(groupChatId) // 📄 שומר תחת document בשם groupChatId
+                .collection("chat")    // 📁 תת־collection בשם chat
+                .add(message)
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        throw task.getException();
+                    }
+                    return Tasks.forResult(null);
+                });
+    }
+
 
 
 

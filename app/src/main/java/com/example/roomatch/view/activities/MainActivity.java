@@ -20,14 +20,16 @@ import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.view.fragments.ApartmentSearchFragment;
 import com.example.roomatch.view.fragments.ChatsFragment;
-import com.example.roomatch.view.fragments.ContactsFragment; // נצטרך ליצור
+import com.example.roomatch.view.fragments.ContactsFragment;
 import com.example.roomatch.view.fragments.CreateProfileFragment;
-import com.example.roomatch.view.fragments.MatchRequestsFragment; // נצתרך ליצור
+import com.example.roomatch.view.fragments.GroupChatFragment;
+import com.example.roomatch.view.fragments.GroupChatsListFragment;
+import com.example.roomatch.view.fragments.MatchRequestsFragment;
 import com.example.roomatch.view.fragments.OwnerApartmentsFragment;
 import com.example.roomatch.view.fragments.PartnerFragment;
 import com.example.roomatch.view.fragments.ProfileFragment;
 import com.example.roomatch.view.fragments.SeekerHomeFragment;
-import com.example.roomatch.view.fragments.SharedGroupsFragment; // נצטרך ליצור
+import com.example.roomatch.view.fragments.SharedGroupsFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -60,16 +62,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         db = FirebaseFirestore.getInstance();
         apartmentRepository = new ApartmentRepository();
 
-        // הגדרת Toolbar כ-ActionBar
-        setSupportActionBar(toolbar);
-
-        // הגדרת Drawer Toggle
+        // הסרת setSupportActionBar כדי להימנע משימוש ב-Toolbar כברירת מחדל
+        // drawerToggle יפעל רק עם DrawerLayout
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawerLayout.addDrawerListener(drawerToggle);
         drawerToggle.syncState();
 
-        // הגדרת מאזין לתפריט המבורגר
         navigationView.setNavigationItemSelectedListener(this);
 
         FirebaseUser currentUser = auth.getCurrentUser();
@@ -107,6 +106,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    // הסרת onCreateOptionsMenu ו-onOptionsItemSelected כי אין צורך ב-Toolbar
+
     private void checkUserProfile(String uid) {
         Log.d("MainActivity", "Checking user profile for uid: " + uid);
         db.collection("users").document(uid).get()
@@ -140,10 +141,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                     if ("owner".equals(userType)) {
                         replaceFragment(new OwnerApartmentsFragment());
-                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED); // חסימת Drawer ל-owner
+                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
                     } else if ("seeker".equals(userType)) {
                         replaceFragment(new ApartmentSearchFragment());
-                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED); // הפעלת Drawer ל-seeker
+                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -180,6 +181,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.nav_chats) {
             replaceFragment(new ChatsFragment());
             return true;
+        } else if (id == R.id.nav_group_chats) {
+            replaceFragment(new GroupChatsListFragment()); // שינוי לרשימת צ'אטים
+            return true;
+        } else if (id == R.id.nav_logout) {
+            auth.signOut();
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
+            return true;
         } else if (id == R.id.menu_apartments) {
             replaceFragment(new ApartmentSearchFragment());
             return true;
@@ -194,11 +203,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.nav_contacts) {
-            replaceFragment(new ContactsFragment()); // נצטרך ליצור
+            replaceFragment(new ContactsFragment());
         } else if (id == R.id.nav_shared_groups) {
-            replaceFragment(new SharedGroupsFragment()); // נצתרך ליצור
+            replaceFragment(new SharedGroupsFragment());
         } else if (id == R.id.nav_match_requests) {
-            replaceFragment(new MatchRequestsFragment()); // כבר קיים
+            replaceFragment(new MatchRequestsFragment());
+        } else if (id == R.id.nav_group_chats) {
+            replaceFragment(new GroupChatsListFragment()); // שינוי גם כאן
         } else if (id == R.id.nav_logout) {
             auth.signOut();
             startActivity(new Intent(this, AuthActivity.class));

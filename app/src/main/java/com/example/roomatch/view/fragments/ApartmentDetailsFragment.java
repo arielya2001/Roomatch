@@ -2,6 +2,7 @@ package com.example.roomatch.view.fragments;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,7 +52,6 @@ public class ApartmentDetailsFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // שימוש ב-AppViewModelFactory ממקום מרכזי
         AppViewModelFactory factory = ViewModelFactoryProvider.createFactory();
         viewModel = new ViewModelProvider(this, factory).get(ApartmentDetailsViewModel.class);
 
@@ -62,7 +62,6 @@ public class ApartmentDetailsFragment extends Fragment {
             }
         }
 
-        // קישור רכיבי UI
         TextView cityTV = view.findViewById(R.id.cityTextView);
         TextView streetTV = view.findViewById(R.id.streetTextView);
         TextView houseNumTV = view.findViewById(R.id.houseNumberTextView);
@@ -72,9 +71,8 @@ public class ApartmentDetailsFragment extends Fragment {
         ImageView imageView = view.findViewById(R.id.apartmentImageView);
         Button messageBtn = view.findViewById(R.id.messageButton);
         Button sendGroupMessageBtn = view.findViewById(R.id.sendGroupMessageButton);
-        groupSpinner = view.findViewById(R.id.groupSpinner); // הנחתי ש-Spinner נוסף ב-Layout
+        groupSpinner = view.findViewById(R.id.groupSpinner);
 
-        // תצוגת הדירה
         viewModel.getApartmentDetails().observe(getViewLifecycleOwner(), apartment -> {
             cityTV.setText(apartment.getCity());
             streetTV.setText(apartment.getStreet());
@@ -90,10 +88,24 @@ public class ApartmentDetailsFragment extends Fragment {
                     .into(imageView);
         });
 
-        // טעינת קבוצות זמינות
         viewModel.loadAvailableGroups();
         viewModel.getAvailableGroups().observe(getViewLifecycleOwner(), groups -> {
-            if (groups != null && !groups.isEmpty()) {
+            if (groups == null) {
+                Log.d("ApartmentDetailsFragment", "🟡 עדיין אין קבוצות (LiveData == null), ממתין לטעינה");
+                return;
+            }
+
+            if (groups.isEmpty()) {
+                Log.d("ApartmentDetailsFragment", "⚠️ קבוצות נטענו אבל הרשימה ריקה");
+                sendGroupMessageBtn.setVisibility(View.GONE);
+                groupSpinner.setVisibility(View.GONE);
+                Toast.makeText(getContext(), "אין קבוצות זמינות", Toast.LENGTH_SHORT).show();
+            } else {
+                Log.d("ApartmentDetailsFragment", "✅ נמצאו " + groups.size() + " קבוצות, מציג ב-Spinner");
+
+                sendGroupMessageBtn.setVisibility(View.VISIBLE);
+                groupSpinner.setVisibility(View.VISIBLE);
+
                 List<String> groupNames = new ArrayList<>();
                 for (SharedGroup group : groups) {
                     groupNames.add(group.getName());
@@ -102,12 +114,9 @@ public class ApartmentDetailsFragment extends Fragment {
                         android.R.layout.simple_spinner_item, groupNames);
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 groupSpinner.setAdapter(adapter);
-            } else {
-                Toast.makeText(getContext(), "אין קבוצות זמינות", Toast.LENGTH_SHORT).show();
             }
         });
 
-        // מעבר לצ'אט
         messageBtn.setOnClickListener(v -> viewModel.onMessageOwnerClicked());
 
         viewModel.getNavigateToChatWith().observe(getViewLifecycleOwner(), chatKey -> {
@@ -123,7 +132,6 @@ public class ApartmentDetailsFragment extends Fragment {
                             .addToBackStack(null)
                             .commit();
 
-                    // איפוס LiveData כדי למנוע טריגר חוזר
                     viewModel.clearNavigation();
                 } else {
                     Toast.makeText(getContext(), "שגיאה בנתוני הצ'אט", Toast.LENGTH_SHORT).show();
@@ -131,14 +139,13 @@ public class ApartmentDetailsFragment extends Fragment {
             }
         });
 
-        // שליחת הודעה בשם הקבוצה
         sendGroupMessageBtn.setOnClickListener(v -> {
             Apartment apartment = viewModel.getApartmentDetails().getValue();
             SharedGroup selectedGroup = getSelectedGroup();
-            if (selectedGroup != null) {
-                viewModel.sendGroupMessage(apartment, selectedGroup);
+            if (apartment != null && selectedGroup != null) {
+                viewModel.sendGroupMessageAndCreateChat(apartment, selectedGroup);
             } else {
-                Toast.makeText(getContext(), "בחר קבוצה", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "בחר דירה וקבוצה", Toast.LENGTH_SHORT).show();
             }
         });
 

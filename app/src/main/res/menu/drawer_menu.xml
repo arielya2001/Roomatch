@@ -13,6 +13,10 @@
         android:icon="@android:drawable/ic_menu_save"
         android:title="בקשות לקשרים" />
     <item
+        android:id="@+id/nav_group_chats"
+        android:icon="@android:drawable/ic_dialog_email"
+        android:title="צ'אטים קבוצתיים" />
+    <item
         android:id="@+id/nav_logout"
         android:icon="@drawable/baseline_logout_24"
         android:title="התנתקות" />
