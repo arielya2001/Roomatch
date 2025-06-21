@@ -24,19 +24,27 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
     }
 
     @FunctionalInterface
+    public interface OnMatchRequestClickListener {
+        void onMatchRequestClick(UserProfile partner);
+    }
+
+    @FunctionalInterface
     public interface OnReportClickListener {
         void onReportClick(UserProfile partner);
     }
 
     private List<UserProfile> partnerList;
     private final OnProfileClickListener profileListener;
+    private final OnMatchRequestClickListener matchRequestListener;
     private final OnReportClickListener reportListener;
 
     public PartnerAdapter(List<UserProfile> partnerList,
                           OnProfileClickListener profileListener,
+                          OnMatchRequestClickListener matchRequestListener,
                           OnReportClickListener reportListener) {
         this.partnerList = partnerList != null ? new ArrayList<>(partnerList) : new ArrayList<>();
         this.profileListener = profileListener;
+        this.matchRequestListener = matchRequestListener;
         this.reportListener = reportListener;
     }
 
@@ -64,16 +72,13 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
         holder.textInterests.setText("תחומי עניין: " + interests);
         holder.textLifestyle.setText("סגנון חיים: " + lifestyle);
 
-        holder.buttonInvite.setOnClickListener(v ->
-                Toast.makeText(v.getContext(), "הוזמן לקבוצה!", Toast.LENGTH_SHORT).show());
-
-        holder.buttonMessage.setOnClickListener(v ->
-                Toast.makeText(v.getContext(), "הודעה נשלחה! (כאילו)", Toast.LENGTH_SHORT).show());
+        // שינוי "שלח בקשת חברות" במקום "הזמן לקבוצה"
+        holder.buttonInvite.setText("שלח בקשת חברות");
+        holder.buttonInvite.setOnClickListener(v -> matchRequestListener.onMatchRequestClick(partner));
 
         holder.buttonViewProfile.setOnClickListener(v -> profileListener.onProfileClick(partner));
         holder.buttonReport.setOnClickListener(v -> reportListener.onReportClick(partner));
     }
-
 
     @Override
     public int getItemCount() {
@@ -90,7 +95,7 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
 
     static class PartnerViewHolder extends RecyclerView.ViewHolder {
         TextView textName, textAge, textInterests, textLifestyle;
-        Button buttonInvite, buttonMessage;
+        Button buttonInvite;
         TextView buttonViewProfile, buttonReport;
 
         public PartnerViewHolder(@NonNull View itemView) {
@@ -100,7 +105,6 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
             textInterests = itemView.findViewById(R.id.textInterests);
             textLifestyle = itemView.findViewById(R.id.textLifestyle);
             buttonInvite = itemView.findViewById(R.id.buttonInvite);
-            buttonMessage = itemView.findViewById(R.id.buttonMessage);
             buttonViewProfile = itemView.findViewById(R.id.buttonViewProfile);
             buttonReport = itemView.findViewById(R.id.buttonReport);
         }

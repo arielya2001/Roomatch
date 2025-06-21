@@ -3,9 +3,6 @@ package com.example.roomatch.viewmodel;
 import androidx.lifecycle.ViewModel;
 import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.viewmodel.AppViewModelFactory;
-import com.example.roomatch.viewmodel.ApartmentDetailsViewModel;
-import com.example.roomatch.viewmodel.CreateProfileViewModel;
-import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
 
 import java.util.HashMap;
 import java.util.Map;

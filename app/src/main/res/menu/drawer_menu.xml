@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_contacts"
+        android:icon="@android:drawable/ic_menu_share"
+        android:title="קשרים" />
+    <item
+        android:id="@+id/nav_shared_groups"
+        android:icon="@android:drawable/ic_menu_gallery"
+        android:title="קבוצות משותפות" />
+    <item
+        android:id="@+id/nav_match_requests"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="בקשות לקשרים" />
+    <item
+        android:id="@+id/nav_logout"
+        android:icon="@drawable/baseline_logout_24"
+        android:title="התנתקות" />
+</menu>

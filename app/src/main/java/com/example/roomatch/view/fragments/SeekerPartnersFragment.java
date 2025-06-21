@@ -2,10 +2,14 @@ package com.example.roomatch.view.fragments;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
-import android.view.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Toast;
-import androidx.annotation.*;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -42,9 +46,11 @@ public class SeekerPartnersFragment extends Fragment {
         viewModel = new ViewModelProvider(this).get(PartnerViewModel.class);
         recyclerView = view.findViewById(R.id.recyclerViewSeekerPartners);
 
+        // הוספת OnMatchRequestClickListener החסר
         adapter = new PartnerAdapter(new ArrayList<>(),
-                partner -> viewModel.showProfileDialog(partner),
-                partner -> viewModel.showReportDialog(partner.getFullName()));
+                partner -> viewModel.showProfileDialog(partner), // OnProfileClickListener
+                partner -> viewModel.sendMatchRequest(partner), // OnMatchRequestClickListener
+                partner -> viewModel.showReportDialog(partner.getFullName())); // OnReportClickListener
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(adapter);

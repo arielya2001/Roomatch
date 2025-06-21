@@ -1,6 +1,7 @@
 package com.example.roomatch.model;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class UserProfile implements Serializable {
     private String fullName;
@@ -9,6 +10,8 @@ public class UserProfile implements Serializable {
     private String lifestyle;
     private String interests;
     private String userType;
+    private String userId; // הוספה של userId
+    private List<String> contactIds;
 
     // קונסטרקטור ריק עבור Firebase
     public UserProfile() {}
@@ -35,4 +38,13 @@ public class UserProfile implements Serializable {
     public void setInterests(String interests) { this.interests = interests; }
     public String getUserType() { return userType; }
     public void setUserType(String userType) { this.userType = userType; }
+    public String getUserId() { return userId; } // הוספת getter
+    public void setUserId(String userId) { this.userId = userId; } // הוספת setter
+    public List<String> getContactIds() {
+        return contactIds;
+    }
+
+    public void setContactIds(List<String> contactIds) {
+        this.contactIds = contactIds;
+    }
 }

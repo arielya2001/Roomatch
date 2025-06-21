@@ -7,7 +7,11 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -16,32 +20,57 @@ import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.view.fragments.ApartmentSearchFragment;
 import com.example.roomatch.view.fragments.ChatsFragment;
+import com.example.roomatch.view.fragments.ContactsFragment; // נצטרך ליצור
 import com.example.roomatch.view.fragments.CreateProfileFragment;
+import com.example.roomatch.view.fragments.MatchRequestsFragment; // נצתרך ליצור
 import com.example.roomatch.view.fragments.OwnerApartmentsFragment;
 import com.example.roomatch.view.fragments.PartnerFragment;
 import com.example.roomatch.view.fragments.ProfileFragment;
 import com.example.roomatch.view.fragments.SeekerHomeFragment;
+import com.example.roomatch.view.fragments.SharedGroupsFragment; // נצטרך ליצור
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
     private BottomNavigationView bottomNav;
     private String userType;
     private ApartmentRepository apartmentRepository;
+    private DrawerLayout drawerLayout;
+    private ActionBarDrawerToggle drawerToggle;
+    private Toolbar toolbar;
+    private NavigationView navigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         bottomNav = findViewById(R.id.bottom_navigation);
+        drawerLayout = findViewById(R.id.drawer_layout);
+        toolbar = findViewById(R.id.toolbar);
+        navigationView = findViewById(R.id.nav_view);
+
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         apartmentRepository = new ApartmentRepository();
+
+        // הגדרת Toolbar כ-ActionBar
+        setSupportActionBar(toolbar);
+
+        // הגדרת Drawer Toggle
+        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
+                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawerLayout.addDrawerListener(drawerToggle);
+        drawerToggle.syncState();
+
+        // הגדרת מאזין לתפריט המבורגר
+        navigationView.setNavigationItemSelectedListener(this);
 
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser == null) {
@@ -50,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        bottomNav.setOnItemSelectedListener(this::onNavigationItemSelected);
+        bottomNav.setOnItemSelectedListener(this::onBottomNavItemSelected);
         bottomNav.setVisibility(BottomNavigationView.GONE);
 
         String initialFragment = getIntent().getStringExtra("fragment");
@@ -111,8 +140,10 @@ public class MainActivity extends AppCompatActivity {
 
                     if ("owner".equals(userType)) {
                         replaceFragment(new OwnerApartmentsFragment());
-                    } else {
+                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED); // חסימת Drawer ל-owner
+                    } else if ("seeker".equals(userType)) {
                         replaceFragment(new ApartmentSearchFragment());
+                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED); // הפעלת Drawer ל-seeker
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -129,6 +160,8 @@ public class MainActivity extends AppCompatActivity {
 
         if ("seeker".equals(userType)) {
             bottomNav.inflateMenu(R.menu.bottom_nav_menu_seeker);
+            // הסרת "התנתקות" מהסרגל התחתון אם קיימת
+            bottomNav.getMenu().removeItem(R.id.nav_logout);
         } else if ("owner".equals(userType)) {
             bottomNav.inflateMenu(R.menu.bottom_nav_menu_owner);
         }
@@ -136,15 +169,10 @@ public class MainActivity extends AppCompatActivity {
         bottomNav.setVisibility(BottomNavigationView.VISIBLE);
     }
 
-    private boolean onNavigationItemSelected(@NonNull MenuItem item) {
+    private boolean onBottomNavItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.nav_profile) {
             replaceFragment(new ProfileFragment());
-            return true;
-        } else if (id == R.id.nav_logout) {
-            auth.signOut();
-            startActivity(new Intent(this, AuthActivity.class));
-            finish();
             return true;
         } else if (id == R.id.nav_apartments) {
             replaceFragment(new OwnerApartmentsFragment());
@@ -162,11 +190,38 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.nav_contacts) {
+            replaceFragment(new ContactsFragment()); // נצטרך ליצור
+        } else if (id == R.id.nav_shared_groups) {
+            replaceFragment(new SharedGroupsFragment()); // נצתרך ליצור
+        } else if (id == R.id.nav_match_requests) {
+            replaceFragment(new MatchRequestsFragment()); // כבר קיים
+        } else if (id == R.id.nav_logout) {
+            auth.signOut();
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
+            return true;
+        }
+        drawerLayout.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
     private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, fragment)
                 .addToBackStack(null)
                 .commit();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (drawerToggle != null) {
+            drawerLayout.removeDrawerListener(drawerToggle);
+        }
     }
 }

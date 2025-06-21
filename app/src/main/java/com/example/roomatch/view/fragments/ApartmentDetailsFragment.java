@@ -5,8 +5,10 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,10 +23,15 @@ import com.example.roomatch.viewmodel.ViewModelFactoryProvider;
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.viewmodel.AppViewModelFactory;
 import com.example.roomatch.viewmodel.ApartmentDetailsViewModel;
+import com.example.roomatch.model.SharedGroup;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ApartmentDetailsFragment extends Fragment {
 
     private ApartmentDetailsViewModel viewModel;
+    private Spinner groupSpinner;
 
     public static ApartmentDetailsFragment newInstance(Bundle apartmentData) {
         ApartmentDetailsFragment fragment = new ApartmentDetailsFragment();
@@ -64,6 +71,8 @@ public class ApartmentDetailsFragment extends Fragment {
         TextView descriptionTV = view.findViewById(R.id.descriptionTextView);
         ImageView imageView = view.findViewById(R.id.apartmentImageView);
         Button messageBtn = view.findViewById(R.id.messageButton);
+        Button sendGroupMessageBtn = view.findViewById(R.id.sendGroupMessageButton);
+        groupSpinner = view.findViewById(R.id.groupSpinner); // הנחתי ש-Spinner נוסף ב-Layout
 
         // תצוגת הדירה
         viewModel.getApartmentDetails().observe(getViewLifecycleOwner(), apartment -> {
@@ -79,6 +88,23 @@ public class ApartmentDetailsFragment extends Fragment {
                     .placeholder(R.drawable.placeholder_image)
                     .error(R.drawable.placeholder_image)
                     .into(imageView);
+        });
+
+        // טעינת קבוצות זמינות
+        viewModel.loadAvailableGroups();
+        viewModel.getAvailableGroups().observe(getViewLifecycleOwner(), groups -> {
+            if (groups != null && !groups.isEmpty()) {
+                List<String> groupNames = new ArrayList<>();
+                for (SharedGroup group : groups) {
+                    groupNames.add(group.getName());
+                }
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
+                        android.R.layout.simple_spinner_item, groupNames);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                groupSpinner.setAdapter(adapter);
+            } else {
+                Toast.makeText(getContext(), "אין קבוצות זמינות", Toast.LENGTH_SHORT).show();
+            }
         });
 
         // מעבר לצ'אט
@@ -99,11 +125,42 @@ public class ApartmentDetailsFragment extends Fragment {
 
                     // איפוס LiveData כדי למנוע טריגר חוזר
                     viewModel.clearNavigation();
-
                 } else {
                     Toast.makeText(getContext(), "שגיאה בנתוני הצ'אט", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+
+        // שליחת הודעה בשם הקבוצה
+        sendGroupMessageBtn.setOnClickListener(v -> {
+            Apartment apartment = viewModel.getApartmentDetails().getValue();
+            SharedGroup selectedGroup = getSelectedGroup();
+            if (selectedGroup != null) {
+                viewModel.sendGroupMessage(apartment, selectedGroup);
+            } else {
+                Toast.makeText(getContext(), "בחר קבוצה", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private SharedGroup getSelectedGroup() {
+        String selectedName = (String) groupSpinner.getSelectedItem();
+        if (selectedName != null) {
+            List<SharedGroup> groups = viewModel.getAvailableGroups().getValue();
+            if (groups != null) {
+                for (SharedGroup group : groups) {
+                    if (group.getName().equals(selectedName)) {
+                        return group;
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

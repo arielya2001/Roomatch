@@ -49,6 +49,7 @@ public class PartnerFragment extends Fragment {
 
         adapter = new PartnerAdapter(new ArrayList<>(),
                 partner -> viewModel.showProfileDialog(partner),
+                partner -> viewModel.sendMatchRequest(partner), // עדכון ל-sendMatchRequest
                 partner -> viewModel.showReportDialog(partner.getFullName()));
 
         partnersRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
