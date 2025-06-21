@@ -62,13 +62,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         db = FirebaseFirestore.getInstance();
         apartmentRepository = new ApartmentRepository();
 
-        // הסרת setSupportActionBar כדי להימנע משימוש ב-Toolbar כברירת מחדל
-        // drawerToggle יפעל רק עם DrawerLayout
-        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
-                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawerLayout.addDrawerListener(drawerToggle);
-        drawerToggle.syncState();
-
         navigationView.setNavigationItemSelectedListener(this);
 
         FirebaseUser currentUser = auth.getCurrentUser();
@@ -131,6 +124,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                     userType = userProfile.getUserType();
                     Log.d("MainActivity", "User type: " + userType);
+
+                    if ("owner".equals(userType)) {
+                        toolbar.setVisibility(Toolbar.GONE); // הסתרת ה־Toolbar מה-Activity
+                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                    } else if ("seeker".equals(userType)) {
+                        setSupportActionBar(toolbar); // שימוש בתפריט
+                        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
+                                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                        drawerLayout.addDrawerListener(drawerToggle);
+                        drawerToggle.syncState();
+                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                    }
+
 
                     if (userType == null || userType.isEmpty()) {
                         replaceFragment(new CreateProfileFragment());
