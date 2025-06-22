@@ -23,7 +23,6 @@ public class GroupChatsListFragment extends Fragment {
 
     private GroupChatsViewModel viewModel;
     private RecyclerView recyclerView;
-    private Button startNewChatButton;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -35,7 +34,6 @@ public class GroupChatsListFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.recyclerViewGroupChats);
-        startNewChatButton = view.findViewById(R.id.buttonStartNewChat);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         GroupChatsAdapter adapter = new GroupChatsAdapter(new ArrayList<>());
@@ -43,6 +41,7 @@ public class GroupChatsListFragment extends Fragment {
 
         viewModel = new ViewModelProvider(this).get(GroupChatsViewModel.class);
         viewModel.loadGroupChats().observe(getViewLifecycleOwner(), adapter::setChats);
+        viewModel.getApartmentIdToAddressMap().observe(getViewLifecycleOwner(), adapter::setApartmentIdToAddressMap);
 
         // 💥 הוספת ה־click listener:
         adapter.setOnChatClickListener(chat -> {
@@ -57,10 +56,6 @@ public class GroupChatsListFragment extends Fragment {
                     .replace(R.id.fragmentContainer, fragment) // וודא שיש לך container כזה ב־activity
                     .addToBackStack(null)
                     .commit();
-        });
-
-        startNewChatButton.setOnClickListener(v -> {
-            // ניווט לפתיחת צ'אט חדש אם תוסיף את זה בהמשך
         });
     }
 

@@ -11,12 +11,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.roomatch.R;
 import com.example.roomatch.model.GroupChat;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GroupChatsAdapter extends RecyclerView.Adapter<GroupChatsAdapter.ChatViewHolder> {
 
     private List<GroupChat> chats;
     private OnChatClickListener listener;
+
+    private Map<String, String> apartmentIdToAddressMap = new HashMap<>();
+
 
     public interface OnChatClickListener {
         void onChatClick(GroupChat chat);
@@ -30,6 +35,11 @@ public class GroupChatsAdapter extends RecyclerView.Adapter<GroupChatsAdapter.Ch
         this.chats = newChats;
         notifyDataSetChanged();
     }
+    public void setApartmentIdToAddressMap(Map<String, String> map) {
+        this.apartmentIdToAddressMap = map;
+        notifyDataSetChanged();
+    }
+
 
     public void setOnChatClickListener(OnChatClickListener listener) {
         this.listener = listener;
@@ -46,7 +56,11 @@ public class GroupChatsAdapter extends RecyclerView.Adapter<GroupChatsAdapter.Ch
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         GroupChat chat = chats.get(position);
-        holder.chatTitle.setText("צ'אט עם דירה: " + chat.getApartmentId()); // תוכל לשנות להצגת שם הדירה אם קיים
+
+        // שימוש בכתובת מלאה במקום שם עיר בלבד
+        String address = apartmentIdToAddressMap.getOrDefault(chat.getApartmentId(), "כתובת לא ידועה");
+
+        holder.chatTitle.setText("צ'אט עם דירה: " + address);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -54,6 +68,8 @@ public class GroupChatsAdapter extends RecyclerView.Adapter<GroupChatsAdapter.Ch
             }
         });
     }
+
+
 
     @Override
     public int getItemCount() {
