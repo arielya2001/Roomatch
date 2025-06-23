@@ -29,6 +29,8 @@ public class ViewModelFactoryProvider {
         // לדוגמה:
         // creators.put(SeekerApartmentsViewModel.class, () -> new SeekerApartmentsViewModel(apartmentRepository));
 
+        creators.put(AdvancedSearchViewModel.class, () -> new AdvancedSearchViewModel(apartmentRepository));
+
         return new AppViewModelFactory(creators);
     }
 }

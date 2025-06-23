@@ -9,6 +9,6 @@
         <item>נקבה</item>
         <item>אחר</item>
     </string-array>
-
     <string name="default_web_client_id">730704673974-780s2lhe0nq00euabaekqe90kvn9s6og.apps.googleusercontent.com</string>
+    <string name="google_maps_key">AIzaSyBHvJSGRqykrqDtYB-TN8C4C70OYPi_IMI</string>
 </resources>

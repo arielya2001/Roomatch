@@ -24,6 +24,9 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
         void onViewApartmentClick(Apartment apartment);
         void onEditApartmentClick(Apartment apartment);
         void onDeleteApartmentClick(Apartment apartment);
+
+        void onReportApartmentClick(Apartment apartment);
+
     }
 
     /* ~~~~~~~~~~~~~~~~ data + ctor ~~~~~~~~~~~~~~~~ */
@@ -72,6 +75,10 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
         h.buttonDeleteApartment.setOnClickListener(v -> {
             if (listener != null) listener.onDeleteApartmentClick(apt);
         });
+        h.buttonReportApartment.setOnClickListener(v -> {
+            if (listener != null) listener.onReportApartmentClick(apt);
+        });
+
     }
 
     /* ~~~~~~~~~~~~~~~~ misc ~~~~~~~~~~~~~~~~ */
@@ -92,6 +99,9 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
         ImageButton buttonEditApartment, buttonDeleteApartment;
         ImageView apartmentImageView;
 
+        ImageButton buttonReportApartment;
+
+
         ApartmentViewHolder(@NonNull View itemView) {
             super(itemView);
             apartmentImageView = itemView.findViewById(R.id.apartmentImageView);
@@ -101,6 +111,8 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
             price = itemView.findViewById(R.id.textViewApartmentPrice);
             buttonEditApartment = itemView.findViewById(R.id.buttonEditApartment);
             buttonDeleteApartment = itemView.findViewById(R.id.buttonDeleteApartment);
+            buttonReportApartment = itemView.findViewById(R.id.buttonReportApartment);
+
         }
     }
 }

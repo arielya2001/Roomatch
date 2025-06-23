@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.*;
 
 import com.bumptech.glide.Glide;
 import com.example.roomatch.R;
+import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.viewmodel.ViewModelFactoryProvider;
 import com.example.roomatch.adapters.ApartmentCardAdapter;
 import com.example.roomatch.model.Apartment;
@@ -24,6 +25,7 @@ import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +37,8 @@ public class OwnerApartmentsFragment extends Fragment {
     private RecyclerView recyclerView;
     private ApartmentCardAdapter adapter;
     private OwnerApartmentsViewModel viewModel;
+
+    private final ApartmentRepository repository = new ApartmentRepository();
     private List<Apartment> apartmentList = new ArrayList<>();
     private Spinner spinnerFilterField, spinnerOrder;
     private SearchView searchView;
@@ -104,6 +108,11 @@ public class OwnerApartmentsFragment extends Fragment {
             public void onDeleteApartmentClick(Apartment apartment) {
                 confirmAndDelete(apartment);
             }
+            @Override
+            public void onReportApartmentClick(Apartment apartment) {
+                showReportDialog(apartment);
+            }
+
         });
         recyclerView.setAdapter(adapter);
 
@@ -188,6 +197,46 @@ public class OwnerApartmentsFragment extends Fragment {
             Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         }
     }
+
+    private void showReportDialog(Apartment apt) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_report_apartment, null);
+        builder.setView(dialogView);
+
+        Spinner reasonSpinner = dialogView.findViewById(R.id.spinnerReportReason);
+        EditText additionalDetails = dialogView.findViewById(R.id.editTextAdditionalDetails);
+        Button sendButton = dialogView.findViewById(R.id.buttonSendReport);
+        Button cancelButton = dialogView.findViewById(R.id.buttonCancelReport);
+
+        String[] reasons = {"פרסום כוזב", "תוכן פוגעני", "תמונה לא הולמת", "מידע שגוי", "אחר"};
+        reasonSpinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, reasons));
+
+        AlertDialog dialog = builder.create();
+
+        sendButton.setOnClickListener(v -> {
+            String reason = reasonSpinner.getSelectedItem().toString();
+            String details = additionalDetails.getText().toString();
+
+            Map<String, Object> report = new HashMap<>();
+            report.put("apartmentId", apt.getId());
+            report.put("ownerId", apt.getOwnerId());
+            report.put("reason", reason);
+            report.put("details", details);
+            report.put("timestamp", System.currentTimeMillis());
+
+            repository.reportApartment(apt.getId(), apt.getOwnerId(), reason, details)
+                    .addOnSuccessListener(d -> Toast.makeText(getContext(), "הדיווח נשלח בהצלחה", Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e -> Toast.makeText(getContext(), "שגיאה בשליחת הדיווח", Toast.LENGTH_SHORT).show());
+
+
+            dialog.dismiss();
+        });
+
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
 
     private void showApartmentDetails(Apartment apt) {
         LayoutInflater inflater = LayoutInflater.from(getContext());

@@ -534,6 +534,16 @@ public class ApartmentRepository {
                     return Tasks.forResult(null);
                 });
     }
+    public Task<Void> reportApartment(String apartmentId, String ownerId, String reason, String details) {
+        Map<String, Object> report = new HashMap<>();
+        report.put("apartmentId", apartmentId);
+        report.put("ownerId", ownerId);
+        report.put("reason", reason);
+        report.put("details", details);
+        report.put("timestamp", System.currentTimeMillis());
+
+        return db.collection("reports").add(report).continueWith(task -> null);
+    }
 
 
 

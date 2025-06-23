@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.repository.ApartmentRepository;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -31,9 +32,21 @@ public class OwnerApartmentsViewModel extends ViewModel {
     //אם נכשלה → publishSuccess.setValue(false)
     //צריך לדעת על הצלחה כדי לנקות טופס/לנווט חזרה וכו'
 
+    private String selectedCity;
+    private String selectedStreet;
+    private LatLng selectedLocation;
+
+
     public OwnerApartmentsViewModel(ApartmentRepository repository) {
         this.repository = repository;
     }
+
+    public void setSelectedAddress(String city, String street, LatLng location) {
+        this.selectedCity = city;
+        this.selectedStreet = street;
+        this.selectedLocation = location;
+    }
+
 
     public LiveData<List<Apartment>> getFilteredApartments() { return filteredApartments; }
     public LiveData<String> getToastMessage() { return toastMessage; }
@@ -107,9 +120,15 @@ public class OwnerApartmentsViewModel extends ViewModel {
         filteredApartments.setValue(result);
     }
 
-    public void publishApartment(String city, String street, String houseNumStr,
-                                 String priceStr, String roommatesStr, String description, Uri imageUri) {
-        String validationError = validateInputs(city, street, houseNumStr, priceStr, roommatesStr, description);
+    public void publishApartment(String houseNumStr, String priceStr, String roommatesStr,
+                                 String description, Uri imageUri) {
+        if (selectedCity == null || selectedStreet == null || selectedLocation == null) {
+            toastMessage.setValue("יש לבחור כתובת אוטומטית לפני פרסום");
+            publishSuccess.setValue(false);
+            return;
+        }
+
+        String validationError = validateInputs(selectedCity, selectedStreet, houseNumStr, priceStr, roommatesStr, description);
         if (validationError != null) {
             toastMessage.setValue(validationError);
             publishSuccess.setValue(false);
@@ -127,7 +146,20 @@ public class OwnerApartmentsViewModel extends ViewModel {
             return;
         }
 
-        Apartment apartment = new Apartment(null, getCurrentUserId(), city, street, houseNumber, price, roommatesNeeded, description, null);
+        Apartment apartment = new Apartment(
+                null,
+                getCurrentUserId(),
+                selectedCity,
+                selectedStreet,
+                houseNumber,
+                price,
+                roommatesNeeded,
+                description,
+                null,
+                selectedLocation.latitude,
+                selectedLocation.longitude
+        );
+
         repository.publishApartment(apartment, imageUri)
                 .addOnSuccessListener(docRef -> {
                     toastMessage.setValue("הדירה פורסמה");
@@ -139,6 +171,7 @@ public class OwnerApartmentsViewModel extends ViewModel {
                     publishSuccess.setValue(false);
                 });
     }
+
 
     public void updateApartment(String apartmentId, String city, String street, String houseNumStr,
                                 String priceStr, String roommatesStr, String description, Uri imageUri) {

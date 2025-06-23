@@ -10,46 +10,33 @@
         android:padding="16dp">
 
         <TextView
-            android:id="@+id/textView3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="כתובת" />
+            android:text="כתובת (בחר כתובת ולאחר מכן הזן מספר בית)" />
 
-        <LinearLayout
+        <!-- השלמת כתובת חכמה -->
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/autocompleteFragmentContainer"
+            android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_marginTop="8dp" />
 
-            <EditText
-                android:id="@+id/editTextHouseNumber"
-                android:layout_width="50dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="מספר בית"
-                android:inputType="number" />
-
-            <EditText
-                android:id="@+id/editTextStreet"
-                android:layout_width="50dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:hint="רחוב" />
-
-            <EditText
-                android:id="@+id/editTextCity"
-                android:layout_width="50dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="עיר" />
-        </LinearLayout>
-
+        <!-- שדה להזנת מספר בית בלבד -->
+        <EditText
+            android:id="@+id/editTextHouseNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="מספר בית"
+            android:inputType="number"
+            android:layout_marginTop="8dp" />
 
         <EditText
             android:id="@+id/editTextPrice"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="מחיר (₪)"
-            android:inputType="text" />
+            android:inputType="number" />
 
         <EditText
             android:id="@+id/editTextRoommates"
@@ -94,7 +81,6 @@
                 android:layout_margin="5dp"
                 android:layout_marginTop="12dp"
                 android:background="@mipmap/ic_files_foreground" />
-
         </LinearLayout>
 
         <LinearLayout

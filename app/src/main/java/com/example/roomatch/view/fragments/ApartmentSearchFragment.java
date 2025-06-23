@@ -21,6 +21,7 @@ import com.example.roomatch.adapters.ApartmentAdapter;
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.viewmodel.ApartmentSearchViewModel;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,7 +60,7 @@ public class ApartmentSearchFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // UI Binding
+        // חיבור רכיבי UI רגילים
         recyclerView = view.findViewById(R.id.apartmentRecyclerView);
         spinnerFilterField = view.findViewById(R.id.spinnerFilterField);
         spinnerOrder = view.findViewById(R.id.spinnerOrder);
@@ -67,6 +68,10 @@ public class ApartmentSearchFragment extends Fragment {
         buttonClearFilter = view.findViewById(R.id.buttonClearFilter);
         searchView = view.findViewById(R.id.searchView);
 
+        // כפתור לחיפוש מתקדם
+        FloatingActionButton buttonAdvancedSearch = view.findViewById(R.id.buttonAdvancedSearch);
+
+        // RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new ApartmentAdapter(apartments, getContext(), this::openApartmentDetails);
         recyclerView.setAdapter(adapter);
@@ -98,11 +103,11 @@ public class ApartmentSearchFragment extends Fragment {
         orderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerOrder.setAdapter(orderAdapter);
 
-        // Filters
+        // כפתורי סינון
         buttonFilter.setOnClickListener(v -> applyFilter());
         buttonClearFilter.setOnClickListener(v -> resetFilter());
 
-        // Search
+        // חיפוש חופשי
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override public boolean onQueryTextSubmit(String query) {
                 viewModel.searchApartments(query);
@@ -115,8 +120,20 @@ public class ApartmentSearchFragment extends Fragment {
             }
         });
 
+        // טען את כל הדירות
         viewModel.loadApartments();
+
+        // מעבר לחיפוש המתקדם
+        buttonAdvancedSearch.setOnClickListener(v -> {
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragmentContainer, new AdvancedSearchFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
     }
+
+
 
     private void applyFilter() {
         String selectedLabel = spinnerFilterField.getSelectedItem().toString();

@@ -30,11 +30,14 @@ import com.example.roomatch.view.fragments.PartnerFragment;
 import com.example.roomatch.view.fragments.ProfileFragment;
 import com.example.roomatch.view.fragments.SeekerHomeFragment;
 import com.example.roomatch.view.fragments.SharedGroupsFragment;
+import com.google.android.libraries.places.api.Places;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -52,6 +55,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // הפעלת Google Places API אם טרם הופעל
+        if (!Places.isInitialized()) {
+            Places.initialize(getApplicationContext(), getString(R.string.google_maps_key), Locale.getDefault());
+        }
 
         bottomNav = findViewById(R.id.bottom_navigation);
         drawerLayout = findViewById(R.id.drawer_layout);
@@ -98,6 +106,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             checkUserProfile(currentUser.getUid());
         }
     }
+
 
     // הסרת onCreateOptionsMenu ו-onOptionsItemSelected כי אין צורך ב-Toolbar
 
@@ -241,4 +250,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             drawerLayout.removeDrawerListener(drawerToggle);
         }
     }
+
 }

@@ -21,8 +21,14 @@ import com.example.roomatch.R;
 import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
 import com.example.roomatch.viewmodel.ViewModelFactoryProvider;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.libraries.places.api.model.AddressComponent;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 
 public class OwnerFragment extends Fragment {
 
@@ -32,6 +38,11 @@ public class OwnerFragment extends Fragment {
     ImageView imageView;
     Uri imageUri;
     OwnerApartmentsViewModel viewModel;
+
+    private String selectedCity;
+    private String selectedStreet;
+    private LatLng selectedLocation; // ממפות
+
 
     public OwnerFragment() {}
 
@@ -47,12 +58,9 @@ public class OwnerFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        ApartmentRepository repo = new ApartmentRepository();
         viewModel = new ViewModelProvider(this, ViewModelFactoryProvider.createFactory())
                 .get(OwnerApartmentsViewModel.class);
 
-        cityEditText = view.findViewById(R.id.editTextCity);
-        streetEditText = view.findViewById(R.id.editTextStreet);
         houseNumberEditText = view.findViewById(R.id.editTextHouseNumber);
         priceEditText = view.findViewById(R.id.editTextPrice);
         roommatesEditText = view.findViewById(R.id.editTextRoommates);
@@ -70,17 +78,57 @@ public class OwnerFragment extends Fragment {
 
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), this::showToast);
         viewModel.getPublishSuccess().observe(getViewLifecycleOwner(), success -> {
-            Log.d("DEBUG", "Publish success observed: " + success);
             if (Boolean.TRUE.equals(success)) {
                 resetForm();
-                Log.d("DEBUG", "Calling OwnerApartmentsFragment after publish");
                 getParentFragmentManager().beginTransaction()
                         .replace(R.id.fragmentContainer, new OwnerApartmentsFragment())
                         .addToBackStack(null)
                         .commit();
             }
         });
+
+        // --- AutocompleteSupportFragment הגדרה של ---
+        AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
+                getChildFragmentManager().findFragmentById(R.id.autocompleteFragmentContainer);
+
+        if (autocompleteFragment != null) {
+            autocompleteFragment.setPlaceFields(Arrays.asList(
+                    Place.Field.ID,
+                    Place.Field.LAT_LNG,
+                    Place.Field.ADDRESS_COMPONENTS
+            ));
+
+            autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+                @Override
+                public void onPlaceSelected(@NonNull Place place) {
+                    LatLng latLng = place.getLatLng();
+                    String city = extractComponent(place, "locality");
+                    String street = extractComponent(place, "route");
+
+                    if (latLng == null || city == null || street == null) {
+                        showToast("יש לבחור כתובת תקינה הכוללת עיר ורחוב");
+                        return;
+                    }
+
+                    viewModel.setSelectedAddress(city, street, latLng);
+                    showToast("כתובת נבחרה: " + street + ", " + city);
+                }
+
+                @Override
+                public void onError(@NonNull com.google.android.gms.common.api.Status status) {
+                    showToast("שגיאה בבחירת כתובת: " + status.getStatusMessage());
+                }
+            });
+        }
     }
+
+    public void setSelectedAddress(String city, String street, LatLng location) {
+        this.selectedCity = city;
+        this.selectedStreet = street;
+        this.selectedLocation = location;
+    }
+
+
 
     private void showToast(String message) {
         if (getContext() != null) {
@@ -152,31 +200,40 @@ public class OwnerFragment extends Fragment {
     }
 
     private void publishApartment() {
-        String city = cityEditText.getText().toString().trim();
-        String street = streetEditText.getText().toString().trim();
         String houseNumStr = houseNumberEditText.getText().toString().trim();
         String priceStr = priceEditText.getText().toString().trim();
         String roommatesStr = roommatesEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
-        Log.d("DEBUG", "Publishing apartment: " + city + ", " + street + ", " + houseNumStr + ", " + priceStr);
 
-
-        if (city.isEmpty() || street.isEmpty() || houseNumStr.isEmpty() || priceStr.isEmpty() || roommatesStr.isEmpty() || description.isEmpty()) {
+        if (houseNumStr.isEmpty() || priceStr.isEmpty() || roommatesStr.isEmpty() || description.isEmpty()) {
             showToast("כל השדות חייבים להיות מלאים");
             return;
         }
 
-        viewModel.publishApartment(city, street, houseNumStr, priceStr, roommatesStr, description, imageUri);
+        viewModel.publishApartment(houseNumStr, priceStr, roommatesStr, description, imageUri);
     }
 
+
     private void resetForm() {
-        cityEditText.setText("");
-        streetEditText.setText("");
-        houseNumberEditText.setText("");
-        priceEditText.setText("");
-        roommatesEditText.setText("");
-        descriptionEditText.setText("");
+        if (cityEditText != null) cityEditText.setText("");
+        if (streetEditText != null) streetEditText.setText("");
+        if (houseNumberEditText != null) houseNumberEditText.setText("");
+        if (priceEditText != null) priceEditText.setText("");
+        if (roommatesEditText != null) roommatesEditText.setText("");
+        if (descriptionEditText != null) descriptionEditText.setText("");
+        if (imageView != null) imageView.setImageDrawable(null);
         imageUri = null;
-        imageView.setImageDrawable(null);
     }
+
+
+    private String extractComponent(Place place, String type) {
+        if (place.getAddressComponents() == null) return "";
+        for (AddressComponent component : place.getAddressComponents().asList()) {
+            if (component.getTypes().contains(type)) {
+                return component.getName();
+            }
+        }
+        return "";
+    }
+
 }

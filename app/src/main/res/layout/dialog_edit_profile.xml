@@ -51,34 +51,42 @@
         android:hint="הזן מגדר"
         android:layout_marginBottom="8dp" />
 
-    <TextView
-        android:id="@+id/labelLifestyle"
+    <LinearLayout
+        android:id="@+id/layoutLifestyleAndInterests"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="סגנון חיים:"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/editLifestyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="הזן סגנון חיים"
-        android:layout_marginBottom="8dp" />
+        <TextView
+            android:id="@+id/labelLifestyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="סגנון חיים:"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/labelInterests"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="תחומי עניין:"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        <EditText
+            android:id="@+id/editLifestyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="הזן סגנון חיים"
+            android:layout_marginBottom="8dp" />
 
-    <EditText
-        android:id="@+id/editInterests"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="הזן תחומי עניין"
-        android:lines="2" />
+        <TextView
+            android:id="@+id/labelInterests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="תחומי עניין:"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/editInterests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="הזן תחומי עניין"
+            android:lines="2" />
+    </LinearLayout>
+
 
 </LinearLayout>

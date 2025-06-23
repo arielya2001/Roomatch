@@ -1,72 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="16dp">
 
-    <TextView
-        android:text="דירות פנויות"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="20sp" />
-
-    <!-- Spinner לבחירת שדה לסינון -->
-    <Spinner
-        android:id="@+id/spinnerFilterField"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp" />
-
-    <!-- Spinner לבחירת סדר (עולה/יורד) -->
-    <Spinner
-        android:id="@+id/spinnerOrder"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp" />
-
-    <!-- כפתור סינון -->
     <LinearLayout
+        android:id="@+id/layoutContent"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="2dp"
-        android:orientation="horizontal">
+        android:layout_height="match_parent">
 
-        <Button
-            android:id="@+id/buttonFilter"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+        <TextView
+            android:text="דירות פנויות"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp" />
+
+        <Spinner
+            android:id="@+id/spinnerFilterField"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <Spinner
+            android:id="@+id/spinnerOrder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_margin="2dp"
-            android:background="@mipmap/ic_filter_foreground"
-            android:text="Button" />
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/buttonClearFilter"
-            style="@style/Theme.Roomatch"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_margin="2dp"
-            android:background="@android:drawable/ic_menu_close_clear_cancel"
-            android:text="נקה סינון" />
+            <Button
+                android:id="@+id/buttonFilter"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_margin="2dp"
+                android:background="@mipmap/ic_filter_foreground"
+                android:text="Button" />
 
+            <Button
+                android:id="@+id/buttonClearFilter"
+                style="@style/Theme.Roomatch"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_margin="2dp"
+                android:background="@android:drawable/ic_menu_close_clear_cancel"
+                android:text="נקה סינון" />
+        </LinearLayout>
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:queryHint="חפש לפי עיר, רחוב או תיאור"
+            android:iconifiedByDefault="false"
+            android:layout_marginTop="8dp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/apartmentRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="8dp" />
     </LinearLayout>
 
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/searchView"
-        android:layout_width="match_parent"
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/buttonAdvancedSearch"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:queryHint="חפש לפי עיר, רחוב או תיאור"
-        android:iconifiedByDefault="false"
-        android:layout_marginTop="8dp" />
-
-
-
-    <!-- רשימת הדירות -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/apartmentRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="8dp" />
-</LinearLayout>
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="12dp"
+        android:contentDescription="חיפוש מתקדם"
+        android:src="@android:drawable/ic_menu_mapmode"
+        app:backgroundTint="@color/purple_500" />
+</RelativeLayout>

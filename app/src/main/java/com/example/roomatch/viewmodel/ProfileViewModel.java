@@ -60,6 +60,13 @@ public class ProfileViewModel extends ViewModel {
         editRequested.setValue(true);
     }
 
+    public boolean isCurrentUserOwner() {
+        return getProfile().getValue() != null &&
+                "owner".equals(getProfile().getValue().getUserType());
+    }
+
+
+
     public void resetEditRequest() {
         editRequested.setValue(false);
     }
