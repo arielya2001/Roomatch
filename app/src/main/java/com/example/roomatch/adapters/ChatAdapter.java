@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +22,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     private String currentUserId;
 
     public ChatAdapter(List<Map<String, Object>> messages, String currentUserId) {
-        this.messages = messages;
+        this.messages = new ArrayList<>(messages != null ? messages : new ArrayList<>());
         this.currentUserId = currentUserId;
     }
 
@@ -53,6 +54,17 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     @Override
     public int getItemCount() {
         return messages.size();
+    }
+
+    /**
+     * מעדכן את רשימת ההודעות ומתריע על שינוי.
+     */
+    public void updateMessages(List<Map<String, Object>> newMessages) {
+        messages.clear();
+        if (newMessages != null) {
+            messages.addAll(newMessages);
+        }
+        notifyDataSetChanged();
     }
 
     static class ChatViewHolder extends RecyclerView.ViewHolder {

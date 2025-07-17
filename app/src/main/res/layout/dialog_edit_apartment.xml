@@ -47,7 +47,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="left"
+        android:layout_gravity="start"
         android:orientation="horizontal">
 
         <EditText
@@ -76,16 +76,12 @@
             style="@style/Theme.Roomatch"
             android:layout_width="50dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="left"
+            android:layout_gravity="end"
             android:layout_marginBottom="8dp"
             android:layout_weight="1"
             android:hint="עיר"
             android:textAlignment="viewEnd" />
     </LinearLayout>
-
-    <!-- רחוב -->
-
-    <!-- מספר בית -->
 
     <!-- מחיר -->
     <LinearLayout
@@ -134,7 +130,6 @@
     </LinearLayout>
 
     <!-- תיאור -->
-
     <TextView
         android:id="@+id/textView9"
         android:layout_width="match_parent"
@@ -150,6 +145,28 @@
         android:lines="3"
         android:textAlignment="viewEnd" />
 
-    <!-- מספר שותפים -->
+    <!-- כפתורים -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
+        <Button
+            android:id="@+id/btn_cancel"
+            style="@style/Theme.Roomatch"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="5dp"
+            android:text="ביטול" />
+
+        <Button
+            android:id="@+id/btn_save"
+            style="@style/Theme.Roomatch"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="5dp"
+            android:text="שמור" />
+    </LinearLayout>
 </LinearLayout>

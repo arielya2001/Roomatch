@@ -2,30 +2,38 @@ package com.example.roomatch.view.fragments;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.*;
-
+import androidx.appcompat.widget.SearchView;
 import com.bumptech.glide.Glide;
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.ApartmentCardAdapter;
-import com.example.roomatch.utils.ChatUtil;
-import androidx.appcompat.widget.SearchView;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.*;
-import androidx.appcompat.widget.Toolbar;
-import java.util.*;
+import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.view.activities.MainActivity;
+import com.example.roomatch.viewmodel.AppViewModelFactory;
+import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
+import androidx.appcompat.widget.Toolbar; // החלף ייבוא זה
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class OwnerApartmentsFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private ApartmentCardAdapter adapter;
-    private List<Map<String, Object>> apartmentList = new ArrayList<>();
-    private List<Map<String, Object>> allApartments = new ArrayList<>();
-    private FirebaseFirestore db;
-    private FirebaseAuth auth;
+    private OwnerApartmentsViewModel viewModel;
+    private ApartmentRepository testRepository; // For testing
+    private boolean isTestingMode = false;
+
+    private List<Map<String, Object>> apartmentList = new ArrayList<>(); // For testing dummy data
 
     private Spinner spinnerFilterField, spinnerOrder;
     private SearchView searchView;
@@ -47,12 +55,28 @@ public class OwnerApartmentsFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_owner_apartments, container, false);
     }
 
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        db = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
+        // Initialize ViewModel
+        Map<Class<? extends ViewModel>, Supplier<? extends ViewModel>> creators = new HashMap<>();
+        ApartmentRepository repository = isTestingMode && testRepository != null
+                ? testRepository
+                : new ApartmentRepository(MainActivity.isTestMode);
+
+        creators.put(OwnerApartmentsViewModel.class, () -> new OwnerApartmentsViewModel(repository));
+        AppViewModelFactory factory = new AppViewModelFactory(creators);
+        viewModel = new ViewModelProvider(this, factory).get(OwnerApartmentsViewModel.class);
+
+        viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null && !message.isEmpty()) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                TextView testTextView = view.findViewById(R.id.textViewTestMessage);
+                testTextView.setText(message);
+            }
+        });
 
         recyclerView = view.findViewById(R.id.recyclerViewOwnerApartments);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -83,6 +107,11 @@ public class OwnerApartmentsFragment extends Fragment {
             public void onEditApartmentClick(Map<String, Object> apartment) {
                 showEditApartmentDialog(apartment);
             }
+
+            @Override
+            public void onDeleteApartmentClick(Map<String, Object> apartment) {
+                confirmAndDelete(apartment);
+            }
         });
         recyclerView.setAdapter(adapter);
 
@@ -103,9 +132,9 @@ public class OwnerApartmentsFragment extends Fragment {
             }
         });
 
-        Toolbar toolbar = view.findViewById(R.id.toolbar);
+        Toolbar toolbar = view.findViewById(R.id.toolbar); // השתמש ב-androidx.appcompat.widget.Toolbar
         if (toolbar != null) {
-            ImageButton publishButton = toolbar.findViewById(R.id.buttonChats); // Reuse same ID for now
+            ImageButton publishButton = toolbar.findViewById(R.id.buttonChats);
             publishButton.setImageResource(android.R.drawable.ic_menu_add); // Set "+" icon
             publishButton.setOnClickListener(v -> {
                 OwnerFragment ownerFragment = new OwnerFragment();
@@ -117,70 +146,48 @@ public class OwnerApartmentsFragment extends Fragment {
             });
         }
 
-        loadApartments();
-    }
+        // Load apartments via ViewModel
+        viewModel.getFilteredApartments().observe(getViewLifecycleOwner(), apartments -> {
+            apartmentList.clear();
+            if (apartments != null) {
+                apartmentList.addAll(apartments);
+            }
+            adapter.updateApartments(apartmentList);
+        });
 
-    private void loadApartments() {
-        String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
-        if (uid == null) return;
+        // Load apartments when fragment is created
+        viewModel.loadApartments(viewModel.getCurrentUserId());
+        if (isTestingMode) {
+            addDummyApartmentForTesting("dummy1", "תל אביב", "דיזנגוף", "10", "4000", "2", "נחמדה מאוד");
+        }
 
-        db.collection("apartments")
-                .whereEqualTo("ownerId", uid)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    apartmentList.clear();
-                    allApartments.clear();
-                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        Map<String, Object> data = doc.getData();
-                        data.put("id", doc.getId());
-                        data.put("hasMessages", false);
-                        data.put("lastSenderId", null);
-
-                        allApartments.add(data);
-                        apartmentList.add(data);
-                    }
-                    adapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "שגיאה בטעינת דירות", Toast.LENGTH_SHORT).show());
     }
 
     private void applyFilter() {
         String selectedLabel = spinnerFilterField.getSelectedItem().toString();
         String selectedField = fieldMap.get(selectedLabel);
-        String order = spinnerOrder.getSelectedItem().toString();
-
-        if (selectedField == null) {
-            Toast.makeText(getContext(), "שדה לא תקין", Toast.LENGTH_SHORT).show();
-            return;
+        boolean ascending = spinnerOrder.getSelectedItem().toString().equals("עולה");
+        if (selectedField != null) {
+            viewModel.applyFilter(selectedField, ascending);
+        } else {
+            showToast("שדה לא תקין");
         }
-
-        apartmentList.sort((a, b) -> {
-            Comparable valueA = (Comparable) a.get(selectedField);
-            Comparable valueB = (Comparable) b.get(selectedField);
-            if (valueA == null || valueB == null) return 0;
-            return order.equals("עולה") ? valueA.compareTo(valueB) : valueB.compareTo(valueA);
-        });
-
-        adapter.notifyDataSetChanged();
     }
 
     private void resetFilter() {
-        apartmentList.clear();
-        apartmentList.addAll(allApartments);
-        adapter.notifyDataSetChanged();
+        viewModel.resetFilter();
         searchView.setQuery("", false);
         searchView.clearFocus();
     }
 
     private void searchApartments(String query) {
-        String lowerQuery = query.toLowerCase();
-        apartmentList.clear();
-        for (Map<String, Object> apt : allApartments) {
-            if (apt.values().stream().anyMatch(val -> val != null && val.toString().toLowerCase().contains(lowerQuery))) {
-                apartmentList.add(apt);
-            }
+        viewModel.searchApartments(query);
+    }
+
+    private void showToast(String message) {
+        if (getContext() != null) {
+            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         }
-        adapter.notifyDataSetChanged();
     }
 
     private void showApartmentDetails(Map<String, Object> apt) {
@@ -205,12 +212,12 @@ public class OwnerApartmentsFragment extends Fragment {
         String imageUrl = (String) apt.get("imageUrl");
         String ownerId = (String) apt.get("ownerId");
 
-        cityTextView.setText("עיר: " + city);
-        streetTextView.setText("רחוב: " + street);
+        cityTextView.setText("עיר: " + (city != null ? city : "לא זמין"));
+        streetTextView.setText("רחוב: " + (street != null ? street : "לא זמין"));
         houseNumberTextView.setText("מספר בית: " + houseNumber);
         priceTextView.setText("מחיר: " + price + " ₪");
         roommatesTextView.setText("שותפים דרושים: " + roommates);
-        descriptionTextView.setText("תיאור: " + description);
+        descriptionTextView.setText("תיאור: " + (description != null ? description : "לא זמין"));
 
         if (imageUrl != null && !imageUrl.isEmpty()) {
             Glide.with(this).load(imageUrl).into(apartmentImageView);
@@ -218,12 +225,12 @@ public class OwnerApartmentsFragment extends Fragment {
             apartmentImageView.setImageResource(R.drawable.placeholder_image);
         }
 
-        String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String currentUid = viewModel.getCurrentUserId();
         if (currentUid != null && currentUid.equals(ownerId)) {
             messageButton.setVisibility(View.GONE);
         } else {
             messageButton.setOnClickListener(v -> {
-                Toast.makeText(getContext(), "כאן יהיה מעבר לצ'אט עם בעל הדירה 😊", Toast.LENGTH_SHORT).show();
+                showToast("כאן יהיה מעבר לצ'אט עם בעל הדירה 😊");
             });
         }
 
@@ -234,6 +241,8 @@ public class OwnerApartmentsFragment extends Fragment {
     }
 
     private void showEditApartmentDialog(Map<String, Object> apt) {
+        Log.d("DialogDebug", "Starting showEditApartmentDialog with apartment: " + apt);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_edit_apartment, null);
@@ -245,58 +254,147 @@ public class OwnerApartmentsFragment extends Fragment {
         EditText editPrice = dialogView.findViewById(R.id.editPrice);
         EditText editDescription = dialogView.findViewById(R.id.editDescription);
         EditText editRoommatesNeeded = dialogView.findViewById(R.id.editRoommatesNeeded);
+        Button btnSave = dialogView.findViewById(R.id.btn_save);
+        Button btnCancel = dialogView.findViewById(R.id.btn_cancel);
 
+        // וידוא שכל ה-View-ים נמצאו
+        if (editCity == null || editStreet == null || editHouseNumber == null ||
+                editPrice == null || editDescription == null || editRoommatesNeeded == null ||
+                btnSave == null || btnCancel == null) {
+            Log.e("DialogDebug", "One or more views in dialog_edit_apartment layout are null!");
+        } else {
+            Log.d("DialogDebug", "All dialog views initialized successfully.");
+        }
+
+        // מילוי שדות עם ערכים קיימים או ברירת מחדל
         editCity.setText((String) apt.get("city"));
         editStreet.setText((String) apt.get("street"));
-        editHouseNumber.setText(String.valueOf(apt.get("houseNumber")));
-        editPrice.setText(String.valueOf(apt.get("price")));
+        editHouseNumber.setText(apt.get("houseNumber") != null ? String.valueOf(apt.get("houseNumber")) : "");
+        editPrice.setText(apt.get("price") != null ? String.valueOf(apt.get("price")) : "");
         editDescription.setText((String) apt.get("description"));
-        editRoommatesNeeded.setText(String.valueOf(apt.get("roommatesNeeded")));
+        editRoommatesNeeded.setText(apt.get("roommatesNeeded") != null ? String.valueOf(apt.get("roommatesNeeded")) : "");
 
-        builder.setTitle("עריכת דירה")
-                .setPositiveButton("שמור", (dialog, which) -> {
-                    String newCity = editCity.getText().toString().trim();
-                    String newStreet = editStreet.getText().toString().trim();
-                    String houseNumStr = editHouseNumber.getText().toString().trim();
-                    String priceStr = editPrice.getText().toString().trim();
-                    String newDescription = editDescription.getText().toString().trim();
-                    String roommatesStr = editRoommatesNeeded.getText().toString().trim();
+        Log.d("DialogDebug", "Fields populated: city=" + editCity.getText() +
+                ", street=" + editStreet.getText() +
+                ", houseNum=" + editHouseNumber.getText() +
+                ", price=" + editPrice.getText() +
+                ", description=" + editDescription.getText() +
+                ", roommates=" + editRoommatesNeeded.getText());
 
-                    if (!newCity.isEmpty() && !newStreet.isEmpty() && !houseNumStr.isEmpty() &&
-                            !priceStr.isEmpty() && !newDescription.isEmpty() && !roommatesStr.isEmpty()) {
-                        try {
-                            int newHouseNum = Integer.parseInt(houseNumStr);
-                            int newPrice = Integer.parseInt(priceStr);
-                            int newRoommates = Integer.parseInt(roommatesStr);
-                            if (newPrice >= 0 && newRoommates >= 0 && newHouseNum >= 0) {
-                                String apartmentId = (String) apt.get("id");
-                                Map<String, Object> updates = new HashMap<>();
-                                updates.put("city", newCity);
-                                updates.put("street", newStreet);
-                                updates.put("houseNumber", newHouseNum);
-                                updates.put("price", newPrice);
-                                updates.put("description", newDescription);
-                                updates.put("roommatesNeeded", newRoommates);
+        AlertDialog dialog = builder.setTitle("עריכת דירה").create();
+        Log.d("DialogDebug", "Dialog created with title: עריכת דירה");
 
-                                db.collection("apartments").document(apartmentId)
-                                        .update(updates)
-                                        .addOnSuccessListener(aVoid -> {
-                                            Toast.makeText(getContext(), "דירה עודכנה בהצלחה", Toast.LENGTH_SHORT).show();
-                                            loadApartments();
-                                        })
-                                        .addOnFailureListener(e -> Toast.makeText(getContext(), "שגיאה בעדכון הדירה", Toast.LENGTH_SHORT).show());
-                            } else {
-                                Toast.makeText(getContext(), "ערכים חייבים להיות מספרים חיוביים", Toast.LENGTH_SHORT).show();
-                            }
-                        } catch (NumberFormatException e) {
-                            Toast.makeText(getContext(), "שדות מספריים חייבים להיות מספרים תקינים", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(getContext(), "כל השדות חייבים להיות מלאים", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("ביטול", null);
+        btnSave.setOnClickListener(v -> {
+            Log.d("DialogDebug", "Save button clicked.");
+            String newCity = editCity.getText().toString().trim();
+            String newStreet = editStreet.getText().toString().trim();
+            String houseNumStr = editHouseNumber.getText().toString().trim();
+            String priceStr = editPrice.getText().toString().trim();
+            String newDescription = editDescription.getText().toString().trim();
+            String roommatesStr = editRoommatesNeeded.getText().toString().trim();
 
-        builder.create().show();
+            Log.d("DialogDebug", "Collected data: city=" + newCity +
+                    ", street=" + newStreet +
+                    ", houseNum=" + houseNumStr +
+                    ", price=" + priceStr +
+                    ", description=" + newDescription +
+                    ", roommates=" + roommatesStr);
+
+            // קריאה אחת - ה־ViewModel כבר מטפל ב־isTestMode ובעדכון הרשימה
+            viewModel.updateApartment(
+                    (String) apt.get("id"),
+                    newCity,
+                    newStreet,
+                    houseNumStr,
+                    priceStr,
+                    roommatesStr,
+                    newDescription,
+                    null  // אם אין שינוי בתמונה
+            );
+
+            Log.d("DialogDebug", "Calling viewModel.updateApartment with ID: " + apt.get("id"));
+            dialog.dismiss();
+            Log.d("DialogDebug", "Dialog dismissed after save.");
+        });
+
+        btnCancel.setOnClickListener(v -> {
+            Log.d("DialogDebug", "Cancel button clicked.");
+            dialog.dismiss();
+            Log.d("DialogDebug", "Dialog dismissed after cancel.");
+        });
+
+        dialog.show();
+        Log.d("DialogDebug", "Dialog shown.");
     }
+
+
+    private void confirmAndDelete(Map<String, Object> apt) {
+        String aptId = (String) apt.get("id");
+        if (aptId == null) {
+            showToast("שגיאת מחיקה: מזהה דירה חסר");
+            return;
+        }
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("מחיקת דירה")
+                .setMessage("האם למחוק את הדירה לצמיתות?")
+                .setPositiveButton("מחק", (d, i) -> viewModel.deleteApartment(aptId))
+                .setNegativeButton("בטל", null)
+                .show();
+    }
+
+    /**
+     * Method to set testing conditions - similar to your friend's approach
+     * This allows us to inject a mock repository for testing
+     */
+    public void setTestingConditions(ApartmentRepository fakeRepo) {
+        this.testRepository = fakeRepo;
+        this.isTestingMode = true;
+
+        // עדכון ה-ViewModel עם ה-repository המזויף וסימון מצב בדיקה
+        if (viewModel != null) {
+            viewModel.setTestRepository(fakeRepo);
+            viewModel.setTestingConditions(fakeRepo); // העברת מצב הבדיקה ל-ViewModel
+        }
+    }
+
+    /**
+     * Helper method to add dummy apartment data for testing
+     */
+    public void addDummyApartmentForTesting(String id, String city, String street,
+                                            String houseNumber, String price,
+                                            String roommates, String description) {
+        if (isTestingMode) {
+            // Create a dummy apartment object
+            Map<String, Object> dummyApartment = new HashMap<>();
+            dummyApartment.put("id", id);
+            dummyApartment.put("city", city);
+            dummyApartment.put("street", street);
+            dummyApartment.put("houseNumber", houseNumber.isEmpty() ? 0 : Integer.parseInt(houseNumber));
+            dummyApartment.put("price", price.isEmpty() ? 0 : Integer.parseInt(price));
+            dummyApartment.put("roommatesNeeded", roommates.isEmpty() ? 0 : Integer.parseInt(roommates));
+            dummyApartment.put("description", description);
+
+            // Add to your apartment list
+            apartmentList.add(dummyApartment);
+
+            // עדכון ה-ViewModel עם הנתונים הדמה
+            if (viewModel != null) {
+                viewModel.setFilteredApartments(apartmentList); // עדכון ישיר של הרשימה המסוננת
+            }
+
+            // Notify adapter if it exists
+            if (adapter != null) {
+                adapter.updateApartments(apartmentList); // עדכון ישיר של רשימת הדירות
+            }
+        }
+    }
+    public OwnerApartmentsViewModel getViewModel() {
+        return this.viewModel;
+    }
+    // מחיקת כל הדירות (שימושי בטסטים)
+
+
+
+
 }

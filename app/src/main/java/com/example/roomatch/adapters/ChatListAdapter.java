@@ -12,13 +12,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.roomatch.R;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
-import java.util.Date;
-import java.util.Locale;
 import com.google.firebase.Timestamp;
-
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatViewHolder> {
 
@@ -30,7 +30,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
     }
 
     public ChatListAdapter(List<Map<String, Object>> chats, OnChatClickListener listener) {
-        this.chats = chats;
+        this.chats = new ArrayList<>(chats != null ? chats : new ArrayList<>());
         this.listener = listener;
     }
 
@@ -51,40 +51,37 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         String formattedTime = "";
 
         if (tsObject instanceof Long) {
-            // אם זה Long – נניח שזה מילישניות ונמיר לתאריך
             Date date = new Date((Long) tsObject);
             formattedTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date);
         } else if (tsObject instanceof Timestamp) {
-            // אם זה Firebase Timestamp (נדיר במקרה הזה)
             Timestamp ts = (Timestamp) tsObject;
             formattedTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(ts.toDate());
         }
 
-        holder.textViewTime.setText("שעה: " + formattedTime);
-
-
-
-
         boolean hasUnread = (boolean) chat.get("hasUnread");
 
-        if (hasUnread) {
-            holder.textViewUnreadBadge.setVisibility(View.VISIBLE);
-            holder.textViewUnreadBadge.setText("🔔 הודעה חדשה"); // ← כאן
-        } else {
-            holder.textViewUnreadBadge.setVisibility(View.GONE);
-        }
-
+        holder.textViewTime.setText("שעה: " + formattedTime);
         holder.textViewSender.setText("מאת: " + fromUserId);
         holder.textViewApartment.setText("דירה: " + apartmentId);
         holder.textViewMessage.setText("הודעה אחרונה: " + lastMessage);
-        holder.textViewTime.setText("שעה: " + formattedTime);
-        holder.buttonOpenChat.setOnClickListener(v -> listener.onChatClick(fromUserId, apartmentId));
         holder.textViewUnreadBadge.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
+        holder.buttonOpenChat.setOnClickListener(v -> listener.onChatClick(fromUserId, apartmentId));
     }
 
     @Override
     public int getItemCount() {
         return chats.size();
+    }
+
+    /**
+     * מעדכן את רשימת הצ'אטים ומתריע על שינוי.
+     */
+    public void updateChats(List<Map<String, Object>> newChats) {
+        chats.clear();
+        if (newChats != null) {
+            chats.addAll(newChats);
+        }
+        notifyDataSetChanged();
     }
 
     static class ChatViewHolder extends RecyclerView.ViewHolder {

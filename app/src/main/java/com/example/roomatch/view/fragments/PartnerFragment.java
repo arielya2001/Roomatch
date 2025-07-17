@@ -2,28 +2,32 @@ package com.example.roomatch.view.fragments;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
-import android.view.*;
-import android.widget.*;
-import androidx.annotation.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.PartnerAdapter;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.*;
+import com.example.roomatch.viewmodel.PartnerViewModel;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PartnerFragment extends Fragment {
 
-    private FirebaseFirestore db;
-    private FirebaseAuth auth;
+    private PartnerViewModel viewModel;
     private RecyclerView partnersRecyclerView;
     private PartnerAdapter adapter;
-
-    private final List<Map<String, Object>> partners = new ArrayList<>();
 
     public PartnerFragment() {}
 
@@ -40,56 +44,49 @@ public class PartnerFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        db = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
+        viewModel = new ViewModelProvider(this).get(PartnerViewModel.class);
 
         partnersRecyclerView = view.findViewById(R.id.recyclerViewPartners);
 
-        adapter = new PartnerAdapter(partners,
+        adapter = new PartnerAdapter(new ArrayList<>(),
                 new PartnerAdapter.OnProfileClickListener() {
                     @Override
                     public void onProfileClick(Map<String, Object> partner) {
-                        showProfileDialog(partner);
+                        viewModel.showProfileDialog(partner); // נשלח אירוע ל-ViewModel
                     }
                 },
                 new PartnerAdapter.OnReportClickListener() {
                     @Override
                     public void onReportClick(String fullName) {
-                        showReportDialog(fullName);
+                        viewModel.showReportDialog(fullName); // נשלח אירוע ל-ViewModel
                     }
                 });
 
         partnersRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         partnersRecyclerView.setAdapter(adapter);
 
-        loadPartners();
+        // צפייה ברשימת שותפים
+        viewModel.getPartners().observe(getViewLifecycleOwner(), partners -> {
+            if (partners != null) {
+                adapter.updatePartners(partners); // תלוי בשיטה ב-PartnerAdapter
+            }
+        });
+
+        // צפייה בהודעות Toast
+        viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // טיפול בהצגת דיאלוגי פרופיל
+        viewModel.getPartners().observe(getViewLifecycleOwner(), partners -> {
+            // כאן ניתן להוסיף לוגיקה להצגת דיאלוג אם יש שינוי, אבל נעביר את זה ל-OnProfileClick
+        });
     }
 
-    private void loadPartners() {
-        String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
-        if (uid == null) return;
-
-        db.collection("users")
-                .whereEqualTo("userType", "seeker")
-                .whereEqualTo("seekerType", "partner")
-                .get()
-                .addOnSuccessListener(docs -> {
-                    partners.clear();
-                    for (DocumentSnapshot doc : docs) {
-                        if (!doc.getId().equals(uid)) {
-                            Map<String, Object> data = doc.getData();
-                            if (data != null) {
-                                data.put("id", doc.getId());
-                                partners.add(data);
-                            }
-                        }
-                    }
-                    adapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "שגיאה בטעינה", Toast.LENGTH_SHORT).show());
-    }
-
-    private void showProfileDialog(Map<String, Object> partner) {
+    // שיטות להצגת דיאלוגים (מועברות מה-ViewModel ל-Fragment)
+    public void showProfileDialog(Map<String, Object> partner) {
         String profile = "גיל: " + partner.getOrDefault("age", "לא צוין") +
                 "\nמגדר: " + partner.getOrDefault("gender", "לא צוין") +
                 "\nתחומי עניין: " + partner.getOrDefault("interests", "לא צוין") +
@@ -102,7 +99,7 @@ public class PartnerFragment extends Fragment {
                 .show();
     }
 
-    private void showReportDialog(String fullName) {
+    public void showReportDialog(String fullName) {
         final EditText input = new EditText(getContext());
         new AlertDialog.Builder(getContext())
                 .setTitle("דווח על " + fullName)

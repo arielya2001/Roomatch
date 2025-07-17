@@ -1,25 +1,22 @@
 package com.example.roomatch.view.fragments;
 
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.ApartmentAdapter;
 import com.example.roomatch.model.Apartment;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
+import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.view.activities.MainActivity;
+import com.example.roomatch.viewmodel.ApartmentSearchViewModel;
 
 import java.util.*;
 
@@ -31,9 +28,9 @@ public class ApartmentSearchFragment extends Fragment {
     private SearchView searchView;
     private ApartmentAdapter adapter;
     private List<Apartment> apartments = new ArrayList<>();
-    private List<Apartment> originalApartments = new ArrayList<>(); // שמירת המקור
-    private FirebaseFirestore db;
-    private FirebaseAuth auth;
+    private List<Apartment> originalApartments = new ArrayList<>();
+
+    private ApartmentSearchViewModel viewModel;
 
     private final Map<String, String> fieldMap = new HashMap<String, String>() {{
         put("עיר", "city");
@@ -42,8 +39,6 @@ public class ApartmentSearchFragment extends Fragment {
         put("מחיר", "price");
         put("מספר שותפים", "roommatesNeeded");
     }};
-
-    public ApartmentSearchFragment() {}
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -57,22 +52,35 @@ public class ApartmentSearchFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // UI Binding
         recyclerView = view.findViewById(R.id.apartmentRecyclerView);
         spinnerFilterField = view.findViewById(R.id.spinnerFilterField);
         spinnerOrder = view.findViewById(R.id.spinnerOrder);
         buttonFilter = view.findViewById(R.id.buttonFilter);
-        buttonClearFilter = view.findViewById(R.id.buttonClearFilter); // חדש
-        searchView = view.findViewById(R.id.searchView); // חדש
+        buttonClearFilter = view.findViewById(R.id.buttonClearFilter);
+        searchView = view.findViewById(R.id.searchView);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        db = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
-
         adapter = new ApartmentAdapter(apartments, getContext(), this::openApartmentDetails);
         recyclerView.setAdapter(adapter);
 
-        // מילוי הספינרים
+        // ViewModel
+        ApartmentRepository repository = new ApartmentRepository(MainActivity.isTestMode);
+        viewModel = new ApartmentSearchViewModel(repository);
+
+        viewModel.getApartments().observe(getViewLifecycleOwner(), list -> {
+            apartments.clear();
+            apartments.addAll(list);
+            originalApartments.clear();
+            originalApartments.addAll(list);
+            adapter.notifyDataSetChanged();
+        });
+
+        viewModel.getToastMessage().observe(getViewLifecycleOwner(), msg ->
+                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show()
+        );
+
+        // Spinners
         ArrayAdapter<String> fieldAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item,
                 new String[]{"עיר", "רחוב", "מספר בית", "מחיר", "מספר שותפים"});
         fieldAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -83,94 +91,42 @@ public class ApartmentSearchFragment extends Fragment {
         orderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerOrder.setAdapter(orderAdapter);
 
+        // Filters
         buttonFilter.setOnClickListener(v -> applyFilter());
         buttonClearFilter.setOnClickListener(v -> resetList());
 
+        // Search
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                filterLocally(query);
+            @Override public boolean onQueryTextSubmit(String query) {
+                viewModel.searchApartments(query);
                 return true;
             }
 
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                filterLocally(newText);
+            @Override public boolean onQueryTextChange(String newText) {
+                viewModel.searchApartments(newText);
                 return true;
             }
         });
 
-        loadApartments(); // טען את כל הדירות
-    }
-
-    private void loadApartments() {
-        db.collection("apartments")
-                .get()
-                .addOnSuccessListener(result -> {
-                    apartments.clear();
-                    originalApartments.clear();
-                    for (var doc : result) {
-                        Apartment apt = doc.toObject(Apartment.class);
-                        apt.setId(doc.getId());
-                        apartments.add(apt);
-                        originalApartments.add(apt);
-                    }
-                    adapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "שגיאה בטעינת דירות", Toast.LENGTH_SHORT).show()
-                );
+        viewModel.loadApartments(); // 🔥 Load initial data
     }
 
     private void applyFilter() {
         String selectedLabel = spinnerFilterField.getSelectedItem().toString();
         String selectedField = fieldMap.get(selectedLabel);
-        String order = spinnerOrder.getSelectedItem().toString();
+        boolean ascending = spinnerOrder.getSelectedItem().toString().equals("עולה");
 
-        if (selectedField == null) {
+        if (selectedField != null) {
+            viewModel.applyFilter(selectedField, ascending);
+        } else {
             Toast.makeText(getContext(), "שגיאה בסינון", Toast.LENGTH_SHORT).show();
-            return;
         }
-
-        Query.Direction direction = order.equals("עולה") ? Query.Direction.ASCENDING : Query.Direction.DESCENDING;
-
-        db.collection("apartments")
-                .orderBy(selectedField, direction)
-                .get()
-                .addOnSuccessListener(result -> {
-                    apartments.clear();
-                    for (var doc : result) {
-                        Apartment apt = doc.toObject(Apartment.class);
-                        apt.setId(doc.getId());
-                        apartments.add(apt);
-                    }
-                    adapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "שגיאה בסינון", Toast.LENGTH_SHORT).show()
-                );
     }
 
     private void resetList() {
-        apartments.clear();
-        apartments.addAll(originalApartments);
-        adapter.notifyDataSetChanged();
+        viewModel.resetList(originalApartments);
         searchView.setQuery("", false);
         searchView.clearFocus();
-    }
-
-    private void filterLocally(String text) {
-        List<Apartment> filtered = new ArrayList<>();
-        for (Apartment apt : originalApartments) {
-            if ((apt.getCity() != null && apt.getCity().toLowerCase().contains(text.toLowerCase())) ||
-                    (apt.getStreet() != null && apt.getStreet().toLowerCase().contains(text.toLowerCase())) ||
-                    (apt.getDescription() != null && apt.getDescription().toLowerCase().contains(text.toLowerCase()))) {
-                filtered.add(apt);
-            }
-        }
-        apartments.clear();
-        apartments.addAll(filtered);
-        adapter.notifyDataSetChanged();
     }
 
     private void openApartmentDetails(Apartment apt) {
@@ -187,11 +143,10 @@ public class ApartmentSearchFragment extends Fragment {
 
         ApartmentDetailsFragment fragment = ApartmentDetailsFragment.newInstance(bundle);
 
-        FragmentTransaction ft = requireActivity()
-                .getSupportFragmentManager()
-                .beginTransaction();
-        ft.replace(R.id.fragmentContainer, fragment);
-        ft.addToBackStack(null);
-        ft.commit();
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 }

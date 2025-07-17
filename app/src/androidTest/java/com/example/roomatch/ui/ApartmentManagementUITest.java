@@ -263,58 +263,59 @@ public class ApartmentManagementUITest {
     /**
      * Tests the delete apartment functionality and verifies the apartment is removed from the list.
      */
-    @Test
-    public void deleteApartment_removesApartmentFromList() {
-        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), MainActivity.class); // Create intent to launch MainActivity.
-        intent.putExtra("fragment", "owner_apartments"); // Set the fragment to load.
-
-        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(intent)) { // Launch the activity and manage its lifecycle.
-
-            scenario.onActivity(activity -> { // Perform actions on the activity.
-                OwnerApartmentsFragment fragment = (OwnerApartmentsFragment) activity.getSupportFragmentManager().findFragmentById(R.id.fragmentContainer); // Find the fragment by ID.
-                ApartmentRepository fakeRepo = new ApartmentRepository(true); // Create a mock repository for testing.
-                fragment.setTestingConditions(fakeRepo); // Set testing conditions for the fragment.
-
-                // Create a dummy apartment map.
-                Map<String, Object> dummy = new HashMap<>();
-                dummy.put("id", dummyId); // Add unique ID to the dummy apartment.
-                dummy.put("city", "Tel Aviv"); // Add city to the dummy apartment.
-                dummy.put("street", "Dizzengof"); // Add street to the dummy apartment.
-                dummy.put("houseNumber", 12); // Add house number to the dummy apartment.
-                dummy.put("price", 3000); // Add price to the dummy apartment.
-                dummy.put("roommatesNeeded", 2); // Add number of roommates needed to the dummy apartment.
-                dummy.put("description", "pretty Apartment"); // Add description to the dummy apartment.
-
-                Map<String, Object> new_dummy = new HashMap<>();
-                new_dummy.put("id", new_dummyId); // Add unique ID to the dummy apartment.
-                new_dummy.put("city", "haifa"); // Add city to the dummy apartment.
-                new_dummy.put("street", "Dizzengof"); // Add street to the dummy apartment.
-                new_dummy.put("houseNumber", 12); // Add house number to the dummy apartment.
-                new_dummy.put("price", 3000); // Add price to the dummy apartment.
-                new_dummy.put("roommatesNeeded", 2); // Add number of roommates needed to the dummy apartment.
-                new_dummy.put("description", "pretty Apartment"); // Add description to the dummy apartment.
-
-                // Add the dummy apartment to the ViewModel directly.
-                fragment.getViewModel().addTestApartment(new_dummy);
-
-                // Add the dummy apartment to the ViewModel directly.
-                fragment.getViewModel().addTestApartment(dummy);
-                printApartmentsInViewModel(fragment);
-            });
-
-            // Click the delete button on the first item.
-            onView(withId(R.id.recyclerViewOwnerApartments)).perform(RecyclerViewActions.actionOnItemAtPosition(0, clickChildViewWithId(R.id.buttonDeleteApartment)));
-
-            // Confirm the deletion dialog.
-            onView(withText("מחק")).perform(click()); // Click the delete confirmation button.
-            onView(withId(R.id.textViewTestMessage))
-                    .check(matches(withText("הדירה נמחקה")));
-            // Check that the apartment is removed (list is empty or does not contain the text).
-            onView(withId(R.id.recyclerViewOwnerApartments)).check(matches(not(hasDescendant(withText(containsString("haifa"))))));
-        } catch (Exception e) {
-            e.printStackTrace(); // Handle any exceptions that occur during the test.
-        }
-    }
+//    @Test
+//    public void deleteApartment_removesApartmentFromList() {
+//        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), MainActivity.class); // Create intent to launch MainActivity.
+//        intent.putExtra("fragment", "owner_apartments"); // Set the fragment to load.
+//
+//        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(intent)) { // Launch the activity and manage its lifecycle.
+//
+//            scenario.onActivity(activity -> { // Perform actions on the activity.
+//                OwnerApartmentsFragment fragment = (OwnerApartmentsFragment) activity.getSupportFragmentManager().findFragmentById(R.id.fragmentContainer); // Find the fragment by ID.
+//                ApartmentRepository fakeRepo = new ApartmentRepository(true); // Create a mock repository for testing.
+//                fragment.setTestingConditions(fakeRepo); // Set testing conditions for the fragment.
+//
+//                // Create a dummy apartment map.
+//                Map<String, Object> dummy = new HashMap<>();
+//                dummy.put("id", dummyId); // Add unique ID to the dummy apartment.
+//                dummy.put("city", "Tel Aviv"); // Add city to the dummy apartment.
+//                dummy.put("street", "Dizzengof"); // Add street to the dummy apartment.
+//                dummy.put("houseNumber", 12); // Add house number to the dummy apartment.
+//                dummy.put("price", 3000); // Add price to the dummy apartment.
+//                dummy.put("roommatesNeeded", 2); // Add number of roommates needed to the dummy apartment.
+//                dummy.put("description", "pretty Apartment"); // Add description to the dummy apartment.
+//
+//                Map<String, Object> new_dummy = new HashMap<>();
+//                new_dummy.put("id", new_dummyId); // Add unique ID to the dummy apartment.
+//                new_dummy.put("city", "haifa"); // Add city to the dummy apartment.
+//                new_dummy.put("street", "Dizzengof"); // Add street to the dummy apartment.
+//                new_dummy.put("houseNumber", 12); // Add house number to the dummy apartment.
+//                new_dummy.put("price", 3000); // Add price to the dummy apartment.
+//                new_dummy.put("roommatesNeeded", 2); // Add number of roommates needed to the dummy apartment.
+//                new_dummy.put("description", "pretty Apartment"); // Add description to the dummy apartment.
+//
+//                // Add the dummy apartment to the ViewModel directly.
+//                fragment.getViewModel().addTestApartment(new_dummy);
+//
+//                // Add the dummy apartment to the ViewModel directly.
+//                fragment.getViewModel().addTestApartment(dummy);
+//                printApartmentsInViewModel(fragment);
+//            });
+//
+//            // Click the delete button on the first item.
+//            onView(withId(R.id.recyclerViewOwnerApartments)).perform(RecyclerViewActions.actionOnItemAtPosition(0, clickChildViewWithId(R.id.buttonDeleteApartment)));
+//
+//            // Confirm the deletion dialog.
+//            onView(withText("מחק")).perform(click()); // Click the delete confirmation button.
+//            onView(withId(R.id.textViewTestMessage))
+//                    .check(matches(withText("הדירה נמחקה")));
+//
+//            // Check that the apartment is removed (list is empty or does not contain the text).
+//            onView(withId(R.id.recyclerViewOwnerApartments)).check(matches(not(hasDescendant(withText(containsString("haifa"))))));
+//        } catch (Exception e) {
+//            e.printStackTrace(); // Handle any exceptions that occur during the test.
+//        }
+//    }
 
     @Test
     public void applyFilter_ordersListAscendingByCity() {

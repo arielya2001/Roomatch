@@ -168,7 +168,6 @@ public class ApartmentRepository {
     public Task<Void> deleteApartment(String apartmentId) {
         if (isTestingMode || db == null) {
             return Tasks.forResult(null); // תגובה מזויפת אם במצב בדיקה או אם db לא מאותחל
-
         }
         return db.collection("apartments").document(apartmentId).delete();
     }

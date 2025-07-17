@@ -33,15 +33,22 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     @Override
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         UserProfile user = userList.get(position);
-        holder.name.setText("שם: " + user.getFullName());
-        holder.age.setText("גיל: " + user.getAge());
-        holder.lifestyle.setText("סגנון חיים: " + user.getLifestyle());
-        holder.interests.setText("תחומי עניין: " + user.getInterests());
+        holder.name.setText("שם: " + (user.getFullName() != null ? user.getFullName() : "לא ידוע"));
+        holder.age.setText("גיל: " + (user.getAge() > 0 ? String.valueOf(user.getAge()) : "לא ידוע"));
+        holder.lifestyle.setText("סגנון חיים: " + (user.getLifestyle() != null ? user.getLifestyle() : "לא ידוע"));
+        holder.interests.setText("תחומי עניין: " + (user.getInterests() != null ? user.getInterests() : "לא ידוע"));
     }
 
     @Override
     public int getItemCount() {
-        return userList.size();
+        return userList != null ? userList.size() : 0;
+    }
+
+    public void updateUsers(List<UserProfile> newUserList) {
+        if (newUserList != null) {
+            this.userList = newUserList;
+            notifyDataSetChanged();
+        }
     }
 
     static class UserViewHolder extends RecyclerView.ViewHolder {

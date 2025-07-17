@@ -12,32 +12,35 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.ChatAdapter;
-import com.example.roomatch.utils.ChatUtil;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.*;
+import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.model.repository.ChatRepository;
+import com.example.roomatch.model.repository.UserRepository;
+import com.example.roomatch.viewmodel.ChatViewModel;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.QuerySnapshot;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class ChatFragment extends Fragment {
 
-    private FirebaseFirestore db;
-    private FirebaseAuth auth;
-    private String otherUserId;
-    private String apartmentId;
-    private String chatId;
-
+    private static final String TAG = "ChatFragment";
+    private ChatViewModel viewModel;
     private RecyclerView recyclerView;
     private EditText messageEditText;
     private Button sendButton, backButton;
-
-    private List<Map<String, Object>> messages = new ArrayList<>();
     private ChatAdapter adapter;
-    private ListenerRegistration listener;
+    private String otherUserId;
+    private String apartmentId;
+    private String chatId;
 
     public ChatFragment(String otherUserId, String apartmentId) {
         this.otherUserId = otherUserId;
@@ -45,9 +48,7 @@ public class ChatFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_chat, container, false);
     }
 
@@ -55,107 +56,92 @@ public class ChatFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        auth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        viewModel = new ViewModelProvider(this, new ViewModelProvider.Factory() {
+            @NonNull @Override
+            @SuppressWarnings("unchecked")
+            public <T extends androidx.lifecycle.ViewModel> T create(@NonNull Class<T> c) {
+                return (T) new ChatViewModel(
+                        new ChatRepository(),   // ← במקום ApartmentRepository
+                        new UserRepository()
+                );
+            }
+        }).get(ChatViewModel.class);
 
-        String currentUid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "";
-        chatId = ChatUtil.generateChatId(currentUid, otherUserId, apartmentId);
+        String currentUid = viewModel.getCurrentUserId();
+        if (currentUid == null) {
+            Toast.makeText(getContext(), "שגיאה: משתמש לא מחובר", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // יצירת chatId עקבי על ידי מיון
+        chatId = generateConsistentChatId(currentUid, otherUserId, apartmentId);
 
         recyclerView = view.findViewById(R.id.recyclerViewMessages);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ChatAdapter(messages, currentUid);
+        adapter = new ChatAdapter(new ArrayList<>(), currentUid); // התחלה עם רשימה ריקה
         recyclerView.setAdapter(adapter);
 
         messageEditText = view.findViewById(R.id.editTextMessage);
         sendButton = view.findViewById(R.id.buttonSend);
         backButton = view.findViewById(R.id.buttonBack);
 
-        sendButton.setOnClickListener(v -> sendMessage(currentUid));
-        backButton.setOnClickListener(v -> requireActivity().onBackPressed());
+        sendButton.setOnClickListener(v -> {
+            String text = messageEditText.getText().toString().trim();
+            if (!text.isEmpty()) {
+                viewModel.sendMessage(chatId, otherUserId, apartmentId, text);
+                messageEditText.setText("");
+            }
+        });
+        backButton.setOnClickListener(v ->
+                requireActivity()
+                        .getSupportFragmentManager()
+                        .popBackStack());
 
-        startMessageListener();
-        markMessagesAsRead();
-    }
-
-    private void sendMessage(String currentUid) {
-        String text = messageEditText.getText().toString().trim();
-        if (text.isEmpty()) return;
-
-        Map<String, Object> message = new HashMap<>();
-        message.put("fromUserId", currentUid);
-        message.put("toUserId", otherUserId);
-        message.put("text", text);
-        message.put("timestamp", System.currentTimeMillis());
-        message.put("apartmentId", apartmentId);
-        message.put("read", currentUid.equals(otherUserId)); // אם השולח הוא הנמען, read=true, אחרת false
-
-        db.collection("messages")
-                .document(chatId)
-                .collection("chat")
-                .add(message)
-                .addOnSuccessListener(docRef -> {
-                    messageEditText.setText("");
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("ChatFragment", "Error sending message", e);
-                    Toast.makeText(getContext(), "שגיאה בשליחת הודעה", Toast.LENGTH_SHORT).show();
-                });
-    }
-
-    private void markMessagesAsRead() {
-        String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "";
-        if (uid.isEmpty() || chatId.isEmpty()) return;
-
-        db.collection("messages")
-                .document(chatId)
-                .collection("chat")
-                .whereEqualTo("toUserId", uid)
-                .whereEqualTo("read", false)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        doc.getReference().update("read", true)
-                                .addOnFailureListener(e -> Log.e("ChatFragment", "Error marking as read: " + e.getMessage()));
+        // האזנה להודעות עם הגבלה של 20 הודעות
+        viewModel.getChatMessagesQuery(chatId, 20).addSnapshotListener((snapshot, e) -> {
+            if (e != null) {
+                Log.e(TAG, "Listener error: " + e.getMessage());
+                return;
+            }
+            if (snapshot != null) {
+                Log.d(TAG, "Received snapshot with " + snapshot.getDocuments().size() + " messages");
+                ArrayList<Map<String, Object>> newMessages = new ArrayList<>();
+                for (var doc : snapshot.getDocuments()) {
+                    Map<String, Object> data = doc.getData();
+                    if (data != null) {
+                        newMessages.add(data);
                     }
-                    // רענון הודעות לאחר עדכון
-                    startMessageListener();
-                })
-                .addOnFailureListener(e -> Log.e("ChatFragment", "Error fetching unread messages: " + e.getMessage()));
+                }
+                adapter.updateMessages(newMessages);
+                recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+            }
+        });
+
+        // סימון הודעות כנקראות
+        viewModel.markMessagesAsRead(chatId);
+
+        // צפייה בהודעות Toast
+        viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    private void startMessageListener() {
-        listener = db.collection("messages")
-                .document(chatId)
-                .collection("chat")
-                .orderBy("timestamp", Query.Direction.ASCENDING)
-                .addSnapshotListener((snapshot, error) -> {
-                    if (error != null) {
-                        Log.e("ChatFragment", "Listener error", error);
-                        return;
-                    }
-
-                    if (snapshot != null) {
-                        messages.clear();
-                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                            messages.add(doc.getData());
-                        }
-                        adapter.notifyDataSetChanged();
-                        recyclerView.scrollToPosition(messages.size() - 1);
-                    }
-                });
-    }
-
-    private String getSortedChatId(String user1, String user2) {
-        List<String> sorted = Arrays.asList(user1, user2);
-        Collections.sort(sorted);
-        return sorted.get(0) + "_" + sorted.get(1);
+    /**
+     * יוצר chatId עקבי על ידי מיון של userIds ואז להוסיף את apartmentId.
+     */
+    private String generateConsistentChatId(String user1, String user2, String apartmentId) {
+        List<String> userIds = new ArrayList<>();
+        userIds.add(user1);
+        userIds.add(user2);
+        Collections.sort(userIds);
+        return userIds.get(0) + "_" + userIds.get(1) + "_" + apartmentId;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (listener != null) {
-            listener.remove(); // מנקה את המאזין
-        }
+        // המאזין יוסר אוטומטית עם החיים של ה-Fragment
     }
 }

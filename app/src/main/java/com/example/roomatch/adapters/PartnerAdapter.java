@@ -95,4 +95,11 @@ public class PartnerAdapter extends RecyclerView.Adapter<PartnerAdapter.PartnerV
     private String safeToString(Object value, String defaultValue) {
         return (value != null) ? value.toString() : defaultValue;
     }
+
+    public void updatePartners(List<Map<String, Object>> newPartners) {
+        partnerList.clear();
+        partnerList.addAll(newPartners);
+        notifyDataSetChanged();
+    }
+
 }
