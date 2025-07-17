@@ -18,17 +18,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.ChatAdapter;
-import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.model.Message;
 import com.example.roomatch.model.repository.ChatRepository;
 import com.example.roomatch.model.repository.UserRepository;
 import com.example.roomatch.viewmodel.ChatViewModel;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class ChatFragment extends Fragment {
 
@@ -60,10 +57,7 @@ public class ChatFragment extends Fragment {
             @NonNull @Override
             @SuppressWarnings("unchecked")
             public <T extends androidx.lifecycle.ViewModel> T create(@NonNull Class<T> c) {
-                return (T) new ChatViewModel(
-                        new ChatRepository(),   // ← במקום ApartmentRepository
-                        new UserRepository()
-                );
+                return (T) new ChatViewModel(new ChatRepository(), new UserRepository());
             }
         }).get(ChatViewModel.class);
 
@@ -78,7 +72,7 @@ public class ChatFragment extends Fragment {
 
         recyclerView = view.findViewById(R.id.recyclerViewMessages);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ChatAdapter(new ArrayList<>(), currentUid); // התחלה עם רשימה ריקה
+        adapter = new ChatAdapter(new ArrayList<>(), currentUid);
         recyclerView.setAdapter(adapter);
 
         messageEditText = view.findViewById(R.id.editTextMessage);
@@ -105,11 +99,12 @@ public class ChatFragment extends Fragment {
             }
             if (snapshot != null) {
                 Log.d(TAG, "Received snapshot with " + snapshot.getDocuments().size() + " messages");
-                ArrayList<Map<String, Object>> newMessages = new ArrayList<>();
+                List<Message> newMessages = new ArrayList<>();
                 for (var doc : snapshot.getDocuments()) {
-                    Map<String, Object> data = doc.getData();
-                    if (data != null) {
-                        newMessages.add(data);
+                    Message message = doc.toObject(Message.class);
+                    if (message != null) {
+                        message.setId(doc.getId());
+                        newMessages.add(message);
                     }
                 }
                 adapter.updateMessages(newMessages);

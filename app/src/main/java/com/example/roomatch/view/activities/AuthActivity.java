@@ -5,18 +5,25 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.widget.*;
-import androidx.annotation.NonNull;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.roomatch.R;
-import com.google.android.gms.auth.api.signin.*;
+import com.example.roomatch.model.UserProfile;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.*;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.HashMap;
 
 public class AuthActivity extends AppCompatActivity {
 
@@ -79,6 +86,10 @@ public class AuthActivity extends AppCompatActivity {
                     Toast.makeText(this, "יש להזין שם משתמש", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                if (username.length() < 3) {
+                    Toast.makeText(this, "שם משתמש קצר מדי (מינימום 3 תווים)", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 register(email, password, username);
             }
         });
@@ -122,12 +133,12 @@ public class AuthActivity extends AppCompatActivity {
                         db.collection("users").document(uid).get().addOnSuccessListener(snapshot -> {
                             if (!snapshot.exists()) {
                                 Log.d("AuthActivity", "New user, creating profile");
-                                HashMap<String, Object> userData = new HashMap<>();
-                                userData.put("username", acct.getDisplayName());
-                                userData.put("userType", "");
+                                UserProfile userProfile = new UserProfile();
+                                userProfile.setFullName(acct.getDisplayName());
+                                userProfile.setUserType("");
 
                                 db.collection("users").document(uid)
-                                        .set(userData)
+                                        .set(userProfile)
                                         .addOnSuccessListener(unused -> {
                                             Log.d("AuthActivity", "User profile created successfully");
                                             db.collection("users").document(uid).get()
@@ -188,11 +199,11 @@ public class AuthActivity extends AppCompatActivity {
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(result -> {
                     String uid = result.getUser().getUid();
-                    HashMap<String, Object> userMap = new HashMap<>();
-                    userMap.put("username", username);
-                    userMap.put("userType", "");
+                    UserProfile userProfile = new UserProfile();
+                    userProfile.setFullName(username);
+                    userProfile.setUserType("");
 
-                    db.collection("users").document(uid).set(userMap)
+                    db.collection("users").document(uid).set(userProfile)
                             .addOnSuccessListener(unused -> {
                                 Toast.makeText(this, "נרשמת בהצלחה", Toast.LENGTH_SHORT).show();
                                 startMain();

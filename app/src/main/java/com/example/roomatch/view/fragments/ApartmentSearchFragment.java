@@ -1,8 +1,13 @@
 package com.example.roomatch.view.fragments;
 
 import android.os.Bundle;
-import android.view.*;
-import android.widget.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,10 +20,13 @@ import com.example.roomatch.R;
 import com.example.roomatch.adapters.ApartmentAdapter;
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.repository.ApartmentRepository;
-import com.example.roomatch.view.activities.MainActivity;
 import com.example.roomatch.viewmodel.ApartmentSearchViewModel;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ApartmentSearchFragment extends Fragment {
 
@@ -52,7 +60,7 @@ public class ApartmentSearchFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // UI Binding
+        // חיבור רכיבי UI רגילים
         recyclerView = view.findViewById(R.id.apartmentRecyclerView);
         spinnerFilterField = view.findViewById(R.id.spinnerFilterField);
         spinnerOrder = view.findViewById(R.id.spinnerOrder);
@@ -60,12 +68,16 @@ public class ApartmentSearchFragment extends Fragment {
         buttonClearFilter = view.findViewById(R.id.buttonClearFilter);
         searchView = view.findViewById(R.id.searchView);
 
+        // כפתור לחיפוש מתקדם
+        FloatingActionButton buttonAdvancedSearch = view.findViewById(R.id.buttonAdvancedSearch);
+
+        // RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new ApartmentAdapter(apartments, getContext(), this::openApartmentDetails);
         recyclerView.setAdapter(adapter);
 
         // ViewModel
-        ApartmentRepository repository = new ApartmentRepository(MainActivity.isTestMode);
+        ApartmentRepository repository = new ApartmentRepository();
         viewModel = new ApartmentSearchViewModel(repository);
 
         viewModel.getApartments().observe(getViewLifecycleOwner(), list -> {
@@ -91,11 +103,11 @@ public class ApartmentSearchFragment extends Fragment {
         orderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerOrder.setAdapter(orderAdapter);
 
-        // Filters
+        // כפתורי סינון
         buttonFilter.setOnClickListener(v -> applyFilter());
-        buttonClearFilter.setOnClickListener(v -> resetList());
+        buttonClearFilter.setOnClickListener(v -> resetFilter());
 
-        // Search
+        // חיפוש חופשי
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override public boolean onQueryTextSubmit(String query) {
                 viewModel.searchApartments(query);
@@ -108,8 +120,20 @@ public class ApartmentSearchFragment extends Fragment {
             }
         });
 
-        viewModel.loadApartments(); // 🔥 Load initial data
+        // טען את כל הדירות
+        viewModel.loadApartments();
+
+        // מעבר לחיפוש המתקדם
+        buttonAdvancedSearch.setOnClickListener(v -> {
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragmentContainer, new AdvancedSearchFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
     }
+
+
 
     private void applyFilter() {
         String selectedLabel = spinnerFilterField.getSelectedItem().toString();
@@ -123,23 +147,15 @@ public class ApartmentSearchFragment extends Fragment {
         }
     }
 
-    private void resetList() {
-        viewModel.resetList(originalApartments);
+    private void resetFilter() {
+        viewModel.resetFilter();
         searchView.setQuery("", false);
         searchView.clearFocus();
     }
 
     private void openApartmentDetails(Apartment apt) {
         Bundle bundle = new Bundle();
-        bundle.putString("city", apt.getCity());
-        bundle.putString("street", apt.getStreet());
-        bundle.putInt("houseNumber", apt.getHouseNumber());
-        bundle.putString("description", apt.getDescription());
-        bundle.putString("imageUrl", apt.getImageUrl());
-        bundle.putString("ownerId", apt.getOwnerId());
-        bundle.putInt("price", apt.getPrice());
-        bundle.putInt("roommatesNeeded", apt.getRoommatesNeeded());
-        bundle.putString("apartmentId", apt.getId());
+        bundle.putSerializable("apartment", apt);
 
         ApartmentDetailsFragment fragment = ApartmentDetailsFragment.newInstance(bundle);
 

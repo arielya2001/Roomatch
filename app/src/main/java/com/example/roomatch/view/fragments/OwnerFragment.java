@@ -1,38 +1,48 @@
 package com.example.roomatch.view.fragments;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import android.Manifest;
 import com.example.roomatch.R;
 import com.example.roomatch.model.repository.ApartmentRepository;
-import com.example.roomatch.view.activities.MainActivity;
-import com.example.roomatch.viewmodel.AppViewModelFactory;
 import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
-import com.google.firebase.storage.FirebaseStorage;
+import com.example.roomatch.viewmodel.ViewModelFactoryProvider;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.libraries.places.api.model.AddressComponent;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 
-import java.util.*;
-import java.util.function.Supplier;
+import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 
 public class OwnerFragment extends Fragment {
 
     EditText cityEditText, streetEditText, houseNumberEditText;
     EditText priceEditText, roommatesEditText, descriptionEditText;
-    Button selectImageButton, publishButton;
+    Button selectImageButton, publishButton, cancelButton, cameraButton;
     ImageView imageView;
     Uri imageUri;
-
-    FirebaseStorage storage;
     OwnerApartmentsViewModel viewModel;
+
+    private String selectedCity;
+    private String selectedStreet;
+    private LatLng selectedLocation; // ממפות
+
 
     public OwnerFragment() {}
 
@@ -48,29 +58,24 @@ public class OwnerFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        storage = FirebaseStorage.getInstance();
+        viewModel = new ViewModelProvider(this, ViewModelFactoryProvider.createFactory())
+                .get(OwnerApartmentsViewModel.class);
 
-        // ViewModel מחובר לריפוזיטורי
-        ApartmentRepository repo = new ApartmentRepository(MainActivity.isTestMode);
-        Map<Class<? extends ViewModel>, Supplier<? extends ViewModel>> creators = new HashMap<>();
-        creators.put(OwnerApartmentsViewModel.class, () -> new OwnerApartmentsViewModel(repo));
-        AppViewModelFactory factory = new AppViewModelFactory(creators);
-        viewModel = new ViewModelProvider(this, factory).get(OwnerApartmentsViewModel.class);
-
-        cityEditText = view.findViewById(R.id.editTextCity);
-        streetEditText = view.findViewById(R.id.editTextStreet);
         houseNumberEditText = view.findViewById(R.id.editTextHouseNumber);
         priceEditText = view.findViewById(R.id.editTextPrice);
         roommatesEditText = view.findViewById(R.id.editTextRoommates);
         descriptionEditText = view.findViewById(R.id.editTextDescription);
         selectImageButton = view.findViewById(R.id.buttonSelectImage);
         publishButton = view.findViewById(R.id.buttonPublish);
+        cancelButton = view.findViewById(R.id.cancel);
+        cameraButton = view.findViewById(R.id.camera);
         imageView = view.findViewById(R.id.imageViewPreview);
 
         selectImageButton.setOnClickListener(v -> openFileChooser());
         publishButton.setOnClickListener(v -> publishApartment());
+        cancelButton.setOnClickListener(v -> resetForm());
+        cameraButton.setOnClickListener(v -> openCamera());
 
-        // Observers
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), this::showToast);
         viewModel.getPublishSuccess().observe(getViewLifecycleOwner(), success -> {
             if (Boolean.TRUE.equals(success)) {
@@ -81,7 +86,49 @@ public class OwnerFragment extends Fragment {
                         .commit();
             }
         });
+
+        // --- AutocompleteSupportFragment הגדרה של ---
+        AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
+                getChildFragmentManager().findFragmentById(R.id.autocompleteFragmentContainer);
+
+        if (autocompleteFragment != null) {
+            autocompleteFragment.setPlaceFields(Arrays.asList(
+                    Place.Field.ID,
+                    Place.Field.LAT_LNG,
+                    Place.Field.ADDRESS_COMPONENTS
+            ));
+
+            autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+                @Override
+                public void onPlaceSelected(@NonNull Place place) {
+                    LatLng latLng = place.getLatLng();
+                    String city = extractComponent(place, "locality");
+                    String street = extractComponent(place, "route");
+
+                    if (latLng == null || city == null || street == null) {
+                        showToast("יש לבחור כתובת תקינה הכוללת עיר ורחוב");
+                        return;
+                    }
+
+                    viewModel.setSelectedAddress(city, street, latLng);
+                    showToast("כתובת נבחרה: " + street + ", " + city);
+                }
+
+                @Override
+                public void onError(@NonNull com.google.android.gms.common.api.Status status) {
+                    showToast("שגיאה בבחירת כתובת: " + status.getStatusMessage());
+                }
+            });
+        }
     }
+
+    public void setSelectedAddress(String city, String street, LatLng location) {
+        this.selectedCity = city;
+        this.selectedStreet = street;
+        this.selectedLocation = location;
+    }
+
+
 
     private void showToast(String message) {
         if (getContext() != null) {
@@ -101,7 +148,6 @@ public class OwnerFragment extends Fragment {
                 return;
             }
         }
-
         openGallery();
     }
 
@@ -111,45 +157,83 @@ public class OwnerFragment extends Fragment {
         startActivityForResult(intent, 101);
     }
 
+    private void openCamera() {
+        if (requireContext().checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, 104);
+            return;
+        }
+        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, 105);
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if ((requestCode == 102 || requestCode == 103) && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             openGallery();
+        } else if (requestCode == 104 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openCamera();
         } else {
-            showToast("נדרשת הרשאה לגשת לתמונות");
+            showToast("נדרשת הרשאה לגשת לתמונות או למצלמה");
         }
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 101 && data != null && data.getData() != null) {
-            imageUri = data.getData();
+        if ((requestCode == 101 || requestCode == 105) && resultCode == Activity.RESULT_OK && data != null) {
+            if (requestCode == 101 && data.getData() != null) {
+                imageUri = data.getData();
+            } else if (requestCode == 105 && data.getExtras() != null) {
+                Bitmap bitmap = (Bitmap) data.getExtras().get("data");
+                imageUri = getImageUri(requireContext(), bitmap);
+            }
             imageView.setImageURI(imageUri);
         }
     }
 
+    private Uri getImageUri(Context context, Bitmap bitmap) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(context.getContentResolver(), bitmap, "ApartmentImage", null);
+        return Uri.parse(path);
+    }
+
     private void publishApartment() {
-        String city = cityEditText.getText().toString().trim();
-        String street = streetEditText.getText().toString().trim();
         String houseNumStr = houseNumberEditText.getText().toString().trim();
         String priceStr = priceEditText.getText().toString().trim();
         String roommatesStr = roommatesEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
 
-        viewModel.publishApartment(city, street, houseNumStr, priceStr, roommatesStr, description, imageUri);
+        if (houseNumStr.isEmpty() || priceStr.isEmpty() || roommatesStr.isEmpty() || description.isEmpty()) {
+            showToast("כל השדות חייבים להיות מלאים");
+            return;
+        }
+
+        viewModel.publishApartment(houseNumStr, priceStr, roommatesStr, description, imageUri);
     }
 
+
     private void resetForm() {
-        cityEditText.setText("");
-        streetEditText.setText("");
-        houseNumberEditText.setText("");
-        priceEditText.setText("");
-        roommatesEditText.setText("");
-        descriptionEditText.setText("");
+        if (cityEditText != null) cityEditText.setText("");
+        if (streetEditText != null) streetEditText.setText("");
+        if (houseNumberEditText != null) houseNumberEditText.setText("");
+        if (priceEditText != null) priceEditText.setText("");
+        if (roommatesEditText != null) roommatesEditText.setText("");
+        if (descriptionEditText != null) descriptionEditText.setText("");
+        if (imageView != null) imageView.setImageDrawable(null);
         imageUri = null;
-        imageView.setImageDrawable(null);
+    }
+
+
+    private String extractComponent(Place place, String type) {
+        if (place.getAddressComponents() == null) return "";
+        for (AddressComponent component : place.getAddressComponents().asList()) {
+            if (component.getTypes().contains(type)) {
+                return component.getName();
+            }
+        }
+        return "";
     }
 
 }

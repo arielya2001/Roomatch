@@ -30,19 +30,27 @@
             android:text="מגדר: "
             android:textSize="18sp" />
 
-        <TextView
-            android:id="@+id/textProfileLifestyle"
+        <LinearLayout
+            android:id="@+id/layoutLifestyleAndInterests"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="סגנון חיים: "
-            android:textSize="18sp" />
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/textProfileInterests"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="תחומי עניין: "
-            android:textSize="18sp" />
+            <TextView
+                android:id="@+id/textProfileLifestyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="סגנון חיים: "
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/textProfileInterests"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="תחומי עניין: "
+                android:textSize="18sp" />
+        </LinearLayout>
+
 
 
         <androidx.recyclerview.widget.RecyclerView

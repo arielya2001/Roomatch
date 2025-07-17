@@ -2,10 +2,9 @@ package com.example.roomatch.view.fragments;
 
 import android.os.Bundle;
 import android.view.*;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import android.widget.Toast;
+import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.example.roomatch.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -30,9 +29,10 @@ public class SeekerMainFragment extends Fragment {
         BottomNavigationView bottomNav = view.findViewById(R.id.bottomNavSeeker);
         bottomNav.setOnItemSelectedListener(item -> {
             Fragment selected = null;
-            if (item.getItemId() == R.id.menu_apartments) {
+            int itemId = item.getItemId();
+            if (itemId == R.id.menu_apartments) {
                 selected = new SeekerApartmentsFragment();
-            } else if (item.getItemId() == R.id.menu_partners) {
+            } else if (itemId == R.id.menu_partners) {
                 selected = new SeekerPartnersFragment();
             }
 
@@ -41,11 +41,13 @@ public class SeekerMainFragment extends Fragment {
                         .beginTransaction()
                         .replace(R.id.seekerContentFrame, selected)
                         .commit();
+                return true;
+            } else {
+                Toast.makeText(getContext(), "בחירה לא תקינה", Toast.LENGTH_SHORT).show();
+                return false;
             }
-            return true;
         });
 
-        // טען את ברירת המחדל: דירות
         bottomNav.setSelectedItemId(R.id.menu_apartments);
     }
 }

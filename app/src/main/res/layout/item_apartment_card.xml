@@ -119,6 +119,16 @@
                         android:layout_gravity="end"
                         android:textSize="16sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/textViewApartmentDistance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="מרחק: 1.2 ק\"
+                        android:textColor="@android:color/black"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp" />
+
                 </LinearLayout>
             </LinearLayout>
 
@@ -141,12 +151,23 @@
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <ImageButton
+                        android:id="@+id/buttonReportApartment"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@android:color/transparent"
+                        android:contentDescription="דווח על דירה"
+                        app:srcCompat="@android:drawable/ic_menu_info_details"
+                        app:tint="@color/errorRed" />
+
+                    <ImageButton
                         android:id="@+id/buttonEditApartment"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:background="@android:color/transparent"
-                        app:srcCompat="@android:drawable/ic_menu_edit" />
+                        android:contentDescription="ערוך דירה"
+                        app:srcCompat="@android:drawable/ic_menu_edit"
+                        app:tint="@color/black" />
+
 
                     <!--  מחיקת דירה  -->
                     <ImageButton

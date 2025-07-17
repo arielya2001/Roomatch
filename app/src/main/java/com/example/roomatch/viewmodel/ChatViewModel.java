@@ -1,13 +1,20 @@
 package com.example.roomatch.viewmodel;
 
+import static androidx.test.InstrumentationRegistry.getContext;
+
 import android.net.Uri;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.roomatch.model.Chat;
+import com.example.roomatch.model.Message;
 import com.example.roomatch.model.repository.ChatRepository;
 import com.example.roomatch.model.repository.UserRepository;
+import com.example.roomatch.utils.ChatUtil;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -18,28 +25,24 @@ import java.util.Map;
 
 public class ChatViewModel extends ViewModel {
 
-    /* ---------- Repositories ---------- */
-    private final ChatRepository  chatRepo;
-    private final UserRepository  userRepo;
+    private final ChatRepository chatRepo;
+    private final UserRepository userRepo;
 
-    /* ---------- LiveData ---------- */
-    private final MutableLiveData<List<Map<String, Object>>> messages = new MutableLiveData<>(new ArrayList<>());
-    private final MutableLiveData<List<Map<String, Object>>> chats    = new MutableLiveData<>(new ArrayList<>());
-    private final MutableLiveData<String>                    toast    = new MutableLiveData<>();
+    private final MutableLiveData<List<Message>> messages = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<Chat>> chats = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<String> toast = new MutableLiveData<>();
 
     public ChatViewModel(ChatRepository chatRepo, UserRepository userRepo) {
         this.chatRepo = chatRepo;
         this.userRepo = userRepo;
     }
 
-    /* getters */
-    public LiveData<List<Map<String, Object>>> getMessages() { return messages; }
-    public LiveData<List<Map<String, Object>>> getChats()    { return chats; }
-    public LiveData<String>                    getToast()    { return toast; }
+    public LiveData<List<Message>> getMessages() { return messages; }
+    public LiveData<List<Chat>> getChats() { return chats; }
+    public LiveData<String> getToast() { return toast; }
 
     private String uid() { return userRepo.getCurrentUserId(); }
 
-    /* ---------- שליחת הודעות ---------- */
     public void sendMessage(String chatId, String toUserId, String apartmentId, String text) {
         String fromUid = uid();
         if (fromUid == null || text.trim().isEmpty()) {
@@ -47,26 +50,25 @@ public class ChatViewModel extends ViewModel {
             return;
         }
 
-        chatRepo.sendMessage(chatId, fromUid, toUserId, apartmentId, text)
+        Message message = new Message(fromUid, toUserId, text, apartmentId, System.currentTimeMillis());
+        chatRepo.sendMessage(chatId, message)
                 .addOnSuccessListener(r -> toast.setValue("הודעה נשלחה"))
                 .addOnFailureListener(e -> toast.setValue("שגיאה: " + e.getMessage()));
     }
 
-    public void sendMessageWithImage(String chatId, String toUserId,
-                                     String apartmentId, String text, Uri imageUri) {
-
+    public void sendMessageWithImage(String chatId, String toUserId, String apartmentId, String text, Uri imageUri) {
         String fromUid = uid();
         if (fromUid == null || text.trim().isEmpty()) {
             toast.setValue("שגיאה: משתמש לא מחובר או הודעה ריקה");
             return;
         }
 
-        chatRepo.sendMessageWithImage(chatId, fromUid, toUserId, apartmentId, text, imageUri)
+        Message message = new Message(fromUid, toUserId, text, apartmentId, System.currentTimeMillis());
+        chatRepo.sendMessageWithImage(chatId, message, imageUri)
                 .addOnSuccessListener(r -> toast.setValue("הודעה נשלחה"))
                 .addOnFailureListener(e -> toast.setValue("שגיאה: " + e.getMessage()));
     }
 
-    /* ---------- זרם הודעות ---------- */
     public Query getChatMessagesQuery(String chatId, int limit) {
         return chatRepo.getPaginatedChatMessagesQuery(chatId, limit > 0 ? limit : 20);
     }
@@ -79,7 +81,24 @@ public class ChatViewModel extends ViewModel {
                 .addOnFailureListener(e -> toast.setValue("שגיאה בסימון כנקראו: " + e.getMessage()));
     }
 
-    /* ---------- רשימת צ'אטים ---------- */
+    private List<Chat> allChats = new ArrayList<>();
+
+    public void filterChats(String query) {
+        List<Chat> filtered = new ArrayList<>();
+        String lower = query.toLowerCase();
+
+        for (Chat chat : allChats) {
+            String user = chat.getFromUserName() != null ? chat.getFromUserName().toLowerCase() : "";
+            String apt = chat.getApartmentName() != null ? chat.getApartmentName().toLowerCase() : "";
+            if (user.contains(lower) || apt.contains(lower)) {
+                filtered.add(chat);
+            }
+        }
+
+        chats.setValue(filtered);
+    }
+
+
     public void loadChats() {
         String me = uid();
         if (me == null) {
@@ -87,70 +106,52 @@ public class ChatViewModel extends ViewModel {
             return;
         }
 
-        chatRepo.getChatsForUser(me)
+        chatRepo.getAllChatMessages()  // ← תכף נוסיף את זה בריפוזיטורי
                 .addOnSuccessListener(snapshot -> {
-                    List<Map<String, Object>> tmp = new ArrayList<>();
+                    Map<String, Chat> chatMap = new HashMap<>();
 
                     for (QueryDocumentSnapshot doc : snapshot) {
-                        Map<String, Object> data = doc.getData();
+                        Message msg = doc.toObject(Message.class);
+                        if (msg == null) continue;
 
-                        String fromUid  = (String) data.get("fromUserId");
-                        String aptId    = (String) data.get("apartmentId");
-                        String lastTxt  = (String) data.get("text");
-                        Long   ts       = doc.getLong("timestamp");
-                        Boolean readVal = doc.getBoolean("read");
+                        String from = msg.getFromUserId();
+                        String to = msg.getToUserId();
+                        String apt = msg.getApartmentId();
 
-                        if (fromUid == null || aptId == null || ts == null) continue;
+                        if (from == null || to == null || apt == null) continue;
 
-                        /* ודא שאין כפילות */
-                        boolean exists = tmp.stream()
-                                .anyMatch(c -> c.get("fromUserId").equals(fromUid)
-                                        && c.get("apartmentId").equals(aptId));
-                        if (exists) continue;
+                        boolean involved = me.equals(from) || me.equals(to);
+                        if (!involved) continue;
 
-                        Map<String, Object> chat = new HashMap<>();
-                        chat.put("fromUserId",  fromUid);
-                        chat.put("apartmentId", aptId);
-                        chat.put("lastMessage", lastTxt);
-                        chat.put("timestamp",   ts);
-                        chat.put("hasUnread",   readVal != null ? !readVal : true);
-
-                        /* ניתן לשפר אח”כ עם קריאה ל‑UserRepository / ApartmentRepository */
-                        chat.put("fromUserName",  fromUid);
-                        chat.put("apartmentName", aptId);
-
-                        tmp.add(chat);
+                        // מפתח ייחודי לשיחה: לא משנה מי השולח
+                        String chatKey = ChatUtil.generateChatId(from, to, apt);
+                        if (!chatMap.containsKey(chatKey)) {
+                            Chat chat = new Chat();
+                            chat.setFromUserId(!me.equals(from) ? from : to);  // הצד השני!
+                            chat.setApartmentId(apt);
+                            chat.setLastMessage(msg);
+                            chat.setTimestamp(new com.google.firebase.Timestamp(new java.util.Date(msg.getTimestamp())));
+                            chat.setHasUnread(!msg.isRead() && msg.getToUserId().equals(me));
+                            chat.setFromUserName(chat.getFromUserId());
+                            chat.setApartmentName(apt);
+                            chatMap.put(chatKey, chat);
+                        }
                     }
-                    chats.setValue(tmp);
+
+                    chats.setValue(new ArrayList<>(chatMap.values()));
+                    allChats = new ArrayList<>(chatMap.values());  // ← הוספה חשובה!
                 })
-                .addOnFailureListener(e -> toast.setValue("שגיאה בטעינת צ'אטים: " + e.getMessage()));
-    }
+                .addOnFailureListener(e -> {
+                    Log.e("ChatsFragment", "Error loading chats", e); // חשוב – לא רק e.getMessage()
+                    Toast.makeText(getContext(), "שגיאה בטעינת צ'אטים: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });    }
 
-    /* ---------- סינון ---------- */
-    public void filterChats(String query) {
-        if (query == null) { loadChats(); return; }
 
-        String q = query.toLowerCase();
-        List<Map<String, Object>> current = chats.getValue() == null
-                ? new ArrayList<>()
-                : new ArrayList<>(chats.getValue());
-
-        List<Map<String, Object>> filtered = new ArrayList<>();
-        for (Map<String, Object> c : current) {
-            String sender   = ((String) c.get("fromUserName")).toLowerCase();
-            String aptName  = ((String) c.get("apartmentName")).toLowerCase();
-            if (sender.contains(q) || aptName.contains(q)) filtered.add(c);
-        }
-        chats.setValue(filtered);
-    }
-
-    /** מאפשר לפרגמנט לקבל את UID של המשתמש המחובר. */
-    public String getCurrentUserId() {          //  ← חדש
+    public String getCurrentUserId() {
         return uid();
     }
 
-    /** אותו ‎LiveData‎ – אבל בשם שה‑Fragment הישן כבר משתמש בו. */
-    public LiveData<String> getToastMessage() { //  ← חדש
+    public LiveData<String> getToastMessage() {
         return toast;
     }
 }

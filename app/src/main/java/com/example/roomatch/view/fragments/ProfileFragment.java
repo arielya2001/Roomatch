@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,9 +17,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.roomatch.R;
+import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.viewmodel.ProfileViewModel;
-
-import java.util.Map;
 
 public class ProfileFragment extends Fragment {
 
@@ -34,58 +34,61 @@ public class ProfileFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
 
-        // חיבור views
         textName = view.findViewById(R.id.textProfileName);
         textAge = view.findViewById(R.id.textProfileAge);
         textGender = view.findViewById(R.id.textProfileGender);
         textLifestyle = view.findViewById(R.id.textProfileLifestyle);
         textInterests = view.findViewById(R.id.textProfileInterests);
 
+        LinearLayout layoutLifestyleAndInterests = view.findViewById(R.id.layoutLifestyleAndInterests);
         Button updateProfileButton = view.findViewById(R.id.buttonUpdateProfile);
+
         updateProfileButton.setOnClickListener(v -> viewModel.requestEditProfile());
 
-        // צפייה בפרופיל
         viewModel.getProfile().observe(getViewLifecycleOwner(), profile -> {
             if (profile != null) {
-                textName.setText("שם: " + safe(profile.get("fullName")));
-                textAge.setText("גיל: " + safe(profile.get("age")));
-                textGender.setText("מגדר: " + safe(profile.get("gender")));
-                textLifestyle.setText("סגנון חיים: " + safe(profile.get("lifestyle")));
-                textInterests.setText("תחומי עניין: " + safe(profile.get("interests")));
+                textName.setText("שם: " + safe(profile.getFullName()));
+                textAge.setText("גיל: " + profile.getAge());
+                textGender.setText("מגדר: " + safe(profile.getGender()));
+
+                if ("owner".equals(profile.getUserType())) {
+                    layoutLifestyleAndInterests.setVisibility(View.GONE);
+                } else {
+                    layoutLifestyleAndInterests.setVisibility(View.VISIBLE);
+                    textLifestyle.setText("סגנון חיים: " + safe(profile.getLifestyle()));
+                    textInterests.setText("תחומי עניין: " + safe(profile.getInterests()));
+                }
             }
         });
 
-        // צפייה בטוסטים
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), msg -> {
             if (msg != null) {
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });
 
-        // פתיחת דיאלוג עריכת פרופיל
         viewModel.getEditRequested().observe(getViewLifecycleOwner(), shouldEdit -> {
             if (shouldEdit != null && shouldEdit) {
                 showEditProfileDialog();
-                viewModel.resetEditRequest(); // קריאה לשיטה ציבורית לאיפוס
+                viewModel.resetEditRequest();
             }
         });
 
-        // טעינת נתונים
         viewModel.loadProfile();
     }
 
-    private String safe(Object value) {
-        return value != null ? value.toString() : "לא זמין";
+
+    private String safe(String value) {
+        return value != null ? value : "לא זמין";
     }
 
     private void showEditProfileDialog() {
-        Map<String, Object> current = viewModel.getProfile().getValue();
+        UserProfile current = viewModel.getProfile().getValue();
         if (current == null) {
             Toast.makeText(getContext(), "לא ניתן לערוך פרופיל ריק", Toast.LENGTH_SHORT).show();
             return;
@@ -100,25 +103,49 @@ public class ProfileFragment extends Fragment {
         EditText editGender = dialogView.findViewById(R.id.editGender);
         EditText editLifestyle = dialogView.findViewById(R.id.editLifestyle);
         EditText editInterests = dialogView.findViewById(R.id.editInterests);
+        LinearLayout layoutLifestyleAndInterests = dialogView.findViewById(R.id.layoutLifestyleAndInterests);
 
-        editFullName.setText(safe(current.get("fullName")));
-        editAge.setText(safe(current.get("age")));
-        editGender.setText(safe(current.get("gender")));
-        editLifestyle.setText(safe(current.get("lifestyle")));
-        editInterests.setText(safe(current.get("interests")));
+
+        // הזנת ערכים
+        editFullName.setText(safe(current.getFullName()));
+        editAge.setText(String.valueOf(current.getAge()));
+        editGender.setText(safe(current.getGender()));
+        editLifestyle.setText(safe(current.getLifestyle()));
+        editInterests.setText(safe(current.getInterests()));
+
+        boolean isOwner = viewModel.isCurrentUserOwner(); // ← ודא שיש מתודה כזו ב־ViewModel
+
+        // הסתרת שדות אם המשתמש בעל דירה
+        if (isOwner) {
+            editLifestyle.setVisibility(View.GONE);
+            editInterests.setVisibility(View.GONE);
+        }
+
+        if (isOwner) {
+            layoutLifestyleAndInterests.setVisibility(View.GONE);
+        } else {
+            layoutLifestyleAndInterests.setVisibility(View.VISIBLE);
+        }
+
 
         builder.setTitle("עדכון פרטים אישיים")
                 .setPositiveButton("שמור", (dialog, which) -> {
+                    String ageStr = editAge.getText().toString().trim();
+
+                    String lifestyle = isOwner ? null : editLifestyle.getText().toString().trim();
+                    String interests = isOwner ? null : editInterests.getText().toString().trim();
+
                     viewModel.updateProfile(
                             editFullName.getText().toString().trim(),
-                            editAge.getText().toString().trim(),
+                            ageStr.isEmpty() ? "0" : ageStr,
                             editGender.getText().toString().trim(),
-                            editLifestyle.getText().toString().trim(),
-                            editInterests.getText().toString().trim()
+                            lifestyle,
+                            interests
                     );
                 })
                 .setNegativeButton("ביטול", null)
                 .create()
                 .show();
     }
+
 }

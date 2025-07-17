@@ -2,7 +2,6 @@ package com.example.roomatch.view.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,9 +14,11 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.roomatch.R;
+import com.example.roomatch.viewmodel.ViewModelFactoryProvider;
+import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.view.activities.MainActivity;
+import com.example.roomatch.viewmodel.AppViewModelFactory;
 import com.example.roomatch.viewmodel.CreateProfileViewModel;
-import com.example.roomatch.viewmodel.ProfileViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,6 @@ public class CreateProfileFragment extends Fragment {
 
     private CreateProfileViewModel viewModel;
 
-
     public CreateProfileFragment() {}
 
     @Nullable
@@ -49,8 +49,11 @@ public class CreateProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        viewModel = new ViewModelProvider(this).get(CreateProfileViewModel.class);   // <-- שונה
+        // שימוש ב-AppViewModelFactory ממקום מרכזי
+        AppViewModelFactory factory = ViewModelFactoryProvider.createFactory();
+        viewModel = new ViewModelProvider(this, factory).get(CreateProfileViewModel.class);
 
+        // Initialize UI elements
         editFullName = view.findViewById(R.id.editFullName);
         editAge = view.findViewById(R.id.editAge);
         genderGroup = view.findViewById(R.id.genderGroup);
@@ -81,21 +84,18 @@ public class CreateProfileFragment extends Fragment {
                 Log.e("CreateProfileFragment", "One or more views are null");
                 return;
             }
-            if (checkedId == R.id.radioSeeker) {
-                setVisibility(View.VISIBLE);
-            } else {
-                setVisibility(View.GONE);
-            }
+            setVisibility(checkedId == R.id.radioSeeker ? View.VISIBLE : View.GONE);
         });
 
-        // צפייה בהודעות Toast
+        // Observe Toast messages
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
 
-        viewModel.getProfileSaved().observe(getViewLifecycleOwner(), isSaved -> {   // <-- שם חדש
+        // Observe profile saved status
+        viewModel.getProfileSaved().observe(getViewLifecycleOwner(), isSaved -> {
             if (Boolean.TRUE.equals(isSaved)) {
                 navigateToMainActivity(getUserType());
             }
@@ -115,36 +115,64 @@ public class CreateProfileFragment extends Fragment {
         int selectedGenderId = genderGroup.getCheckedRadioButtonId();
         int selectedUserTypeId = userTypeGroup.getCheckedRadioButtonId();
 
-        viewModel.saveProfile(
-                fullName,
-                ageStr,
-                selectedGenderId,
-                checkboxClean.isChecked(),
-                checkboxSmoker.isChecked(),
-                checkboxNightOwl.isChecked(),
-                checkboxQuiet.isChecked(),
-                checkboxParty.isChecked(),
-                checkboxMusic.isChecked(),
-                checkboxSports.isChecked(),
-                checkboxTravel.isChecked(),
-                checkboxCooking.isChecked(),
-                checkboxReading.isChecked(),
-                selectedUserTypeId
-        );
+        // Collect lifestyle
+        List<String> lifestyleList = new ArrayList<>();
+        if (checkboxClean.isChecked()) lifestyleList.add("נקי");
+        if (checkboxSmoker.isChecked()) lifestyleList.add("מעשן");
+        if (checkboxNightOwl.isChecked()) lifestyleList.add("חיית לילה");
+        if (checkboxQuiet.isChecked()) lifestyleList.add("שקט");
+        if (checkboxParty.isChecked()) lifestyleList.add("אוהב מסיבות");
+        String lifestyle = String.join(", ", lifestyleList);
+
+        // Collect interests
+        List<String> interestsList = new ArrayList<>();
+        if (checkboxMusic.isChecked()) interestsList.add("מוזיקה");
+        if (checkboxSports.isChecked()) interestsList.add("ספורט");
+        if (checkboxTravel.isChecked()) interestsList.add("טיולים");
+        if (checkboxCooking.isChecked()) interestsList.add("בישול");
+        if (checkboxReading.isChecked()) interestsList.add("קריאה");
+        String interests = String.join(", ", interestsList);
+
+        // Create UserProfile
+        UserProfile profile = new UserProfile();
+        profile.setFullName(fullName);
+        profile.setAge(tryParseInt(ageStr) != null ? tryParseInt(ageStr) : 0);
+        profile.setGender(getGender(selectedGenderId));
+        profile.setLifestyle(lifestyle);
+        profile.setInterests(interests);
+        profile.setUserType(getUserType(selectedUserTypeId));
+
+        viewModel.saveProfile(profile);
+    }
+
+    private Integer tryParseInt(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String getGender(int selectedGenderId) {
+        if (selectedGenderId == R.id.radioMale) return "זכר";
+        if (selectedGenderId == R.id.radioFemale) return "נקבה";
+        if (selectedGenderId == R.id.radioOther) return "אחר";
+        return "";
+    }
+
+    private String getUserType(int selectedUserTypeId) {
+        if (selectedUserTypeId == R.id.radioSeeker) return "seeker";
+        if (selectedUserTypeId == R.id.radioOwner) return "owner";
+        return "";
     }
 
     private String getUserType() {
-        int selectedId = userTypeGroup.getCheckedRadioButtonId();
-        return selectedId == R.id.radioSeeker ? "seeker" : "owner";
+        return getUserType(userTypeGroup.getCheckedRadioButtonId());
     }
 
     private void navigateToMainActivity(String userType) {
         Intent intent = new Intent(getActivity(), MainActivity.class);
-        if (userType.equals("owner")) {
-            intent.putExtra("fragment", "owner_apartments");
-        } else {
-            intent.putExtra("fragment", "menu_apartments");
-        }
+        intent.putExtra("fragment", userType.equals("owner") ? "owner_apartments" : "menu_apartments");
         startActivity(intent);
         if (getActivity() != null) {
             getActivity().finish();

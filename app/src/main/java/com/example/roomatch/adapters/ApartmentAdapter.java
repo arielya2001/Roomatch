@@ -1,6 +1,7 @@
 package com.example.roomatch.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,13 +44,30 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
     public void onBindViewHolder(@NonNull ApartmentViewHolder holder, int position) {
         Apartment apt = apartmentList.get(position);
 
+        // Log הקואורדינטות של הדירה ושל המיקום שנבחר
+        Log.d("DistanceDebug", "Apt LatLng: " + apt.getLatitude() + ", " + apt.getLongitude());
+
+
         holder.cityTextView.setText(apt.getCity());
         holder.streetTextView.setText(apt.getStreet());
-        holder.houseNumberTextView.setText(apt.getHouseNumber() + "");
+        holder.houseNumberTextView.setText(String.valueOf(apt.getHouseNumber()));
         holder.priceTextView.setText(" חודש/ " + "₪" + apt.getPrice());
-        holder.roommatesTextView.setText("שותפים דרושים: " + apt.getRoommatesNeeded());
 
-        if (apt.getImageUrl() != null && !apt.getImageUrl().isEmpty()) {
+        // הצגת המרחק אם קיים
+        double distance = apt.getDistance(); // במטרים
+        if (distance > 0) {
+            double distanceKm = distance / 1000.0;
+            holder.distanceTextView.setText(String.format("מרחק: %.1f ק\"מ", distanceKm));
+            holder.distanceTextView.setVisibility(View.VISIBLE);
+        } else {
+            holder.distanceTextView.setVisibility(View.GONE); // הסתרה אם אין מרחק
+        }
+
+        // ניקוי תמונה קודמת אם אין תמונה חדשה
+        if (apt.getImageUrl() == null || apt.getImageUrl().isEmpty()) {
+            Glide.with(context).clear(holder.apartmentImageView);
+            holder.apartmentImageView.setImageResource(R.drawable.placeholder_image);
+        } else {
             Glide.with(context)
                     .load(apt.getImageUrl())
                     .placeholder(R.drawable.placeholder_image)
@@ -75,7 +93,8 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
 
     static class ApartmentViewHolder extends RecyclerView.ViewHolder {
         ImageView apartmentImageView;
-        TextView cityTextView, streetTextView, houseNumberTextView, priceTextView, roommatesTextView;
+        TextView cityTextView, streetTextView, houseNumberTextView, priceTextView;
+        TextView distanceTextView;
 
         public ApartmentViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -84,7 +103,7 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
             streetTextView = itemView.findViewById(R.id.streetTextView);
             houseNumberTextView = itemView.findViewById(R.id.houseNumberTextView);
             priceTextView = itemView.findViewById(R.id.priceTextView);
-            roommatesTextView = itemView.findViewById(R.id.roommatesTextView);
+            distanceTextView = itemView.findViewById(R.id.textViewApartmentDistance);
         }
     }
 }

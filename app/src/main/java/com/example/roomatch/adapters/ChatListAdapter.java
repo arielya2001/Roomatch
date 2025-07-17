@@ -10,26 +10,27 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
+import com.example.roomatch.model.Chat;
+import com.example.roomatch.model.Message;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import com.google.firebase.Timestamp;
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatViewHolder> {
 
-    private List<Map<String, Object>> chats;
+    private List<Chat> chats;
     private OnChatClickListener listener;
 
     public interface OnChatClickListener {
         void onChatClick(String fromUserId, String apartmentId);
     }
 
-    public ChatListAdapter(List<Map<String, Object>> chats, OnChatClickListener listener) {
+    public ChatListAdapter(List<Chat> chats, OnChatClickListener listener) {
         this.chats = new ArrayList<>(chats != null ? chats : new ArrayList<>());
         this.listener = listener;
     }
@@ -43,22 +44,20 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
 
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
-        Map<String, Object> chat = chats.get(position);
-        String fromUserId = (String) chat.get("fromUserId");
-        String apartmentId = (String) chat.get("apartmentId");
-        String lastMessage = (String) chat.get("lastMessage");
-        Object tsObject = chat.get("timestamp");
-        String formattedTime = "";
+        Chat chat = chats.get(position);
 
-        if (tsObject instanceof Long) {
-            Date date = new Date((Long) tsObject);
+        String fromUserId = chat.getFromUserId() != null ? chat.getFromUserId() : "משתמש לא ידוע";
+        String apartmentId = chat.getApartmentId() != null ? chat.getApartmentId() : "דירה לא זמינה";
+        String lastMessage = chat.getLastMessage() != null && chat.getLastMessage().getText() != null
+                ? chat.getLastMessage().getText() : "אין הודעה";
+        String formattedTime = "לא זמין";
+
+        if (chat.getTimestamp() != null) {
+            Date date = chat.getTimestamp().toDate();
             formattedTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date);
-        } else if (tsObject instanceof Timestamp) {
-            Timestamp ts = (Timestamp) tsObject;
-            formattedTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(ts.toDate());
         }
 
-        boolean hasUnread = (boolean) chat.get("hasUnread");
+        boolean hasUnread = chat.isHasUnread();
 
         holder.textViewTime.setText("שעה: " + formattedTime);
         holder.textViewSender.setText("מאת: " + fromUserId);
@@ -76,7 +75,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
     /**
      * מעדכן את רשימת הצ'אטים ומתריע על שינוי.
      */
-    public void updateChats(List<Map<String, Object>> newChats) {
+    public void updateChats(List<Chat> newChats) {
         chats.clear();
         if (newChats != null) {
             chats.addAll(newChats);

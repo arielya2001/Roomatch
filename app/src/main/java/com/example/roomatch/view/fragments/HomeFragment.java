@@ -20,7 +20,6 @@ import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.viewmodel.HomeViewModel;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class HomeFragment extends Fragment {
 
@@ -71,17 +70,15 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        // צפייה בברכה
         viewModel.getGreeting().observe(getViewLifecycleOwner(), greeting -> {
             if (greeting != null) {
                 greetingTextView.setText(greeting);
             }
         });
 
-        // צפייה ברשימת משתמשים
         viewModel.getUserList().observe(getViewLifecycleOwner(), users -> {
             if (users != null) {
-                adapter.updateUsers(users); // קריאה לשיטת העדכון החדשה
+                adapter.updateUsers(users);
             }
         });
     }

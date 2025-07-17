@@ -11,20 +11,22 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
+import com.example.roomatch.model.Message;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder> {
 
-    private List<Map<String, Object>> messages;
+    private List<Message> messages;
     private String currentUserId;
 
-    public ChatAdapter(List<Map<String, Object>> messages, String currentUserId) {
+    public ChatAdapter(List<Message> messages, String currentUserId) {
         this.messages = new ArrayList<>(messages != null ? messages : new ArrayList<>());
         this.currentUserId = currentUserId;
     }
+
+
 
     @NonNull
     @Override
@@ -36,15 +38,15 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
-        Map<String, Object> message = messages.get(position);
+        Message message = messages.get(position);
 
-        String fromUserId = (String) message.get("fromUserId");
-        String text = (String) message.get("text");
+        String text = message.getText() != null ? message.getText() : "הודעה ריקה";
+        String fromUserId = message.getFromUserId() != null ? message.getFromUserId() : "";
 
         holder.messageText.setText(text);
 
         // יישור לפי השולח
-        if (fromUserId != null && fromUserId.equals(currentUserId)) {
+        if (fromUserId.equals(currentUserId)) {
             holder.container.setGravity(Gravity.END);
         } else {
             holder.container.setGravity(Gravity.START);
@@ -59,7 +61,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     /**
      * מעדכן את רשימת ההודעות ומתריע על שינוי.
      */
-    public void updateMessages(List<Map<String, Object>> newMessages) {
+    public void updateMessages(List<Message> newMessages) {
         messages.clear();
         if (newMessages != null) {
             messages.addAll(newMessages);
