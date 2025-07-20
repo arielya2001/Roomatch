@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    style="@style/Theme.Roomatch"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -74,10 +73,10 @@
         <Button
             android:id="@+id/buttonOwnerFilter"
             style="@style/button_style"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_marginEnd="4dp"
-            android:text="סנן" />
+            android:background="@mipmap/ic_filter_foreground" />
 
         <TextView
             android:id="@+id/textViewTestMessage"
@@ -90,9 +89,9 @@
         <Button
             android:id="@+id/buttonOwnerClear"
             style="@style/button_style"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="נקה" />
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:background="@android:drawable/ic_menu_close_clear_cancel" />
     </LinearLayout>
 
     <!-- רשימת הדירות -->
