@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import com.example.roomatch.model.UserProfile;
 import com.google.firebase.Timestamp;
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatViewHolder> {
@@ -58,13 +59,13 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         }
 
         boolean hasUnread = chat.isHasUnread();
-
-        holder.textViewTime.setText("שעה: " + formattedTime);
+        holder.textViewTime.setText(formattedTime+"");
         holder.textViewSender.setText("מאת: " + fromUserId);
         holder.textViewApartment.setText("דירה: " + apartmentId);
         holder.textViewMessage.setText("הודעה אחרונה: " + lastMessage);
         holder.textViewUnreadBadge.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
-        holder.buttonOpenChat.setOnClickListener(v -> listener.onChatClick(fromUserId, apartmentId));
+        holder.itemView.setOnClickListener(v -> listener.onChatClick(fromUserId, apartmentId));
+        //holder.buttonOpenChat.setOnClickListener(v -> listener.onChatClick(fromUserId, apartmentId));
     }
 
     @Override
@@ -93,7 +94,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
             textViewApartment = itemView.findViewById(R.id.textViewApartment);
             textViewMessage = itemView.findViewById(R.id.textViewMessage);
             textViewTime = itemView.findViewById(R.id.textViewTime);
-            buttonOpenChat = itemView.findViewById(R.id.buttonOpenChat);
+            //buttonOpenChat = itemView.findViewById(R.id.buttonOpenChat);
             textViewUnreadBadge = itemView.findViewById(R.id.textViewUnreadBadge);
         }
     }

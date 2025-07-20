@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/messageContainer"
+    style="@style/Theme.Roomatch"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp"
+    android:gravity="start"
     android:orientation="vertical"
-    android:gravity="start">
+    android:padding="8dp">
 
     <TextView
         android:id="@+id/textSenderName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="שם שולח"
-        android:textStyle="bold"
-        android:textColor="#555" />
+        android:textColor="#555"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/textMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="תוכן ההודעה"
         android:paddingTop="2dp"
+        android:text="תוכן ההודעה"
         android:textColor="#000" />
 </LinearLayout>

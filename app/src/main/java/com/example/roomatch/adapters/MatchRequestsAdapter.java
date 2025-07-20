@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -60,15 +61,15 @@ public class MatchRequestsAdapter extends RecyclerView.Adapter<MatchRequestsAdap
     static class RequestViewHolder extends RecyclerView.ViewHolder {
         TextView nameTextView;
         TextView statusTextView; // הוספה לתמיכה ב-status
-        Button approveButton;
-        Button rejectButton;
+        ImageButton approveButton;
+        ImageButton rejectButton;
 
         RequestViewHolder(@NonNull View itemView) {
             super(itemView);
             nameTextView = itemView.findViewById(R.id.requestNameTextView);
             statusTextView = itemView.findViewById(R.id.requestStatusTextView); // ID חדש
-            approveButton = itemView.findViewById(R.id.approveButton);
-            rejectButton = itemView.findViewById(R.id.rejectButton);
+            approveButton =(ImageButton) itemView.findViewById(R.id.approveButton);
+            rejectButton = (ImageButton) itemView.findViewById(R.id.rejectButton);
         }
     }
 }
