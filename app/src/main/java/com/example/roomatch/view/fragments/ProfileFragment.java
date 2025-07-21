@@ -1,29 +1,64 @@
 package com.example.roomatch.view.fragments;
 
 import android.app.AlertDialog;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentContainerView;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.roomatch.R;
 import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.viewmodel.ProfileViewModel;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.libraries.places.api.model.AddressComponent;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+
+import java.util.Arrays;
 
 public class ProfileFragment extends Fragment {
 
     private ProfileViewModel viewModel;
-    private TextView textName, textAge, textGender, textLifestyle, textInterests;
+    private EditText editname, editAge,editDescription;
+    private RadioGroup chooseGender;
+
+    private RadioButton radioMale, radioFemale, radioOther;
+
+    private TextView  textName, textAge, textGender, textLifestyle, textInterests, textWhere;
+
+    private String selectedCity="";
+    private String selectedStreet="";
+    private LatLng selectedLocation; // ממפות
+
+    private Button updateProfileButton, saveProfileButton,cancelEditButton;
+
+    private boolean isEdit=false;
+
+    private FragmentContainerView autoComplete;
+
+    private String currentName,currentGender,currentCity,currentStreet,currentDescription;
+    private Integer currentAge;
+    private LatLng currentSelectedLocation;
+
+
 
     @Nullable
     @Override
@@ -39,29 +74,67 @@ public class ProfileFragment extends Fragment {
 
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
 
-        textName = view.findViewById(R.id.textProfileName);
-        textAge = view.findViewById(R.id.textProfileAge);
-        textGender = view.findViewById(R.id.textProfileGender);
-        textLifestyle = view.findViewById(R.id.textProfileLifestyle);
-        textInterests = view.findViewById(R.id.textProfileInterests);
+        editname=view.findViewById(R.id.editProfileName);
+        editAge=view.findViewById(R.id.editprofileAge);
+        editDescription=view.findViewById(R.id.editProfileDescription);
+        chooseGender=view.findViewById(R.id.ChooseGender);
+        radioMale=view.findViewById(R.id.radioMaleProfile);
+        radioFemale=view.findViewById(R.id.radioFemaleProfile);
+        radioOther=view.findViewById(R.id.radioOtherProfile);
+        //chooseGender.addView(radioMale,0);
+        //chooseGender.addView(radioFemale,1);
+        //chooseGender.addView(radioOther,2);
+        textWhere = view.findViewById(R.id.whereToSearch);
+        textGender = view.findViewById(R.id.textgenderProfile);
+        chooseGender.setVisibility(View.GONE);
+
+        chooseGender.setOnCheckedChangeListener((group, checkedId)->genderChanged(checkedId));
 
         LinearLayout layoutLifestyleAndInterests = view.findViewById(R.id.layoutLifestyleAndInterests);
-        Button updateProfileButton = view.findViewById(R.id.buttonUpdateProfile);
+        updateProfileButton = view.findViewById(R.id.buttonUpdateProfile);
+        saveProfileButton = view.findViewById(R.id.saveButton);
+        cancelEditButton = view.findViewById(R.id.cancelButton);
 
-        updateProfileButton.setOnClickListener(v -> viewModel.requestEditProfile());
+        updateProfileButton.setOnClickListener(v ->editClicked() );
+        saveProfileButton.setOnClickListener(v->saveClicked());
+        cancelEditButton.setOnClickListener(v->cancelClicked());
+        saveProfileButton.setVisibility(View.GONE);
+        cancelEditButton.setVisibility(View.GONE);
+        editDescription.setEnabled(false);
+
+
 
         viewModel.getProfile().observe(getViewLifecycleOwner(), profile -> {
             if (profile != null) {
-                textName.setText("שם: " + safe(profile.getFullName()));
-                textAge.setText("גיל: " + profile.getAge());
-                textGender.setText("מגדר: " + safe(profile.getGender()));
-
+                editname.setText(safe(profile.getFullName()));
+                editAge.setText(profile.getAge()+"");
+                textGender.setText(safe(profile.getGender()));
+                selectedCity=profile.getSelectedCity();
+                selectedStreet=profile.getSelectedStreet();
+                selectedLocation=profile.getSelectedLocation();
+                textWhere.setText(safe(selectedCity)+", "+safe(selectedStreet));
                 if ("owner".equals(profile.getUserType())) {
-                    layoutLifestyleAndInterests.setVisibility(View.GONE);
+                    //layoutLifestyleAndInterests.setVisibility(View.GONE);
                 } else {
-                    layoutLifestyleAndInterests.setVisibility(View.VISIBLE);
-                    textLifestyle.setText("סגנון חיים: " + safe(profile.getLifestyle()));
-                    textInterests.setText("תחומי עניין: " + safe(profile.getInterests()));
+                    //layoutLifestyleAndInterests.setVisibility(View.VISIBLE);
+                    //textLifestyle.setText("סגנון חיים: " + safe(profile.getLifestyle()));
+                    //textInterests.setText("תחומי עניין: " + safe(profile.getInterests()));
+                }
+                if(profile.getSelectedLocation()!=null)
+                {
+                    selectedLocation=profile.getSelectedLocation();
+                }
+                else
+                {
+                    selectedLocation=new LatLng(0.0,0.0);
+                }
+                if(profile.getDescription()!=null)
+                {
+                    editDescription.setText(profile.getDescription());
+                }
+                else
+                {
+                    editDescription.setText("אין תיאור");
                 }
             }
         });
@@ -74,12 +147,164 @@ public class ProfileFragment extends Fragment {
 
         viewModel.getEditRequested().observe(getViewLifecycleOwner(), shouldEdit -> {
             if (shouldEdit != null && shouldEdit) {
-                showEditProfileDialog();
+                //showEditProfileDialog();
                 viewModel.resetEditRequest();
             }
         });
 
         viewModel.loadProfile();
+
+        autoComplete=view.findViewById(R.id.autocompleteFragmentContainer);
+        autoComplete.setVisibility(View.GONE);
+
+        AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
+                getChildFragmentManager().findFragmentById(R.id.autocompleteFragmentContainer);
+
+
+        if (autocompleteFragment != null) {
+            autocompleteFragment.setPlaceFields(Arrays.asList(
+                    Place.Field.ID,
+                    Place.Field.LAT_LNG,
+                    Place.Field.ADDRESS_COMPONENTS
+            ));
+
+            autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+                @Override
+                public void onPlaceSelected(@NonNull Place place) {
+                    LatLng latLng = place.getLatLng();
+                    String city = extractComponent(place, "locality");
+                    String street = extractComponent(place, "route");
+
+                    if (latLng == null || city == null || street == null) {
+                        showToast("יש לבחור כתובת תקינה הכוללת עיר ורחוב");
+                        return;
+                    }
+                    selectedCity=city;
+                    selectedStreet=street;
+                    selectedLocation=latLng;
+                    viewModel.setSelectedAddress(city, street, latLng);
+                    showToast("כתובת נבחרה: " + street + ", " + city);
+                    textWhere.setText(city+", "+street);
+                }
+
+                @Override
+                public void onError(@NonNull com.google.android.gms.common.api.Status status) {
+                    showToast("שגיאה בבחירת כתובת: " + status.getStatusMessage());
+                }
+            });
+        }
+
+
+    }
+
+    private void genderChanged(int checked)
+    {
+        RadioButton selected = chooseGender.findViewById(checked);
+        textGender.setText(selected.getText());
+    }
+
+    private void editClicked()
+    {
+        viewModel.requestEditProfile();
+        updateProfileButton.setVisibility(View.GONE);
+        saveProfileButton.setVisibility(View.VISIBLE);
+        cancelEditButton.setVisibility(View.VISIBLE);
+        editname.setEnabled(true);
+        editAge.setEnabled(true);
+        editDescription.setEnabled(true);
+        chooseGender.setVisibility(View.VISIBLE);
+        autoComplete.setVisibility(View.VISIBLE);
+        if(textGender.getText().toString().equals("זכר"))
+        {
+            radioMale.setChecked(true);
+        }
+        if(textGender.getText().toString().equals("נקבה"))
+        {
+            radioFemale.setChecked(true);
+        }
+        if(textGender.getText().toString().equals("אחר / לא רוצה לשתף"))
+        {
+            radioOther.setChecked(true);
+        }
+        currentName=editname.getText().toString();
+        currentAge=Integer.parseInt(editAge.getText().toString());
+        currentGender=textGender.getText().toString();
+        currentCity=selectedCity;
+        currentStreet=selectedStreet;
+        currentSelectedLocation=selectedLocation;
+        currentDescription=editDescription.getText().toString();
+    }
+    private void saveClicked()
+    {
+        boolean isOwner = viewModel.isCurrentUserOwner(); // ← ודא שיש מתודה כזו ב־ViewModel
+
+        String ageStr = editAge.getText().toString().trim();
+        
+
+        //String lifestyle = isOwner ? null : editLifestyle.getText().toString().trim();
+        //String interests = isOwner ? null : editInterests.getText().toString().trim();
+
+        viewModel.updateProfile(
+                editname.getText().toString().trim(),
+                ageStr.isEmpty() ? "0" : ageStr,
+                textGender.getText().toString().trim(),
+                "lifestyle",
+                "interests",
+                selectedCity,
+                selectedStreet,
+                selectedLocation,
+                editDescription.getText().toString()
+        );
+        updateProfileButton.setVisibility(View.VISIBLE);
+        saveProfileButton.setVisibility(View.GONE);
+        cancelEditButton.setVisibility(View.GONE);
+        editname.setEnabled(false);
+        editAge.setEnabled(false);
+        editDescription.setEnabled(false);
+        chooseGender.setVisibility(View.GONE);
+        autoComplete.setVisibility(View.GONE);
+    }
+
+    private void cancelClicked()
+    {
+        editname.setText(currentName);
+        editAge.setText(String.valueOf(currentAge));
+        textGender.setText(currentGender);
+        selectedCity=currentCity;
+        selectedStreet=currentStreet;
+        selectedLocation=currentSelectedLocation;
+        editDescription.setText(currentDescription);
+        updateProfileButton.setVisibility(View.VISIBLE);
+        saveProfileButton.setVisibility(View.GONE);
+        cancelEditButton.setVisibility(View.GONE);
+        editname.setEnabled(false);
+        editAge.setEnabled(false);
+        editDescription.setEnabled(false);
+        chooseGender.setVisibility(View.GONE);
+        autoComplete.setVisibility(View.GONE);
+
+    }
+
+    private void showToast(String message) {
+        if (getContext() != null) {
+            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void setSelectedAddress(String city, String street, LatLng location) {
+        this.selectedCity = city;
+        this.selectedStreet = street;
+        this.selectedLocation = location;
+    }
+
+    private String extractComponent(Place place, String type) {
+        if (place.getAddressComponents() == null) return "";
+        for (AddressComponent component : place.getAddressComponents().asList()) {
+            if (component.getTypes().contains(type)) {
+                return component.getName();
+            }
+        }
+        return "";
     }
 
 
@@ -99,10 +324,11 @@ public class ProfileFragment extends Fragment {
         builder.setView(dialogView);
 
         EditText editFullName = dialogView.findViewById(R.id.editFullName);
-        EditText editAge = dialogView.findViewById(R.id.editAge);
+        EditText editAge = dialogView.findViewById(R.id.editprofileAge);
         EditText editGender = dialogView.findViewById(R.id.editGender);
         EditText editLifestyle = dialogView.findViewById(R.id.editLifestyle);
         EditText editInterests = dialogView.findViewById(R.id.editInterests);
+        TextView editWhere = dialogView.findViewById(R.id.editWhereToSearch);
         LinearLayout layoutLifestyleAndInterests = dialogView.findViewById(R.id.layoutLifestyleAndInterests);
 
 
@@ -112,9 +338,42 @@ public class ProfileFragment extends Fragment {
         editGender.setText(safe(current.getGender()));
         editLifestyle.setText(safe(current.getLifestyle()));
         editInterests.setText(safe(current.getInterests()));
+        editWhere.setText(safe(current.getSelectedCity())+", "+safe(current.getSelectedStreet()));
 
         boolean isOwner = viewModel.isCurrentUserOwner(); // ← ודא שיש מתודה כזו ב־ViewModel
+        AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
+                getChildFragmentManager().findFragmentById(R.id.autocompleteFragmentContainer);
 
+        if (autocompleteFragment != null) {
+            autocompleteFragment.setPlaceFields(Arrays.asList(
+                    Place.Field.ID,
+                    Place.Field.LAT_LNG,
+                    Place.Field.ADDRESS_COMPONENTS
+            ));
+
+            autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+                @Override
+                public void onPlaceSelected(@NonNull Place place) {
+                    LatLng latLng = place.getLatLng();
+                    String city = extractComponent(place, "locality");
+                    String street = extractComponent(place, "route");
+
+                    if (latLng == null || city == null || street == null) {
+                        showToast("יש לבחור כתובת תקינה הכוללת עיר ורחוב");
+                        return;
+                    }
+
+                    viewModel.setSelectedAddress(city, street, latLng);
+                    showToast("כתובת נבחרה: " + street + ", " + city);
+                    textWhere.setText(city+", "+street);
+                }
+
+                @Override
+                public void onError(@NonNull com.google.android.gms.common.api.Status status) {
+                    showToast("שגיאה בבחירת כתובת: " + status.getStatusMessage());
+                }
+            });
+        }
         // הסתרת שדות אם המשתמש בעל דירה
         if (isOwner) {
             editLifestyle.setVisibility(View.GONE);
@@ -140,12 +399,17 @@ public class ProfileFragment extends Fragment {
                             ageStr.isEmpty() ? "0" : ageStr,
                             editGender.getText().toString().trim(),
                             lifestyle,
-                            interests
+                            interests,
+                            selectedCity,
+                            selectedStreet,
+                            selectedLocation,
+                            editDescription.getText().toString()
                     );
                 })
                 .setNegativeButton("ביטול", null)
                 .create()
                 .show();
     }
+
 
 }

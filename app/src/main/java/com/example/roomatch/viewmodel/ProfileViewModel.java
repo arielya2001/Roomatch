@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel;
 import com.example.roomatch.model.Message;
 import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.model.repository.UserRepository;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
@@ -19,6 +20,10 @@ public class ProfileViewModel extends ViewModel {
     private final MutableLiveData<List<Message>> messages = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
     private final MutableLiveData<Boolean> editRequested = new MutableLiveData<>();
+
+    private String selectedCity;
+    private String selectedStreet;
+    private LatLng selectedLocation;
 
     public LiveData<UserProfile> getProfile() { return profile; }
     public LiveData<List<Message>> getMessages() { return messages; }
@@ -37,6 +42,12 @@ public class ProfileViewModel extends ViewModel {
                 })
                 .addOnFailureListener(e ->
                         toastMessage.setValue("שגיאה בטעינת פרופיל: " + e.getMessage()));
+    }
+
+    public void setSelectedAddress(String city, String street, LatLng location) {
+        this.selectedCity = city;
+        this.selectedStreet = street;
+        this.selectedLocation = location;
     }
 
     public void loadMessages() {
@@ -71,7 +82,7 @@ public class ProfileViewModel extends ViewModel {
         editRequested.setValue(false);
     }
 
-    public void updateProfile(String fullName, String ageStr, String gender, String lifestyle, String interests) {
+    public void updateProfile(String fullName, String ageStr, String gender, String lifestyle, String interests,String city,String street,LatLng loc,String description) {
         if (fullName == null || fullName.trim().length() < 2) {
             toastMessage.setValue("הכנס שם מלא (לפחות 2 תווים)");
             return;
@@ -81,6 +92,12 @@ public class ProfileViewModel extends ViewModel {
             toastMessage.setValue("הכנס גיל תקין (גדול מ-0)");
             return;
         }
+        if(loc==null)
+        {
+            toastMessage.setValue("מיקום לא חוקי");
+            return;
+
+        }
 
         UserProfile updated = new UserProfile(
                 fullName.trim(),
@@ -88,7 +105,12 @@ public class ProfileViewModel extends ViewModel {
                 gender != null ? gender.trim() : null,
                 lifestyle != null ? lifestyle.trim() : null,
                 interests != null ? interests.trim() : null,
-                profile.getValue() != null ? profile.getValue().getUserType() : "seeker"
+                profile.getValue() != null ? profile.getValue().getUserType() : "seeker",
+                city,
+                street,
+                loc.latitude,
+                loc.longitude,
+                description
         );
 
         repository.saveMyProfile(repository.getCurrentUserId(), updated)
@@ -99,6 +121,8 @@ public class ProfileViewModel extends ViewModel {
                 .addOnFailureListener(e ->
                         toastMessage.setValue("שגיאה בעדכון פרופיל: " + e.getMessage()));
     }
+
+
 
     private Integer tryParseInt(String val) {
         try {

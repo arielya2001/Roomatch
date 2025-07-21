@@ -25,7 +25,7 @@ import java.util.List;
 
 public class CreateProfileFragment extends Fragment {
 
-    private EditText editFullName, editAge;
+    private EditText editFullName, editAge,editDescription;
     private RadioGroup userTypeGroup, genderGroup;
     private Button saveProfileButton;
     private CheckBox checkboxClean, checkboxSmoker, checkboxNightOwl, checkboxQuiet, checkboxParty;
@@ -55,7 +55,7 @@ public class CreateProfileFragment extends Fragment {
 
         // Initialize UI elements
         editFullName = view.findViewById(R.id.editFullName);
-        editAge = view.findViewById(R.id.editAge);
+        editAge = view.findViewById(R.id.editprofileAge);
         genderGroup = view.findViewById(R.id.genderGroup);
         checkboxClean = view.findViewById(R.id.checkboxClean);
         checkboxSmoker = view.findViewById(R.id.checkboxSmoker);
@@ -73,6 +73,8 @@ public class CreateProfileFragment extends Fragment {
         interestsLabel = view.findViewById(R.id.interestsLabel);
         lifestyleCheckboxes = view.findViewById(R.id.lifestyleCheckboxes);
         interestsCheckboxes = view.findViewById(R.id.interestsCheckboxes);
+        editDescription=view.findViewById(R.id.editCreateDescription);
+
 
         // Set initial visibility to GONE
         setVisibility(View.GONE);
@@ -107,6 +109,7 @@ public class CreateProfileFragment extends Fragment {
         if (interestsLabel != null) interestsLabel.setVisibility(visibility);
         if (lifestyleCheckboxes != null) lifestyleCheckboxes.setVisibility(visibility);
         if (interestsCheckboxes != null) interestsCheckboxes.setVisibility(visibility);
+        if(editDescription!=null) editDescription.setVisibility(visibility);
     }
 
     private void saveProfile() {
@@ -133,6 +136,8 @@ public class CreateProfileFragment extends Fragment {
         if (checkboxReading.isChecked()) interestsList.add("קריאה");
         String interests = String.join(", ", interestsList);
 
+        String description = editDescription.getText().toString();
+
         // Create UserProfile
         UserProfile profile = new UserProfile();
         profile.setFullName(fullName);
@@ -141,6 +146,7 @@ public class CreateProfileFragment extends Fragment {
         profile.setLifestyle(lifestyle);
         profile.setInterests(interests);
         profile.setUserType(getUserType(selectedUserTypeId));
+        profile.setDescription(description);
 
         viewModel.saveProfile(profile);
     }
@@ -154,7 +160,7 @@ public class CreateProfileFragment extends Fragment {
     }
 
     private String getGender(int selectedGenderId) {
-        if (selectedGenderId == R.id.radioMale) return "זכר";
+        if (selectedGenderId == R.id.radioMaleProfile) return "זכר";
         if (selectedGenderId == R.id.radioFemale) return "נקבה";
         if (selectedGenderId == R.id.radioOther) return "אחר";
         return "";

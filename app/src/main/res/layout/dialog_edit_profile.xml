@@ -29,7 +29,7 @@
         android:textStyle="bold" />
 
     <EditText
-        android:id="@+id/editAge"
+        android:id="@+id/editprofileAge"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="הזן גיל"
@@ -86,6 +86,20 @@
             android:layout_height="wrap_content"
             android:hint="הזן תחומי עניין"
             android:lines="2" />
+
+        <TextView
+            android:id="@+id/editWhereToSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="מחפש דירה ב: " />
+
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/autocompleteFragmentContainer"
+            android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_marginTop="8dp" />
     </LinearLayout>
 
 

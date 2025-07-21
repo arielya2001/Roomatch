@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".view.fragments.LifeStylesFragment">
+
+    <LinearLayout
+        android:id="@+id/lifestyleCheckboxes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <CheckBox android:id="@+id/checkboxClean"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="נקי" />
+
+        <CheckBox android:id="@+id/checkboxSmoker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="מעשן" />
+
+        <CheckBox android:id="@+id/checkboxNightOwl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="חיית לילה" />
+
+        <CheckBox android:id="@+id/checkboxQuiet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="שקט" />
+
+        <CheckBox android:id="@+id/checkboxParty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="אוהב מסיבות" />
+    </LinearLayout>
+</FrameLayout>

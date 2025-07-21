@@ -69,7 +69,7 @@ public class ApartmentSearchFragment extends Fragment {
         searchView = view.findViewById(R.id.searchView);
 
         // כפתור לחיפוש מתקדם
-        FloatingActionButton buttonAdvancedSearch = view.findViewById(R.id.buttonAdvancedSearch);
+        //FloatingActionButton buttonAdvancedSearch = view.findViewById(R.id.buttonAdvancedSearch);
 
         // RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -124,13 +124,13 @@ public class ApartmentSearchFragment extends Fragment {
         viewModel.loadApartments();
 
         // מעבר לחיפוש המתקדם
-        buttonAdvancedSearch.setOnClickListener(v -> {
+        /*buttonAdvancedSearch.setOnClickListener(v -> {
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragmentContainer, new AdvancedSearchFragment())
                     .addToBackStack(null)
                     .commit();
-        });
+        });*/
     }
 
 
