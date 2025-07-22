@@ -114,12 +114,12 @@ public class PartnerViewModel extends ViewModel {
                 case "מגדר":
                     result = safeCompare(a.getGender(), b.getGender());
                     break;
-                case "סגנון חיים":
-                    result = safeCompare(a.getLifestyle(), b.getLifestyle());
-                    break;
-                case "תחומי עניין":
-                    result = safeCompare(a.getInterests(), b.getInterests());
-                    break;
+//                case "סגנון חיים":
+//                    result = safeCompare(a.getLifestyle(), b.getLifestyle());
+//                    break;
+//                case "תחומי עניין":
+//                    result = safeCompare(a.getInterests(), b.getInterests());
+//                    break;
             }
 
             return order.equals("עולה") ? result : -result;

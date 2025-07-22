@@ -10,32 +10,62 @@
         android:id="@+id/interestsCheckboxes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_gravity="right"
+        android:layoutDirection="rtl"
+        android:textDirection="rtl">
 
-    <CheckBox android:id="@+id/checkboxMusic"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="מוזיקה" />
+        <CheckBox
+            android:id="@+id/checkboxMusic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:ellipsize="none"
+            android:layoutDirection="rtl"
+            android:text="מוזיקה"
+            android:textDirection="rtl"
+            android:button="@null"
+            android:drawableRight="?android:attr/listChoiceIndicatorMultiple"/>
 
     <CheckBox android:id="@+id/checkboxSports"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="ספורט" />
+        android:text="ספורט"
+        android:layout_gravity="right"
+        android:layoutDirection="rtl"
+        android:textDirection="rtl"
+        android:button="@null"
+        android:drawableRight="?android:attr/listChoiceIndicatorMultiple"/>
 
     <CheckBox android:id="@+id/checkboxTravel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="טיולים" />
+        android:text="טיולים"
+        android:layout_gravity="right"
+        android:layoutDirection="rtl"
+        android:textDirection="rtl"
+        android:button="@null"
+        android:drawableRight="?android:attr/listChoiceIndicatorMultiple"/>
 
     <CheckBox android:id="@+id/checkboxCooking"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="בישול" />
+        android:text="בישול"
+        android:layout_gravity="right"
+        android:layoutDirection="rtl"
+        android:textDirection="rtl"
+        android:button="@null"
+        android:drawableRight="?android:attr/listChoiceIndicatorMultiple"/>
 
     <CheckBox android:id="@+id/checkboxReading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="קריאה" />
+        android:text="קריאה"
+        android:layout_gravity="right"
+        android:layoutDirection="rtl"
+        android:textDirection="rtl"
+        android:button="@null"
+        android:drawableRight="?android:attr/listChoiceIndicatorMultiple"/>
 </LinearLayout>
 
 </FrameLayout>

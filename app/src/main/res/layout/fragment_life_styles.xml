@@ -9,31 +9,60 @@
         android:id="@+id/lifestyleCheckboxes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_gravity="right"
+        android:layoutDirection="rtl"
+        android:textDirection="rtl"
+        >
 
         <CheckBox android:id="@+id/checkboxClean"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="נקי" />
+            android:text="נקי"
+            android:layout_gravity="right"
+            android:layoutDirection="rtl"
+            android:textDirection="rtl"
+            android:button="@null"
+            android:drawableRight="?android:attr/listChoiceIndicatorMultiple"/>
 
         <CheckBox android:id="@+id/checkboxSmoker"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="מעשן" />
+            android:text="מעשן"
+            android:layout_gravity="right"
+            android:layoutDirection="rtl"
+            android:textDirection="rtl"
+            android:button="@null"
+            android:drawableRight="?android:attr/listChoiceIndicatorMultiple"/>
 
         <CheckBox android:id="@+id/checkboxNightOwl"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="חיית לילה" />
+            android:text="חיית לילה"
+            android:layout_gravity="right"
+            android:layoutDirection="rtl"
+            android:textDirection="rtl"
+            android:button="@null"
+            android:drawableRight="?android:attr/listChoiceIndicatorMultiple"/>
 
         <CheckBox android:id="@+id/checkboxQuiet"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="שקט" />
+            android:text="שקט"
+            android:layout_gravity="right"
+            android:layoutDirection="rtl"
+            android:textDirection="rtl"
+            android:button="@null"
+            android:drawableRight="?android:attr/listChoiceIndicatorMultiple"/>
 
         <CheckBox android:id="@+id/checkboxParty"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="אוהב מסיבות" />
+            android:text="אוהב מסיבות"
+            android:layout_gravity="right"
+            android:layoutDirection="rtl"
+            android:textDirection="rtl"
+            android:button="@null"
+            android:drawableRight="?android:attr/listChoiceIndicatorMultiple"/>
     </LinearLayout>
 </FrameLayout>

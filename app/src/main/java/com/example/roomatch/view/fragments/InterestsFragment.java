@@ -1,66 +1,103 @@
 package com.example.roomatch.view.fragments;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
 import com.example.roomatch.R;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link InterestsFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class InterestsFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private CheckBox checkboxMusic, checkboxSports, checkboxTravel, checkboxCooking, checkboxReading;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private OnInterestsChangedListener listener;
 
-    public InterestsFragment() {
-        // Required empty public constructor
+    public interface OnInterestsChangedListener {
+        void onInterestsChanged(List<String> updatedInterests);
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment InterestsFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static InterestsFragment newInstance(String param1, String param2) {
-        InterestsFragment fragment = new InterestsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    public void setOnInterestsChangedListener(OnInterestsChangedListener listener) {
+        this.listener = listener;
     }
 
+    @Nullable
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_interests, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view,
+                              @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        checkboxMusic = view.findViewById(R.id.checkboxMusic);
+        checkboxSports = view.findViewById(R.id.checkboxSports);
+        checkboxTravel = view.findViewById(R.id.checkboxTravel);
+        checkboxCooking = view.findViewById(R.id.checkboxCooking);
+        checkboxReading = view.findViewById(R.id.checkboxReading);
+
+        View.OnClickListener boxChangedListener = v -> {
+            if (listener != null) {
+                listener.onInterestsChanged(getInterests());
+            }
+        };
+
+        checkboxMusic.setOnClickListener(boxChangedListener);
+        checkboxSports.setOnClickListener(boxChangedListener);
+        checkboxTravel.setOnClickListener(boxChangedListener);
+        checkboxCooking.setOnClickListener(boxChangedListener);
+        checkboxReading.setOnClickListener(boxChangedListener);
+    }
+
+    public List<String> getInterests() {
+        List<String> interests = new ArrayList<>();
+        if (checkboxMusic.isChecked()) interests.add("מוזיקה");
+        if (checkboxSports.isChecked()) interests.add("ספורט");
+        if (checkboxTravel.isChecked()) interests.add("טיולים");
+        if (checkboxCooking.isChecked()) interests.add("בישול");
+        if (checkboxReading.isChecked()) interests.add("קריאה");
+        return interests;
+    }
+
+    public void setBoxes(String interests) {
+        List<String> interestsList = Arrays.asList(interests.split(","));
+        checkboxMusic.setChecked(false);
+        checkboxSports.setChecked(false);
+        checkboxTravel.setChecked(false);
+        checkboxCooking.setChecked(false);
+        checkboxReading.setChecked(false);
+
+        for (String interest : interestsList) {
+            switch (interest) {
+                case "מוזיקה":
+                    checkboxMusic.setChecked(true);
+                    break;
+                case "ספורט":
+                    checkboxSports.setChecked(true);
+                    break;
+                case "טיולים":
+                    checkboxTravel.setChecked(true);
+                    break;
+                case "בישול":
+                    checkboxCooking.setChecked(true);
+                    break;
+                case "קריאה":
+                    checkboxReading.setChecked(true);
+                    break;
+            }
+        }
     }
 }

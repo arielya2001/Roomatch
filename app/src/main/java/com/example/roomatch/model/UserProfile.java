@@ -3,6 +3,8 @@ package com.example.roomatch.model;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class UserProfile implements Serializable {
@@ -46,6 +48,14 @@ public class UserProfile implements Serializable {
     public String getLifestyle() { return lifestyle; }
     public void setLifestyle(String lifestyle) { this.lifestyle = lifestyle; }
     public String getInterests() { return interests; }
+    public List<String> getLifeStyleslist()
+    {
+        return Arrays.asList(this.lifestyle.split(","));
+    }
+    public List<String> getInterestsList()
+    {
+        return Arrays.asList(this.interests.split(","));
+    }
     public void setInterests(String interests) { this.interests = interests; }
     public String getUserType() { return userType; }
     public void setUserType(String userType) { this.userType = userType; }
@@ -56,7 +66,7 @@ public class UserProfile implements Serializable {
     }
 
     public String getSelectedCity(){return this.selectedCity;}
-    public String getSelectedStreet(){return this.selectedCity; }
+    public String getSelectedStreet(){return this.selectedStreet; }
     public LatLng getSelectedLocation(){return  new LatLng(this.lat,this.lng);}
 
     public String getDescription(){return this.description;}
