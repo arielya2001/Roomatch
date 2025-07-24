@@ -108,10 +108,10 @@ public class OwnerApartmentsFragment extends Fragment {
             public void onDeleteApartmentClick(Apartment apartment) {
                 confirmAndDelete(apartment);
             }
-            @Override
-            public void onReportApartmentClick(Apartment apartment) {
-                showReportDialog(apartment);
-            }
+//            @Override
+//            public void onReportApartmentClick(Apartment apartment) {
+//                showReportDialog(apartment);
+//            }
 
         });
         recyclerView.setAdapter(adapter);

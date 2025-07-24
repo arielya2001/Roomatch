@@ -120,28 +120,30 @@ public class OwnerApartmentsViewModel extends ViewModel {
         filteredApartments.setValue(result);
     }
 
-    public void publishApartment(String houseNumStr, String priceStr, String roommatesStr,
-                                 String description, Uri imageUri) {
-        if (selectedCity == null || selectedStreet == null || selectedLocation == null) {
-            toastMessage.setValue("יש לבחור כתובת אוטומטית לפני פרסום");
+    public void publishApartment(String city, String street, String priceStr,
+                                 String roommatesStr, String description,
+                                 Uri imageUri, LatLng location) {
+
+        if (city == null || street == null || location == null ||
+                priceStr == null || roommatesStr == null || description == null ||
+                city.isEmpty() || street.isEmpty() || priceStr.isEmpty() ||
+                roommatesStr.isEmpty() || description.isEmpty()) {
+            toastMessage.setValue("כל השדות חייבים להיות מלאים");
             publishSuccess.setValue(false);
             return;
         }
 
-        String validationError = validateInputs(selectedCity, selectedStreet, houseNumStr, priceStr, roommatesStr, description);
-        if (validationError != null) {
-            toastMessage.setValue(validationError);
-            publishSuccess.setValue(false);
-            return;
-        }
-
-        int houseNumber, price, roommatesNeeded;
+        int price, roommatesNeeded;
         try {
-            houseNumber = Integer.parseInt(houseNumStr);
             price = Integer.parseInt(priceStr);
             roommatesNeeded = Integer.parseInt(roommatesStr);
+            if (price < 0 || roommatesNeeded < 0) {
+                toastMessage.setValue("שדות מספריים חייבים להיות חיוביים");
+                publishSuccess.setValue(false);
+                return;
+            }
         } catch (NumberFormatException e) {
-            toastMessage.setValue("מספרים לא תקינים בשדות כמות/מחיר/מספר בית");
+            toastMessage.setValue("שדות מחיר/שותפים חייבים להיות מספרים תקינים");
             publishSuccess.setValue(false);
             return;
         }
@@ -149,15 +151,15 @@ public class OwnerApartmentsViewModel extends ViewModel {
         Apartment apartment = new Apartment(
                 null,
                 getCurrentUserId(),
-                selectedCity,
-                selectedStreet,
-                houseNumber,
+                city,
+                street,
+                -1, // אין houseNumber
                 price,
                 roommatesNeeded,
                 description,
                 null,
-                selectedLocation.latitude,
-                selectedLocation.longitude
+                location.latitude,
+                location.longitude
         );
 
         repository.publishApartment(apartment, imageUri)
@@ -171,6 +173,7 @@ public class OwnerApartmentsViewModel extends ViewModel {
                     publishSuccess.setValue(false);
                 });
     }
+
 
 
     public void updateApartment(String apartmentId, String city, String street, String houseNumStr,

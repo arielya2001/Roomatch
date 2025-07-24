@@ -117,7 +117,7 @@ public class ChatViewModel extends ViewModel {
                         String from = msg.getFromUserId();
                         String to = msg.getToUserId();
                         String apt = msg.getApartmentId();
-0
+
                         if (from == null || to == null || apt == null) continue;
 
                         boolean involved = me.equals(from) || me.equals(to);

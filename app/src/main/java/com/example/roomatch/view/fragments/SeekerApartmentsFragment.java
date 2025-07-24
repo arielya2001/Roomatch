@@ -56,9 +56,9 @@ public class SeekerApartmentsFragment extends Fragment {
             public void onDeleteApartmentClick(Apartment apartment) {
                 // לא רלוונטי לחיפוש
             }
-            @Override
-            public void onReportApartmentClick(Apartment apartment) {
-            }
+//            @Override
+//            public void onReportApartmentClick(Apartment apartment) {
+//            }
         });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
