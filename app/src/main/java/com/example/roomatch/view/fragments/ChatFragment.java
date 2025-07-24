@@ -54,12 +54,14 @@ public class ChatFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         viewModel = new ViewModelProvider(this, new ViewModelProvider.Factory() {
-            @NonNull @Override
+            @NonNull
+            @Override
             @SuppressWarnings("unchecked")
             public <T extends androidx.lifecycle.ViewModel> T create(@NonNull Class<T> c) {
-                return (T) new ChatViewModel(new ChatRepository(), new UserRepository());
+                return (T) new ChatViewModel(new ChatRepository(requireContext()), new UserRepository());
             }
         }).get(ChatViewModel.class);
+
 
         String currentUid = viewModel.getCurrentUserId();
         if (currentUid == null) {

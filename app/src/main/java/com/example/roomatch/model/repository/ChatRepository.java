@@ -1,7 +1,12 @@
 package com.example.roomatch.model.repository;
 
+import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 
+import com.android.volley.Request;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.roomatch.model.Chat;
 import com.example.roomatch.model.Message;
 import com.google.android.gms.tasks.Task;
@@ -14,6 +19,10 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class ChatRepository {
@@ -21,6 +30,13 @@ public class ChatRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final FirebaseStorage storage = FirebaseStorage.getInstance();
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
+
+    private final Context context;
+
+    public ChatRepository(Context context) {
+        this.context = context.getApplicationContext(); // שמירה על context בטוח
+    }
+
 
     public Task<DocumentReference> sendMessage(String chatId, Message message) {
         if (chatId == null || message == null || message.getFromUserId() == null || message.getToUserId() == null) {
@@ -31,8 +47,49 @@ public class ChatRepository {
         return db.collection("messages")
                 .document(chatId)
                 .collection("chat")
-                .add(message);
+                .add(message)
+                .addOnSuccessListener(docRef -> {});
     }
+    private void sendNotificationToRecipient(Message message) {
+        db.collection("users").document(message.getToUserId())
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    String token = snapshot.getString("fcmToken");
+                    if (token != null) {
+                        try {
+                            JSONObject notification = new JSONObject();
+                            notification.put("to", token);
+
+                            JSONObject body = new JSONObject();
+                            body.put("title", "Roomatch");
+                            body.put("body", "הודעה חדשה לגבי דירה שלך");
+                            notification.put("notification", body);
+
+                            JsonObjectRequest request = new JsonObjectRequest(
+                                    Request.Method.POST,
+                                    "https://fcm.googleapis.com/fcm/send",
+                                    notification,
+                                    response -> Log.d("FCM", "Notification sent"),
+                                    error -> Log.e("FCM", "Notification error", error)
+                            ) {
+                                @Override
+                                public Map<String, String> getHeaders() {
+                                    Map<String, String> headers = new HashMap<>();
+                                    headers.put("Authorization", "key=AIzaSyBHvJSGRqykrqDtYB-TN8C4C70OYPi_IMI"); // ⬅️ שים פה את מפתח השרת שלך
+                                    headers.put("Content-Type", "application/json");
+                                    return headers;
+                                }
+                            };
+
+                            Volley.newRequestQueue(context).add(request);
+
+                        } catch (Exception e) {
+                            Log.e("FCM", "Failed to send notification", e);
+                        }
+                    }
+                });
+    }
+
 
     public Task<DocumentReference> sendMessageWithImage(String chatId, Message message, Uri imageUri) {
         if (chatId == null || message == null || message.getFromUserId() == null || message.getToUserId() == null) {
