@@ -24,6 +24,7 @@ import com.example.roomatch.model.repository.UserRepository;
 import com.example.roomatch.viewmodel.ChatViewModel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -118,7 +119,7 @@ public class ChatFragment extends Fragment {
         viewModel.markMessagesAsRead(chatId);
 
         // צפייה בהודעות Toast
-        viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
+        viewModel.getToast().observe(getViewLifecycleOwner(), message -> {
             if (message != null) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
@@ -128,13 +129,17 @@ public class ChatFragment extends Fragment {
     /**
      * יוצר chatId עקבי על ידי מיון של userIds ואז להוסיף את apartmentId.
      */
-    private String generateConsistentChatId(String user1, String user2, String apartmentId) {
-        List<String> userIds = new ArrayList<>();
-        userIds.add(user1);
-        userIds.add(user2);
-        Collections.sort(userIds);
-        return userIds.get(0) + "_" + userIds.get(1) + "_" + apartmentId;
+    private String generateConsistentChatId(String userId1, String userId2, String apartmentId) {
+        if (userId1 == null || userId2 == null || apartmentId == null) {
+            throw new IllegalArgumentException("User IDs and apartment ID must not be null");
+        }
+
+        List<String> ids = Arrays.asList(userId1, userId2);
+        Collections.sort(ids);
+        return ids.get(0) + "_" + ids.get(1) + "_" + apartmentId;
     }
+
+
 
     @Override
     public void onDestroyView() {

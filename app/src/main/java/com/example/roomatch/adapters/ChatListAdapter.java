@@ -3,7 +3,6 @@ package com.example.roomatch.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -11,7 +10,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.model.Chat;
-import com.example.roomatch.model.Message;
+import com.example.roomatch.model.ChatListItem;
+import com.example.roomatch.model.GroupChatListItem;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -19,20 +19,18 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import com.example.roomatch.model.UserProfile;
-import com.google.firebase.Timestamp;
-
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatViewHolder> {
 
-    private List<Chat> chats;
-    private OnChatClickListener listener;
+    private final List<ChatListItem> items;
+    private final OnChatClickListener listener;
 
     public interface OnChatClickListener {
-        void onChatClick(String fromUserId, String apartmentId);
+        void onPrivateChatClick(String fromUserId, String apartmentId);
+        void onGroupChatClick(String groupId, String apartmentId);
     }
 
-    public ChatListAdapter(List<Chat> chats, OnChatClickListener listener) {
-        this.chats = new ArrayList<>(chats != null ? chats : new ArrayList<>());
+    public ChatListAdapter(List<ChatListItem> items, OnChatClickListener listener) {
+        this.items = new ArrayList<>(items != null ? items : new ArrayList<>());
         this.listener = listener;
     }
 
@@ -45,48 +43,50 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
 
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
-        Chat chat = chats.get(position);
+        ChatListItem item = items.get(position);
 
-        String fromUserId = chat.getFromUserId() != null ? chat.getFromUserId() : "משתמש לא ידוע";
-        String apartmentId = chat.getApartmentId() != null ? chat.getApartmentId() : "דירה לא זמינה";
-        String lastMessage = chat.getLastMessage() != null && chat.getLastMessage().getText() != null
-                ? chat.getLastMessage().getText() : "אין הודעה";
-        String formattedTime = "לא זמין";
+        String time = formatTime(item.getTimestamp());
+        holder.textViewTime.setText(time);
+        holder.textViewSender.setText("שם: " + item.getTitle());
+        holder.textViewApartment.setText(item.getSubText());
+        holder.textViewMessage.setText("הודעה אחרונה: " + item.getLastMessage());
+        holder.textViewUnreadBadge.setVisibility(View.GONE); // אם בעתיד תתמוך בקריאה ל־isUnread()
 
-        if (chat.getTimestamp() != null) {
-            Date date = chat.getTimestamp().toDate();
-            formattedTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date);
-        }
-
-        boolean hasUnread = chat.isHasUnread();
-        holder.textViewTime.setText(formattedTime+"");
-        holder.textViewSender.setText("מאת: " + fromUserId);
-        holder.textViewApartment.setText("דירה: " + apartmentId);
-        holder.textViewMessage.setText("הודעה אחרונה: " + lastMessage);
-        holder.textViewUnreadBadge.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
-        holder.itemView.setOnClickListener(v -> listener.onChatClick(fromUserId, apartmentId));
-        //holder.buttonOpenChat.setOnClickListener(v -> listener.onChatClick(fromUserId, apartmentId));
+        holder.itemView.setOnClickListener(v -> {
+            if (item.isGroup()) {
+                GroupChatListItem g = (GroupChatListItem) item;
+                listener.onGroupChatClick(g.getGroupId(), g.getApartmentId());
+            } else {
+                Chat chat = (Chat) item;
+                listener.onPrivateChatClick(chat.getFromUserId(), chat.getApartmentId());
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
-        return chats.size();
+        return items.size();
     }
 
-    /**
-     * מעדכן את רשימת הצ'אטים ומתריע על שינוי.
-     */
-    public void updateChats(List<Chat> newChats) {
-        chats.clear();
-        if (newChats != null) {
-            chats.addAll(newChats);
+    public void updateChats(List<ChatListItem> newItems) {
+        items.clear();
+        if (newItems != null) {
+            items.addAll(newItems);
         }
         notifyDataSetChanged();
     }
 
+    private String formatTime(long timestamp) {
+        try {
+            Date date = new Date(timestamp);
+            return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date);
+        } catch (Exception e) {
+            return "לא זמין";
+        }
+    }
+
     static class ChatViewHolder extends RecyclerView.ViewHolder {
         TextView textViewSender, textViewApartment, textViewMessage, textViewTime, textViewUnreadBadge;
-        Button buttonOpenChat;
 
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -94,7 +94,6 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
             textViewApartment = itemView.findViewById(R.id.textViewApartment);
             textViewMessage = itemView.findViewById(R.id.textViewMessage);
             textViewTime = itemView.findViewById(R.id.textViewTime);
-            //buttonOpenChat = itemView.findViewById(R.id.buttonOpenChat);
             textViewUnreadBadge = itemView.findViewById(R.id.textViewUnreadBadge);
         }
     }

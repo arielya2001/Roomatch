@@ -13,6 +13,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -21,8 +22,12 @@ import com.google.firebase.storage.StorageReference;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class ChatRepository {
@@ -50,6 +55,52 @@ public class ChatRepository {
                 .add(message)
                 .addOnSuccessListener(docRef -> {});
     }
+
+    public Task<List<DocumentSnapshot>> getAllGroupChatsForUser(String userId) {
+        Task<QuerySnapshot> byMember = db.collection("group_chats")
+                .whereArrayContains("memberIds", userId)
+                .get();
+
+        Task<QuerySnapshot> byOwner = db.collection("group_chats")
+                .whereEqualTo("ownerId", userId)
+                .get();
+
+        return Tasks.whenAllSuccess(byMember, byOwner)
+                .continueWith(task -> {
+                    Set<String> seen = new HashSet<>();
+                    List<DocumentSnapshot> combined = new ArrayList<>();
+
+                    for (Object result : task.getResult()) {
+                        QuerySnapshot qs = (QuerySnapshot) result;
+                        for (DocumentSnapshot doc : qs.getDocuments()) {
+                            if (seen.add(doc.getId())) {
+                                combined.add(doc);
+                            }
+                        }
+                    }
+
+                    return combined;
+                });
+    }
+
+
+
+    public Task<DocumentSnapshot> getLastGroupMessage(String groupChatId) {
+        return db.collection("group_messages")
+                .document(groupChatId)
+                .collection("chat")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .continueWith(task -> {
+                    if (!task.isSuccessful() || task.getResult().isEmpty()) {
+                        return null;
+                    }
+                    return task.getResult().getDocuments().get(0);
+                });
+    }
+
+
     private void sendNotificationToRecipient(Message message) {
         db.collection("users").document(message.getToUserId())
                 .get()

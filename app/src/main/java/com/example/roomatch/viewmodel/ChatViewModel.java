@@ -11,14 +11,17 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.roomatch.model.Chat;
+import com.example.roomatch.model.ChatListItem;
 import com.example.roomatch.model.Message;
 import com.example.roomatch.model.repository.ChatRepository;
 import com.example.roomatch.model.repository.UserRepository;
 import com.example.roomatch.utils.ChatUtil;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +32,12 @@ public class ChatViewModel extends ViewModel {
     private final UserRepository userRepo;
 
     private final MutableLiveData<List<Message>> messages = new MutableLiveData<>(new ArrayList<>());
-    private final MutableLiveData<List<Chat>> chats = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<String> toast = new MutableLiveData<>();
+
+    private final MutableLiveData<List<ChatListItem>> chats = new MutableLiveData<>(new ArrayList<>());
+    public LiveData<List<ChatListItem>> getChats() { return chats; }
+    private List<ChatListItem> allChats = new ArrayList<>();
+
 
     public ChatViewModel(ChatRepository chatRepo, UserRepository userRepo) {
         this.chatRepo = chatRepo;
@@ -38,7 +45,6 @@ public class ChatViewModel extends ViewModel {
     }
 
     public LiveData<List<Message>> getMessages() { return messages; }
-    public LiveData<List<Chat>> getChats() { return chats; }
     public LiveData<String> getToast() { return toast; }
 
     private String uid() { return userRepo.getCurrentUserId(); }
@@ -81,21 +87,20 @@ public class ChatViewModel extends ViewModel {
                 .addOnFailureListener(e -> toast.setValue("שגיאה בסימון כנקראו: " + e.getMessage()));
     }
 
-    private List<Chat> allChats = new ArrayList<>();
-
     public void filterChats(String query) {
-        List<Chat> filtered = new ArrayList<>();
+        List<ChatListItem> filtered = new ArrayList<>();
         String lower = query.toLowerCase();
-
-        for (Chat chat : allChats) {
-            String user = chat.getFromUserName() != null ? chat.getFromUserName().toLowerCase() : "";
-            String apt = chat.getApartmentName() != null ? chat.getApartmentName().toLowerCase() : "";
-            if (user.contains(lower) || apt.contains(lower)) {
-                filtered.add(chat);
+        for (ChatListItem item : allChats) {
+            String title = item.getTitle() != null ? item.getTitle().toLowerCase() : "";
+            String sub = item.getSubText() != null ? item.getSubText().toLowerCase() : "";
+            if (title.contains(lower) || sub.contains(lower)) {
+                filtered.add(item);
             }
         }
-
         chats.setValue(filtered);
+    }
+    public String getCurrentUserId() {
+        return uid();
     }
 
 
@@ -106,9 +111,13 @@ public class ChatViewModel extends ViewModel {
             return;
         }
 
-        chatRepo.getAllChatMessages()  // ← תכף נוסיף את זה בריפוזיטורי
+        Log.d("ChatVM", "loadChats(): טוען צ'אטים למשתמש " + me);
+        Map<String, Chat> chatMap = new HashMap<>();
+
+        // --- טען צ'אטים פרטיים ---
+        chatRepo.getAllChatMessages()
                 .addOnSuccessListener(snapshot -> {
-                    Map<String, Chat> chatMap = new HashMap<>();
+                    Log.d("ChatVM", "התקבלו " + snapshot.size() + " הודעות פרטיות");
 
                     for (QueryDocumentSnapshot doc : snapshot) {
                         Message msg = doc.toObject(Message.class);
@@ -123,35 +132,123 @@ public class ChatViewModel extends ViewModel {
                         boolean involved = me.equals(from) || me.equals(to);
                         if (!involved) continue;
 
-                        // מפתח ייחודי לשיחה: לא משנה מי השולח
                         String chatKey = ChatUtil.generateChatId(from, to, apt);
                         if (!chatMap.containsKey(chatKey)) {
+                            Log.d("ChatVM", "נוסף צ'אט פרטי: " + chatKey);
                             Chat chat = new Chat();
-                            chat.setFromUserId(!me.equals(from) ? from : to);  // הצד השני!
+                            chat.setFromUserId(!me.equals(from) ? from : to);
                             chat.setApartmentId(apt);
                             chat.setLastMessage(msg);
                             chat.setTimestamp(new com.google.firebase.Timestamp(new java.util.Date(msg.getTimestamp())));
                             chat.setHasUnread(!msg.isRead() && msg.getToUserId().equals(me));
                             chat.setFromUserName(chat.getFromUserId());
                             chat.setApartmentName(apt);
+                            chat.setType("private");
                             chatMap.put(chatKey, chat);
                         }
                     }
 
-                    chats.setValue(new ArrayList<>(chatMap.values()));
-                    allChats = new ArrayList<>(chatMap.values());  // ← הוספה חשובה!
+                    // --- טען צ'אטים קבוצתיים ---
+                    chatRepo.getAllGroupChatsForUser(me)
+                            .addOnSuccessListener(groupDocs -> {
+                                Log.d("ChatVM", "התקבלו " + groupDocs.size() + " קבוצות");
+
+                                List<String> groupIds = new ArrayList<>();
+                                for (DocumentSnapshot doc : groupDocs) {
+                                    String groupId = doc.getId();
+                                    String aptId = doc.getString("apartmentId");
+                                    String groupName = doc.getString("groupName");
+
+                                    if (groupId == null || aptId == null) {
+                                        Log.w("ChatVM", "קבוצת צ'אט עם נתונים חסרים - groupId/aptId חסרים");
+                                        continue;
+                                    }
+
+                                    Log.d("ChatVM", "נמצאה קבוצה: " + groupId + " לדירה: " + aptId);
+
+                                    Chat chat = new Chat();
+                                    chat.setId(groupId);
+                                    chat.setApartmentId(aptId);
+                                    chat.setFromUserId(null);
+                                    chat.setFromUserName(groupName != null ? groupName : "קבוצה");
+                                    chat.setApartmentName(aptId);
+                                    chat.setType("group");
+
+                                    chatMap.put("group_" + groupId, chat);
+                                    groupIds.add(groupId);
+                                }
+
+                                if (groupIds.isEmpty()) {
+                                    Log.d("ChatVM", "אין קבוצות. מסיים טעינה");
+                                    finishLoading(chatMap);
+                                    return;
+                                }
+
+                                final int[] loaded = {0};
+                                for (String groupId : groupIds) {
+                                    chatRepo.getLastGroupMessage(groupId)
+                                            .addOnSuccessListener(msgDoc -> {
+                                                Message last = msgDoc.toObject(Message.class);
+                                                if (last != null) {
+                                                    Chat chat = chatMap.get("group_" + groupId);
+                                                    if (chat != null) {
+                                                        Log.d("ChatVM", "הודעה אחרונה לקבוצה " + groupId + ": " + last.getText());
+                                                        chat.setLastMessage(last);
+                                                        chat.setTimestamp(new com.google.firebase.Timestamp(new java.util.Date(last.getTimestamp())));
+                                                        chat.setHasUnread(!last.isRead() && !last.getFromUserId().equals(me));
+                                                    }
+                                                } else {
+                                                    Log.w("ChatVM", "אין הודעה אחרונה לקבוצה " + groupId);
+                                                }
+
+                                                if (++loaded[0] == groupIds.size()) {
+                                                    finishLoading(chatMap);
+                                                }
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Log.e("ChatVM", "שגיאה בשליפת הודעה אחרונה לקבוצה " + groupId, e);
+                                                if (++loaded[0] == groupIds.size()) {
+                                                    finishLoading(chatMap);
+                                                }
+                                            });
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("ChatVM", "שגיאה בטעינת קבוצות", e);
+                                finishLoading(chatMap);
+                            });
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("ChatsFragment", "Error loading chats", e); // חשוב – לא רק e.getMessage()
-                    Toast.makeText(getContext(), "שגיאה בטעינת צ'אטים: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });    }
-
-
-    public String getCurrentUserId() {
-        return uid();
+                    Log.e("ChatVM", "שגיאה בטעינת צ'אטים פרטיים", e);
+                    toast.setValue("שגיאה בטעינת צ'אטים: " + e.getMessage());
+                });
     }
 
-    public LiveData<String> getToastMessage() {
-        return toast;
+
+    private void finishLoading(Map<String, Chat> chatMap) {
+        List<ChatListItem> items = new ArrayList<>();
+        for (Chat chat : chatMap.values()) {
+            Log.d("ChatVM", "נוסף לרשימה סופית: " + chat.getType() + " | " +
+                    (chat.getType().equals("group") ? chat.getId() : chat.getFromUserId()) +
+                    " | apt: " + chat.getApartmentId());
+            items.add(chat); // כי Chat מממש ChatListItem
+        }
+
+        // מיון לפי זמן (חדש קודם), כולל טיפול ב-null
+        items.sort((a, b) -> {
+            Long aTime = a.getTimestamp();
+            Long bTime = b.getTimestamp();
+            if (aTime == null && bTime == null) return 0;
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+            return Long.compare(bTime, aTime); // מיון יורד
+        });
+
+        chats.setValue(items);
+        allChats = items;
+
     }
+
+
+
 }

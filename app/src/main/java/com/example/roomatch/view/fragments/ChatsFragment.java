@@ -1,6 +1,7 @@
 package com.example.roomatch.view.fragments;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,7 +58,18 @@ public class ChatsFragment extends Fragment {
         // RecyclerView
         recyclerView = v.findViewById(R.id.recyclerViewChats);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ChatListAdapter(new ArrayList<>(), this::openChat);
+        adapter = new ChatListAdapter(new ArrayList<>(), new ChatListAdapter.OnChatClickListener() {
+            @Override
+            public void onPrivateChatClick(String fromUserId, String apartmentId) {
+                Log.d("ChatsFragment", "onPrivateChatClick: fromUserId=" + fromUserId + ", apartmentId=" + apartmentId);
+                openPrivateChat(fromUserId, apartmentId);
+            }
+
+            @Override
+            public void onGroupChatClick(String groupChatId, String apartmentId) {
+                openGroupChat(groupChatId);
+            }
+        });
         recyclerView.setAdapter(adapter);
 
         // SearchView
@@ -83,7 +95,7 @@ public class ChatsFragment extends Fragment {
             }
         });
 
-        viewModel.getToastMessage().observe(getViewLifecycleOwner(), msg -> {
+        viewModel.getToast().observe(getViewLifecycleOwner(), msg -> {
             if (msg != null) {
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
             }
@@ -106,4 +118,24 @@ public class ChatsFragment extends Fragment {
                 .addToBackStack(null)
                 .commit();
     }
+
+    private void openPrivateChat(String fromUserId, String apartmentId) {
+        ChatFragment cf = new ChatFragment(fromUserId, apartmentId);
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, cf)
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private void openGroupChat(String groupChatId) {
+        Log.d("ChatsFragment", "פותח צ'אט קבוצתי עם groupChatId: " + groupChatId);
+        GroupChatFragment fragment = GroupChatFragment.newInstance(groupChatId);
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, fragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
 }
