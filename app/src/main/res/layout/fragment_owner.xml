@@ -90,16 +90,6 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/cancel"
-                style="@style/Theme.Roomatch"
-                android:layout_width="50dp"
-                android:layout_height="match_parent"
-                android:layout_gravity="bottom"
-                android:layout_margin="5dp"
-                android:layout_weight="1"
-                android:text="ביטול" />
-
-            <Button
                 android:id="@+id/buttonPublish"
                 style="@style/Theme.Roomatch"
                 android:layout_width="50dp"

@@ -120,8 +120,8 @@ public class OwnerApartmentsViewModel extends ViewModel {
         filteredApartments.setValue(result);
     }
 
-    public void publishApartment(String city, String street, String priceStr,
-                                 String roommatesStr, String description,
+    public void publishApartment(String city, String street, String houseNumberStr,
+                                 String priceStr, String roommatesStr, String description,
                                  Uri imageUri, LatLng location) {
 
         if (city == null || street == null || location == null ||
@@ -133,27 +133,29 @@ public class OwnerApartmentsViewModel extends ViewModel {
             return;
         }
 
-        int price, roommatesNeeded;
+        int price, roommatesNeeded, houseNumber;
         try {
             price = Integer.parseInt(priceStr);
             roommatesNeeded = Integer.parseInt(roommatesStr);
-            if (price < 0 || roommatesNeeded < 0) {
+            houseNumber = (houseNumberStr != null && !houseNumberStr.isEmpty())
+                    ? Integer.parseInt(houseNumberStr) : -1;
+
+            if (price < 0 || roommatesNeeded < 0 || houseNumber < -1) {
                 toastMessage.setValue("שדות מספריים חייבים להיות חיוביים");
                 publishSuccess.setValue(false);
                 return;
             }
         } catch (NumberFormatException e) {
-            toastMessage.setValue("שדות מחיר/שותפים חייבים להיות מספרים תקינים");
+            toastMessage.setValue("שדות מספריים חייבים להיות מספרים תקינים");
             publishSuccess.setValue(false);
             return;
         }
-
         Apartment apartment = new Apartment(
                 null,
                 getCurrentUserId(),
                 city,
                 street,
-                -1, // אין houseNumber
+                houseNumber,
                 price,
                 roommatesNeeded,
                 description,
@@ -161,6 +163,7 @@ public class OwnerApartmentsViewModel extends ViewModel {
                 location.latitude,
                 location.longitude
         );
+
 
         repository.publishApartment(apartment, imageUri)
                 .addOnSuccessListener(docRef -> {

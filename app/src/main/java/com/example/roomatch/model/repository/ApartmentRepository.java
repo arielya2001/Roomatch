@@ -562,28 +562,62 @@ public class ApartmentRepository {
                     return messages;
                 });
     }
+    private String getOwnerIdForGroupChatSync(String groupChatId) {
+        try {
+            DocumentSnapshot snapshot = Tasks.await(
+                    db.collection("group_chats").document(groupChatId).get()
+            );
+            if (snapshot.exists()) {
+                return snapshot.getString("ownerId");
+            }
+        } catch (Exception e) {
+            Log.e("Repository", "שגיאה בקבלת ownerId", e);
+        }
+        return null;
+    }
+
 
 
     /**
      * שולח הודעה בצ'אט קבוצתי.
      */
     public Task<Void> sendGroupChatMessage(String groupChatId, String userId, String text) {
-        Map<String, Object> message = new HashMap<>();
-        message.put("fromUserId", userId);
-        message.put("text", text);
-        message.put("timestamp", System.currentTimeMillis());
+        // נחזיר Task שמבצע את כל הפעולה
+        Task<DocumentSnapshot> groupChatDocTask =
+                db.collection("group_chats").document(groupChatId).get();
 
-        return db.collection("group_messages")
-                .document(groupChatId) // 📄 שומר תחת document בשם groupChatId
-                .collection("chat")    // 📁 תת־collection בשם chat
-                .add(message)
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) {
-                        throw task.getException();
-                    }
-                    return Tasks.forResult(null);
-                });
+        return groupChatDocTask.continueWithTask(task -> {
+            if (!task.isSuccessful()) {
+                throw task.getException();
+            }
+
+            DocumentSnapshot doc = task.getResult();
+            String ownerId = doc.getString("ownerId");  // ✅ נשלף ממקום תקני
+
+            if (ownerId == null) {
+                throw new Exception("ownerId is missing in group_chat " + groupChatId);
+            }
+
+            Map<String, Object> message = new HashMap<>();
+            message.put("fromUserId", userId);
+            message.put("toUserId", ownerId);
+            message.put("text", text);
+            message.put("timestamp", System.currentTimeMillis());
+
+            return db.collection("group_messages")
+                    .document(groupChatId)
+                    .collection("chat")
+                    .add(message)
+                    .continueWith(innerTask -> {
+                        if (!innerTask.isSuccessful()) {
+                            throw innerTask.getException();
+                        }
+                        return null;
+                    });
+        });
     }
+
+
     public Task<Void> reportApartment(String apartmentId, String ownerId, String reason, String details) {
         Map<String, Object> report = new HashMap<>();
         report.put("apartmentId", apartmentId);

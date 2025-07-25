@@ -31,7 +31,7 @@ import java.util.Arrays;
 public class OwnerFragment extends Fragment {
 
     EditText priceEditText, roommatesEditText, descriptionEditText;
-    Button selectImageButton, publishButton, cancelButton, cameraButton;
+    Button selectImageButton, publishButton, cameraButton;
     ImageView imageView;
     Uri imageUri;
     OwnerApartmentsViewModel viewModel;
@@ -39,6 +39,8 @@ public class OwnerFragment extends Fragment {
     private String selectedCity;
     private String selectedStreet;
     private LatLng selectedLocation;
+
+    private String selectedHouseNumber;
 
     public OwnerFragment() {}
 
@@ -62,13 +64,11 @@ public class OwnerFragment extends Fragment {
         descriptionEditText = view.findViewById(R.id.editTextDescription);
         selectImageButton = view.findViewById(R.id.buttonSelectImage);
         publishButton = view.findViewById(R.id.buttonPublish);
-        cancelButton = view.findViewById(R.id.cancel);
         cameraButton = view.findViewById(R.id.camera);
         imageView = view.findViewById(R.id.imageViewPreview);
 
         selectImageButton.setOnClickListener(v -> openFileChooser());
         publishButton.setOnClickListener(v -> publishApartment());
-        cancelButton.setOnClickListener(v -> resetForm());
         cameraButton.setOnClickListener(v -> openCamera());
 
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), this::showToast);
@@ -116,18 +116,19 @@ public class OwnerFragment extends Fragment {
                     return;
                 }
 
-                // עדכון השדה street שיהיה: רחוב + מספר
-                if (houseNumber != null && !houseNumber.isEmpty()) {
-                    street = street + " " + houseNumber;
-                }
-
                 selectedCity = city;
                 selectedStreet = street;
+                selectedHouseNumber = houseNumber != null ? houseNumber : ""; // ✅ שמור בנפרד
                 selectedLocation = latLng;
 
                 TextView addressView = requireView().findViewById(R.id.textViewSelectedAddress);
                 if (addressView != null) {
-                    addressView.setText("כתובת נבחרה: " + street + ", " + city);
+                    String displayAddress = "כתובת נבחרה: " + street;
+                    if (!selectedHouseNumber.isEmpty()) {
+                        displayAddress += " " + selectedHouseNumber;
+                    }
+                    displayAddress += ", " + city;
+                    addressView.setText(displayAddress);
                 }
             }
 
@@ -220,7 +221,7 @@ public class OwnerFragment extends Fragment {
             return;
         }
 
-        viewModel.publishApartment(selectedCity, selectedStreet, priceStr, roommatesStr, description, imageUri, selectedLocation);
+        viewModel.publishApartment(selectedCity, selectedStreet, selectedHouseNumber, priceStr, roommatesStr, description, imageUri, selectedLocation);
     }
 
     private void resetForm() {
