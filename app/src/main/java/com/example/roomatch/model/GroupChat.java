@@ -14,6 +14,18 @@ public class GroupChat {
     private String lastMessage;
     private long lastMessageTimestamp;
 
+    private Message lastMessageObject; // חדש
+
+
+
+    public Message getLastMessageObject() {
+        return lastMessageObject;
+    }
+
+    public void setLastMessageObject(Message lastMessageObject) {
+        this.lastMessageObject = lastMessageObject;
+    }
+
 
     // חובה: constructor ריק לפיירבייס
     public GroupChat() {

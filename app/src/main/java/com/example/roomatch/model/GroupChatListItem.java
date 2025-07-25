@@ -1,13 +1,19 @@
 package com.example.roomatch.model;
 
-import com.example.roomatch.model.ChatListItem;
-import com.example.roomatch.model.GroupChat;
-
 public class GroupChatListItem implements ChatListItem {
     private final GroupChat groupChat;
+    private String lastMessageSenderName;
 
     public GroupChatListItem(GroupChat groupChat) {
         this.groupChat = groupChat;
+    }
+
+    public void setLastMessageSenderName(String lastMessageSenderName) {
+        this.lastMessageSenderName = lastMessageSenderName;
+    }
+
+    public String getLastMessageSenderName() {
+        return lastMessageSenderName != null ? lastMessageSenderName : "אנונימי";
     }
 
     @Override
@@ -17,7 +23,7 @@ public class GroupChatListItem implements ChatListItem {
 
     @Override
     public String getTitle() {
-        return groupChat.getGroupName(); // או groupId אם אין שם
+        return groupChat.getGroupName();
     }
 
     @Override
@@ -42,4 +48,17 @@ public class GroupChatListItem implements ChatListItem {
     public String getApartmentId() {
         return groupChat.getApartmentId();
     }
+
+    private String participantsString;
+
+    @Override
+    public String getParticipantsString() {
+        return participantsString;
+    }
+
+    @Override
+    public void setParticipantsString(String names) {
+        this.participantsString = names;
+    }
+
 }

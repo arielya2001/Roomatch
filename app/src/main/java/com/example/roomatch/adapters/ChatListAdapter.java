@@ -1,5 +1,6 @@
 package com.example.roomatch.adapters;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,12 +46,28 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         ChatListItem item = items.get(position);
 
+        Log.d("ChatAdapter", "binding item: title=" + item.getTitle()
+                + " | sub=" + item.getSubText()
+                + " | message=" + item.getLastMessage()
+                + " | sender=" + item.getLastMessageSenderName()
+                + " | participants=" + item.getParticipantsString());
+
         String time = formatTime(item.getTimestamp());
         holder.textViewTime.setText(time);
-        holder.textViewSender.setText("שם: " + item.getTitle());
+        holder.textViewSender.setText("הודעה אחרונה מאת: " + item.getLastMessageSenderName());
         holder.textViewApartment.setText(item.getSubText());
         holder.textViewMessage.setText("הודעה אחרונה: " + item.getLastMessage());
-        holder.textViewUnreadBadge.setVisibility(View.GONE); // אם בעתיד תתמוך בקריאה ל־isUnread()
+
+        String participants = item.getParticipantsString();
+        if (participants != null && !participants.isEmpty()) {
+            holder.textViewParticipants.setText("משתתפים בצ'אט: " + participants);
+            holder.textViewParticipants.setVisibility(View.VISIBLE);
+        } else {
+            holder.textViewParticipants.setVisibility(View.GONE);
+        }
+
+
+        holder.textViewUnreadBadge.setVisibility(View.GONE);
 
         holder.itemView.setOnClickListener(v -> {
             if (item.isGroup()) {
@@ -86,7 +103,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
     }
 
     static class ChatViewHolder extends RecyclerView.ViewHolder {
-        TextView textViewSender, textViewApartment, textViewMessage, textViewTime, textViewUnreadBadge;
+        TextView textViewSender, textViewApartment, textViewMessage, textViewTime, textViewUnreadBadge, textViewParticipants;
 
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -95,6 +112,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
             textViewMessage = itemView.findViewById(R.id.textViewMessage);
             textViewTime = itemView.findViewById(R.id.textViewTime);
             textViewUnreadBadge = itemView.findViewById(R.id.textViewUnreadBadge);
+            textViewParticipants = itemView.findViewById(R.id.textViewParticipants); // 🆕
         }
     }
 }

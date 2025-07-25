@@ -12,10 +12,14 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.roomatch.model.Chat;
 import com.example.roomatch.model.ChatListItem;
+import com.example.roomatch.model.GroupChat;
+import com.example.roomatch.model.GroupChatListItem;
 import com.example.roomatch.model.Message;
 import com.example.roomatch.model.repository.ChatRepository;
 import com.example.roomatch.model.repository.UserRepository;
 import com.example.roomatch.utils.ChatUtil;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -35,7 +39,11 @@ public class ChatViewModel extends ViewModel {
     private final MutableLiveData<String> toast = new MutableLiveData<>();
 
     private final MutableLiveData<List<ChatListItem>> chats = new MutableLiveData<>(new ArrayList<>());
-    public LiveData<List<ChatListItem>> getChats() { return chats; }
+
+    public LiveData<List<ChatListItem>> getChats() {
+        return chats;
+    }
+
     private List<ChatListItem> allChats = new ArrayList<>();
 
 
@@ -44,10 +52,17 @@ public class ChatViewModel extends ViewModel {
         this.userRepo = userRepo;
     }
 
-    public LiveData<List<Message>> getMessages() { return messages; }
-    public LiveData<String> getToast() { return toast; }
+    public LiveData<List<Message>> getMessages() {
+        return messages;
+    }
 
-    private String uid() { return userRepo.getCurrentUserId(); }
+    public LiveData<String> getToast() {
+        return toast;
+    }
+
+    private String uid() {
+        return userRepo.getCurrentUserId();
+    }
 
     public void sendMessage(String chatId, String toUserId, String apartmentId, String text) {
         String fromUid = uid();
@@ -57,6 +72,7 @@ public class ChatViewModel extends ViewModel {
         }
 
         Message message = new Message(fromUid, toUserId, text, apartmentId, System.currentTimeMillis());
+        message.setSenderName(userRepo.getCurrentUserName()); // ✅ הוסף שורה זו
         chatRepo.sendMessage(chatId, message)
                 .addOnSuccessListener(r -> toast.setValue("הודעה נשלחה"))
                 .addOnFailureListener(e -> toast.setValue("שגיאה: " + e.getMessage()));
@@ -70,6 +86,7 @@ public class ChatViewModel extends ViewModel {
         }
 
         Message message = new Message(fromUid, toUserId, text, apartmentId, System.currentTimeMillis());
+        message.setSenderName(userRepo.getCurrentUserName()); // ✅ הוסף שורה זו
         chatRepo.sendMessageWithImage(chatId, message, imageUri)
                 .addOnSuccessListener(r -> toast.setValue("הודעה נשלחה"))
                 .addOnFailureListener(e -> toast.setValue("שגיאה: " + e.getMessage()));
@@ -99,6 +116,7 @@ public class ChatViewModel extends ViewModel {
         }
         chats.setValue(filtered);
     }
+
     public String getCurrentUserId() {
         return uid();
     }
@@ -137,6 +155,7 @@ public class ChatViewModel extends ViewModel {
                             Log.d("ChatVM", "נוסף צ'אט פרטי: " + chatKey);
                             Chat chat = new Chat();
                             chat.setFromUserId(!me.equals(from) ? from : to);
+                            chat.setToUserId(me.equals(from) ? to : from); // 💡 זה הצד השני
                             chat.setApartmentId(apt);
                             chat.setLastMessage(msg);
                             chat.setTimestamp(new com.google.firebase.Timestamp(new java.util.Date(msg.getTimestamp())));
@@ -227,28 +246,160 @@ public class ChatViewModel extends ViewModel {
 
     private void finishLoading(Map<String, Chat> chatMap) {
         List<ChatListItem> items = new ArrayList<>();
+        Log.d("ChatVM", "finishLoading: כמות בצ'אט מאפ: " + chatMap.size());
+
+        Map<String, String> userNameCache = new HashMap<>();
+        List<Task<Void>> pendingNameTasks = new ArrayList<>();
+        String currentUserId = userRepo.getCurrentUserId();
+
         for (Chat chat : chatMap.values()) {
-            Log.d("ChatVM", "נוסף לרשימה סופית: " + chat.getType() + " | " +
-                    (chat.getType().equals("group") ? chat.getId() : chat.getFromUserId()) +
-                    " | apt: " + chat.getApartmentId());
-            items.add(chat); // כי Chat מממש ChatListItem
+            String type = chat.getType();
+            Log.d("ChatVM", "🔄 סוג: " + type + " | מזהה: " + chat.getId() + " | דירה: " + chat.getApartmentId());
+
+            if ("group".equals(type)) {
+                // ⚙ יצירת אובייקט קבוצתי
+                GroupChat groupChat = new GroupChat();
+                groupChat.setId(chat.getId());
+                groupChat.setGroupId(chat.getId());
+                groupChat.setApartmentId(chat.getApartmentId());
+                groupChat.setGroupName(chat.getTitle());
+
+                GroupChatListItem groupItem = new GroupChatListItem(groupChat);
+
+                Message last = chat.getLastMessageObj();
+                if (last != null) {
+                    groupChat.setLastMessage(last.getText());
+                    groupChat.setLastMessageTimestamp(chat.getTimestamp());
+                    groupChat.setLastMessageObject(last);
+
+                    String senderId = last.getFromUserId();
+                    if (senderId != null) {
+                        if (last.getSenderName() != null) {
+                            groupItem.setLastMessageSenderName(last.getSenderName());
+                        } else if (userNameCache.containsKey(senderId)) {
+                            String name = userNameCache.get(senderId);
+                            last.setSenderName(name);
+                            groupItem.setLastMessageSenderName(name);
+                        } else {
+                            groupItem.setLastMessageSenderName("אנונימי");
+                            Task<Void> t = userRepo.getUserNameById(senderId)
+                                    .addOnSuccessListener(name -> {
+                                        userNameCache.put(senderId, name);
+                                        last.setSenderName(name);
+                                        groupItem.setLastMessageSenderName(name);
+                                    }).continueWith(task -> null);
+                            pendingNameTasks.add(t);
+                        }
+                    }
+                }
+
+                // טעינת שמות המשתתפים (למעט המשתמש הנוכחי)
+                chatRepo.getGroupChatById(chat.getId())
+                        .addOnSuccessListener(doc -> {
+                            List<String> memberIds = (List<String>) doc.get("memberIds");
+                            if (memberIds != null) {
+                                List<String> participantNames = new ArrayList<>();
+                                List<Task<Void>> nameTasks = new ArrayList<>();
+                                for (String memberId : memberIds) {
+                                    if (!memberId.equals(currentUserId)) {
+                                        if (userNameCache.containsKey(memberId)) {
+                                            participantNames.add(userNameCache.get(memberId));
+                                        } else {
+                                            Task<Void> t = userRepo.getUserNameById(memberId)
+                                                    .addOnSuccessListener(name -> {
+                                                        userNameCache.put(memberId, name);
+                                                        participantNames.add(name);
+                                                    }).continueWith(task -> null);
+                                            nameTasks.add(t);
+                                        }
+                                    }
+                                }
+                                Tasks.whenAllComplete(nameTasks).addOnSuccessListener(v -> {
+                                    groupItem.setParticipantsString(String.join(", ", participantNames));
+                                    chats.setValue(new ArrayList<>(allChats));
+                                });
+                            }
+                        });
+
+                Log.d("ChatVM", "✅ נוסף: GroupChatListItem | מאת: " + groupItem.getLastMessageSenderName()
+                        + " | תוכן: " + groupChat.getLastMessage());
+                items.add(groupItem);
+            } else {
+                // צ'אט פרטי
+                Message last = chat.getLastMessageObj();
+                if (last != null) {
+                    String senderId = last.getFromUserId();
+                    if (senderId != null) {
+                        if (last.getSenderName() == null && !userNameCache.containsKey(senderId)) {
+                            Task<Void> t = userRepo.getUserNameById(senderId)
+                                    .addOnSuccessListener(name -> {
+                                        userNameCache.put(senderId, name);
+                                        last.setSenderName(name);
+                                        chat.setFromUserName(name);
+                                    }).continueWith(task -> null);
+                            pendingNameTasks.add(t);
+                        } else if (userNameCache.containsKey(senderId)) {
+                            last.setSenderName(userNameCache.get(senderId));
+                            chat.setFromUserName(userNameCache.get(senderId));
+                        }
+                    }
+                }
+
+                String from = chat.getFromUserId();
+                String to = chat.getToUserId();
+                if (from == null || to == null) {
+                    Log.w("ChatVM", "❗ מזהים חסרים בצ'אט פרטי – דילוג");
+                    continue;
+                }
+
+                String otherId = currentUserId.equals(from) ? to : from;
+                if (userNameCache.containsKey(otherId)) {
+                    chat.setParticipantsString(userNameCache.get(otherId));
+                } else {
+                    chat.setParticipantsString("אנונימי");
+                    Task<Void> t = userRepo.getUserNameById(otherId)
+                            .addOnSuccessListener(name -> {
+                                userNameCache.put(otherId, name);
+                                chat.setParticipantsString(name);
+                                chats.setValue(new ArrayList<>(allChats));
+                            }).continueWith(task -> null);
+                    pendingNameTasks.add(t);
+                }
+
+                Log.d("ChatVM", "✅ נוסף: Chat רגיל | מאת: " + chat.getFromUserName()
+                        + " | תוכן: " + (last != null ? last.getText() : "אין הודעות")
+                        + " | משתתף: " + otherId);
+
+                items.add(chat);
+            }
         }
 
-        // מיון לפי זמן (חדש קודם), כולל טיפול ב-null
-        items.sort((a, b) -> {
-            Long aTime = a.getTimestamp();
-            Long bTime = b.getTimestamp();
-            if (aTime == null && bTime == null) return 0;
-            if (aTime == null) return 1;
-            if (bTime == null) return -1;
-            return Long.compare(bTime, aTime); // מיון יורד
-        });
+        Log.d("ChatVM", "📊 לפני מיון: " + items.size() + " פריטים");
 
-        chats.setValue(items);
-        allChats = items;
-
+        if (!pendingNameTasks.isEmpty()) {
+            Tasks.whenAllComplete(pendingNameTasks)
+                    .addOnSuccessListener(results -> {
+                        Log.d("ChatVM", "🎉 כל השמות נטענו. ממיין...");
+                        Collections.sort(items, (a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
+                        chats.setValue(items);
+                        allChats = items;
+                        Log.d("ChatVM", "🎯 finishLoading: הסתיים לאחר טעינת שמות.");
+                    });
+        } else {
+            Collections.sort(items, (a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
+            chats.setValue(items);
+            allChats = items;
+            Log.d("ChatVM", "🎯 finishLoading: הסתיים ללא טעינת שמות.");
+        }
     }
 
-
-
 }
+
+
+
+
+
+
+
+
+

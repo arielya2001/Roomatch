@@ -55,6 +55,12 @@ public class ChatRepository {
                 .add(message)
                 .addOnSuccessListener(docRef -> {});
     }
+    public Task<DocumentSnapshot> getGroupChatById(String groupChatId) {
+        return db.collection("group_chats")
+                .document(groupChatId)
+                .get();
+    }
+
 
     public Task<List<DocumentSnapshot>> getAllGroupChatsForUser(String userId) {
         Task<QuerySnapshot> byMember = db.collection("group_chats")

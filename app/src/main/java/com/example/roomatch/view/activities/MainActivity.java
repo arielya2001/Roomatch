@@ -18,6 +18,7 @@ import androidx.fragment.app.FragmentManager;
 import com.example.roomatch.R;
 import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.model.repository.UserRepository;
 import com.example.roomatch.view.fragments.ApartmentSearchFragment;
 import com.example.roomatch.view.fragments.ChatsFragment;
 import com.example.roomatch.view.fragments.ContactsFragment;
@@ -130,6 +131,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         finish();
                         return;
                     }
+                    // 👇 הוספה של הקריאה לטעינת שם המשתמש
+                    UserRepository userRepository = new UserRepository();
+                    userRepository.loadCurrentUserName();
 
                     userType = userProfile.getUserType();
                     Log.d("MainActivity", "User type: " + userType);

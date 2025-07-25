@@ -12,6 +12,12 @@ public class Chat implements ChatListItem {
     private String fromUserName;
     private String apartmentName;
 
+    private String toUserId;
+
+    public String getToUserId() { return toUserId; }
+    public void setToUserId(String toUserId) { this.toUserId = toUserId; }
+
+
     private String type;
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
@@ -19,9 +25,10 @@ public class Chat implements ChatListItem {
 
     public Chat() {}
 
-    public Chat(String fromUserId, String apartmentId, Message lastMessage, Timestamp timestamp,
+    public Chat(String fromUserId, String toUserId, String apartmentId, Message lastMessage, Timestamp timestamp,
                 boolean hasUnread, String fromUserName, String apartmentName) {
         this.fromUserId = fromUserId;
+        this.toUserId = toUserId;
         this.apartmentId = apartmentId;
         this.lastMessage = lastMessage;
         this.timestamp = timestamp;
@@ -29,6 +36,7 @@ public class Chat implements ChatListItem {
         this.fromUserName = fromUserName;
         this.apartmentName = apartmentName;
     }
+
 
     // Getters & Setters
     public String getId() { return id; }
@@ -47,6 +55,32 @@ public class Chat implements ChatListItem {
     public void setFromUserName(String fromUserName) { this.fromUserName = fromUserName; }
     public String getApartmentName() { return apartmentName; }
     public void setApartmentName(String apartmentName) { this.apartmentName = apartmentName; }
+
+    private String participantsString;
+
+    @Override
+    public String getParticipantsString() {
+        return participantsString;
+    }
+
+    @Override
+    public void setParticipantsString(String names) {
+        this.participantsString = names;
+    }
+
+
+    @Override
+    public String getLastMessageSenderName() {
+        if (lastMessage != null && lastMessage.getSenderName() != null) {
+            return lastMessage.getSenderName();
+        } else if (fromUserName != null) {
+            return fromUserName;
+        } else {
+            return fromUserId; // fallback
+        }
+    }
+
+
 
     // 🧩 מימוש ChatListItem:
     @Override
