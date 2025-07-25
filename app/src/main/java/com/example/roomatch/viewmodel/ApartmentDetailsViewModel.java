@@ -98,12 +98,24 @@ public class ApartmentDetailsViewModel extends ViewModel {
 
     public void sendGroupMessageAndCreateChat(Apartment apartment, SharedGroup group) {
         if (apartment != null && group != null && group.getId() != null) {
-            repository.sendGroupMessageAndCreateChat(apartment.getOwnerId(), apartment.getId(), group.getId())
+            String ownerId = apartment.getOwnerId();
+            String apartmentId = apartment.getId();
+            String groupId = group.getId();
+
+            repository.sendGroupMessageAndCreateChat(ownerId, apartmentId, groupId)
                     .addOnSuccessListener(aVoid -> {
                         Log.d("ApartmentDetailsVM", "✅ Group chat created successfully");
                         toastMessage.setValue("צ'אט קבוצתי נוצר בהצלחה");
-                        // ניווט ל-GroupChatFragment עם groupId ו-apartmentId
-                        navigateToGroupChat(group.getId(), apartment.getId());
+
+                        // נבצע עכשיו יצירה + קבלת groupChatId אמיתי לניווט נכון
+                        repository.createGroupChatAndReturnId(ownerId, apartmentId, groupId)
+                                .addOnSuccessListener(groupChatId -> {
+                                    navigateToChatWith.setValue(groupChatId);
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("ApartmentDetailsVM", "❌ Error retrieving groupChatId: " + e.getMessage());
+                                    toastMessage.setValue("שגיאה באיתור הצ'אט הקבוצתי: " + e.getMessage());
+                                });
                     })
                     .addOnFailureListener(e -> {
                         Log.e("ApartmentDetailsVM", "❌ Error creating group chat: " + e.getMessage());
@@ -113,6 +125,7 @@ public class ApartmentDetailsViewModel extends ViewModel {
             toastMessage.setValue("שגיאה: פרטים חסרים");
         }
     }
+
 
     private void navigateToGroupChat(String groupId, String apartmentId) {
         // ניתוב זמני עם groupId ו-apartmentId; נצטרך לחפש את groupChatId

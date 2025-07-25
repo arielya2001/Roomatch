@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.GroupChatsAdapter;
+import com.example.roomatch.viewmodel.GroupChatViewModel;
 import com.example.roomatch.viewmodel.GroupChatsViewModel;
 
 import java.util.ArrayList;
@@ -43,20 +45,25 @@ public class GroupChatsListFragment extends Fragment {
         viewModel.loadGroupChats().observe(getViewLifecycleOwner(), adapter::setChats);
         viewModel.getApartmentIdToAddressMap().observe(getViewLifecycleOwner(), adapter::setApartmentIdToAddressMap);
 
-        // 💥 הוספת ה־click listener:
         adapter.setOnChatClickListener(chat -> {
-            GroupChatFragment fragment = new GroupChatFragment();
-            Bundle args = new Bundle();
-            args.putString("groupId", chat.getGroupId());
-            args.putString("apartmentId", chat.getApartmentId());
-            fragment.setArguments(args);
+            // שלב 1: קבלת ViewModel
+            GroupChatViewModel tempViewModel = new ViewModelProvider(this).get(GroupChatViewModel.class);
 
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragmentContainer, fragment) // וודא שיש לך container כזה ב־activity
-                    .addToBackStack(null)
-                    .commit();
+            // שלב 2: חיפוש groupChatId לפי groupId + apartmentId
+            tempViewModel.findGroupChatId(chat.getGroupId(), chat.getApartmentId())
+                    .observe(getViewLifecycleOwner(), groupChatId -> {
+                        if (groupChatId != null) {
+                            // שלב 3: פתיחת GroupChatFragment עם groupChatId
+                            GroupChatFragment fragment = GroupChatFragment.newInstance(groupChatId);
+                            requireActivity().getSupportFragmentManager()
+                                    .beginTransaction()
+                                    .replace(R.id.fragmentContainer, fragment)
+                                    .addToBackStack(null)
+                                    .commit();
+                        } else {
+                            Toast.makeText(getContext(), "לא נמצא groupChatId לצ'אט זה", Toast.LENGTH_SHORT).show();
+                        }
+                    });
         });
     }
-
 }
