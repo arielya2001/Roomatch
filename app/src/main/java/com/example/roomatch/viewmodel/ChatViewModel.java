@@ -15,6 +15,7 @@ import com.example.roomatch.model.ChatListItem;
 import com.example.roomatch.model.GroupChat;
 import com.example.roomatch.model.GroupChatListItem;
 import com.example.roomatch.model.Message;
+import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.model.repository.ChatRepository;
 import com.example.roomatch.model.repository.UserRepository;
 import com.example.roomatch.utils.ChatUtil;
@@ -35,6 +36,9 @@ public class ChatViewModel extends ViewModel {
     private final ChatRepository chatRepo;
     private final UserRepository userRepo;
 
+    private final ApartmentRepository apartmentRepo;
+
+
     private final MutableLiveData<List<Message>> messages = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<String> toast = new MutableLiveData<>();
 
@@ -47,10 +51,12 @@ public class ChatViewModel extends ViewModel {
     private List<ChatListItem> allChats = new ArrayList<>();
 
 
-    public ChatViewModel(ChatRepository chatRepo, UserRepository userRepo) {
-        this.chatRepo = chatRepo;
+    public ChatViewModel(UserRepository userRepo, ChatRepository chatRepo, ApartmentRepository apartmentRepo) {
         this.userRepo = userRepo;
+        this.chatRepo = chatRepo;
+        this.apartmentRepo = apartmentRepo;
     }
+
 
     public LiveData<List<Message>> getMessages() {
         return messages;
@@ -71,12 +77,28 @@ public class ChatViewModel extends ViewModel {
             return;
         }
 
-        Message message = new Message(fromUid, toUserId, text, apartmentId, System.currentTimeMillis());
-        message.setSenderName(userRepo.getCurrentUserName()); // ✅ הוסף שורה זו
-        chatRepo.sendMessage(chatId, message)
-                .addOnSuccessListener(r -> toast.setValue("הודעה נשלחה"))
-                .addOnFailureListener(e -> toast.setValue("שגיאה: " + e.getMessage()));
+        // טען את פרטי הדירה לפי apartmentId
+        apartmentRepo.getApartmentById(apartmentId).addOnSuccessListener(apartment -> {
+            if (apartment == null) {
+                toast.setValue("שגיאה: לא נמצאה דירה");
+                return;
+            }
+
+            Message message = new Message(fromUid, toUserId, text, apartmentId, System.currentTimeMillis());
+            message.setSenderName(userRepo.getCurrentUserName());
+
+            // 👇 הוסף כתובת מהדירה להודעה
+            message.setAddressStreet(apartment.getStreet());
+            message.setAddressHouseNumber(String.valueOf(apartment.getHouseNumber()));
+            message.setAddressCity(apartment.getCity());
+
+            // שלח את ההודעה
+            chatRepo.sendMessage(chatId, message)
+                    .addOnSuccessListener(r -> toast.setValue("הודעה נשלחה"))
+                    .addOnFailureListener(e -> toast.setValue("שגיאה: " + e.getMessage()));
+        }).addOnFailureListener(e -> toast.setValue("שגיאה בטעינת הדירה: " + e.getMessage()));
     }
+
 
     public void sendMessageWithImage(String chatId, String toUserId, String apartmentId, String text, Uri imageUri) {
         String fromUid = uid();
@@ -162,6 +184,9 @@ public class ChatViewModel extends ViewModel {
                             chat.setHasUnread(!msg.isRead() && msg.getToUserId().equals(me));
                             chat.setFromUserName(chat.getFromUserId());
                             chat.setApartmentName(apt);
+                            chat.setAddressStreet(msg.getAddressStreet());
+                            chat.setAddressHouseNumber(msg.getAddressHouseNumber());
+                            chat.setAddressCity(msg.getAddressCity());
                             chat.setType("private");
                             chatMap.put(chatKey, chat);
                         }
@@ -265,6 +290,23 @@ public class ChatViewModel extends ViewModel {
                 groupChat.setGroupName(chat.getTitle());
 
                 GroupChatListItem groupItem = new GroupChatListItem(groupChat);
+
+// טען כתובת הדירה מה-Repository והכנס לפריט
+                apartmentRepo.getApartmentDetails(chat.getApartmentId())
+                        .addOnSuccessListener(apartment -> {
+                            if (apartment != null) {
+                                groupItem.setAddressStreet(apartment.getStreet());
+                                groupItem.setAddressHouseNumber(String.valueOf(apartment.getHouseNumber()));
+                                groupItem.setAddressCity(apartment.getCity());
+
+                                chats.setValue(new ArrayList<>(allChats)); // נעדכן אחרי שהכתובת נטענה
+                            }
+                        });
+
+
+                groupItem.setAddressStreet(chat.getAddressStreet());
+                groupItem.setAddressHouseNumber(chat.getAddressHouseNumber());
+                groupItem.setAddressCity(chat.getAddressCity());
 
                 Message last = chat.getLastMessageObj();
                 if (last != null) {

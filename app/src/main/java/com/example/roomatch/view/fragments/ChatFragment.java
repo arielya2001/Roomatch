@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.ChatAdapter;
 import com.example.roomatch.model.Message;
+import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.model.repository.ChatRepository;
 import com.example.roomatch.model.repository.UserRepository;
 import com.example.roomatch.viewmodel.ChatViewModel;
@@ -59,7 +60,11 @@ public class ChatFragment extends Fragment {
             @Override
             @SuppressWarnings("unchecked")
             public <T extends androidx.lifecycle.ViewModel> T create(@NonNull Class<T> c) {
-                return (T) new ChatViewModel(new ChatRepository(requireContext()), new UserRepository());
+                return (T) new ChatViewModel(
+                        new UserRepository(),
+                        new ChatRepository(requireContext()),
+                        new ApartmentRepository()
+                );
             }
         }).get(ChatViewModel.class);
 

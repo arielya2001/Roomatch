@@ -107,6 +107,22 @@ public class ApartmentRepository {
                 });
     }
 
+    public Task<Apartment> getApartmentById(String apartmentId) {
+        return FirebaseFirestore.getInstance()
+                .collection("apartments")
+                .document(apartmentId)
+                .get()
+                .continueWith(task -> {
+                    DocumentSnapshot doc = task.getResult();
+                    if (doc.exists()) {
+                        return doc.toObject(Apartment.class);
+                    } else {
+                        return null;
+                    }
+                });
+    }
+
+
     /**
      * מעדכן דירה קיימת עם פרטים חדשים ותמונה חדשה אם יש.
      */

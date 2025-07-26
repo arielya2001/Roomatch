@@ -4,6 +4,20 @@ public class GroupChatListItem implements ChatListItem {
     private final GroupChat groupChat;
     private String lastMessageSenderName;
 
+    private String addressStreet;
+    private String addressHouseNumber;
+    private String addressCity;
+
+    public String getAddressStreet() { return addressStreet; }
+    public void setAddressStreet(String addressStreet) { this.addressStreet = addressStreet; }
+
+    public String getAddressHouseNumber() { return addressHouseNumber; }
+    public void setAddressHouseNumber(String addressHouseNumber) { this.addressHouseNumber = addressHouseNumber; }
+
+    public String getAddressCity() { return addressCity; }
+    public void setAddressCity(String addressCity) { this.addressCity = addressCity; }
+
+
     public GroupChatListItem(GroupChat groupChat) {
         this.groupChat = groupChat;
     }
@@ -28,8 +42,13 @@ public class GroupChatListItem implements ChatListItem {
 
     @Override
     public String getSubText() {
-        return "דירה: " + groupChat.getApartmentId();
+        if (addressStreet != null && addressHouseNumber != null && addressCity != null) {
+            return addressStreet + " " + addressHouseNumber + ", " + addressCity;
+        } else {
+            return "דירה: " + groupChat.getApartmentId();
+        }
     }
+
 
     @Override
     public String getLastMessage() {

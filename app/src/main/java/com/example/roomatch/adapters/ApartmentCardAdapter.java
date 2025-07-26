@@ -57,13 +57,19 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
         h.houseNumber.setText(String.valueOf(apt.getHouseNumber()));
         h.price.setText(" חודש / " + apt.getPrice() + " ₪");
 
+// מנקה את התמונה הקודמת כדי למנוע בלבול של תמונות ממוחזרות
+        Glide.with(h.itemView.getContext()).clear(h.apartmentImageView);
+
         String img = apt.getImageUrl() != null ? apt.getImageUrl() : "";
         if (!img.isEmpty()) {
             Glide.with(h.itemView.getContext())
                     .load(img)
                     .placeholder(R.drawable.placeholder_image)
                     .into(h.apartmentImageView);
+        } else {
+            h.apartmentImageView.setImageResource(R.drawable.placeholder_image);
         }
+
 
         /*  --- clicks --- */
         h.itemView.setOnClickListener(v -> {

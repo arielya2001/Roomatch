@@ -55,7 +55,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         String time = formatTime(item.getTimestamp());
         holder.textViewTime.setText(time);
         holder.textViewSender.setText("הודעה אחרונה מאת: " + item.getLastMessageSenderName());
-        holder.textViewApartment.setText(item.getSubText());
+        holder.textViewApartment.setText("כתובת: " + item.getSubText());
         holder.textViewMessage.setText("הודעה אחרונה: " + item.getLastMessage());
 
         String participants = item.getParticipantsString();

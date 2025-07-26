@@ -12,6 +12,35 @@ public class Chat implements ChatListItem {
     private String fromUserName;
     private String apartmentName;
 
+    private String addressStreet;
+    private String addressHouseNumber;
+    private String addressCity;
+
+    public String getAddressStreet() {
+        return addressStreet;
+    }
+
+    public void setAddressStreet(String addressStreet) {
+        this.addressStreet = addressStreet;
+    }
+
+    public String getAddressHouseNumber() {
+        return addressHouseNumber;
+    }
+
+    public void setAddressHouseNumber(String addressHouseNumber) {
+        this.addressHouseNumber = addressHouseNumber;
+    }
+
+    public String getAddressCity() {
+        return addressCity;
+    }
+
+    public void setAddressCity(String addressCity) {
+        this.addressCity = addressCity;
+    }
+
+
     private String toUserId;
 
     public String getToUserId() { return toUserId; }
@@ -95,8 +124,15 @@ public class Chat implements ChatListItem {
 
     @Override
     public String getSubText() {
-        return "דירה: " + (apartmentName != null ? apartmentName : apartmentId);
+        if (addressStreet != null && addressHouseNumber != null && addressCity != null) {
+            return addressStreet + " " + addressHouseNumber + ", " + addressCity;
+        } else if (apartmentName != null) {
+            return apartmentName;
+        } else {
+            return apartmentId;
+        }
     }
+
 
     @Override
     public String getLastMessage() {
