@@ -9,7 +9,10 @@ import com.example.roomatch.model.repository.UserRepository;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class HomeViewModel extends ViewModel {
 
@@ -46,10 +49,63 @@ public class HomeViewModel extends ViewModel {
                 .addOnSuccessListener(query -> {
                     List<UserProfile> users = new ArrayList<>();
                     for (DocumentSnapshot doc : query.getDocuments()) {
-                        UserProfile profile = doc.toObject(UserProfile.class);
-                        if (profile != null) {
-                            users.add(profile);
+                        try
+                        {
+                            UserProfile profile = doc.toObject(UserProfile.class);
+                            if (profile != null) {
+                                if (profile.getUserId() == null) {
+                                    // מחיקת הדוקומנט מהקולקשיין
+                                    doc.getReference().delete();
+                                } else {
+                                    users.add(profile);
+                                }
+                            }
                         }
+                        catch (RuntimeException mapEx)
+                        {
+                            String userType = doc.getString("userType");
+                            List<String> contactsIds;
+                            String description="";
+                            String interests="";
+                            String lifestyle="";
+                            String selectedCity="";
+                            Map<String,Double> selectedLocation = Collections.emptyMap();
+                            String selectedStreet="";
+                            if(userType=="seeker")
+                            {
+                                Object contactsIdsRAW = doc.get("contactIds");
+                                if(contactsIdsRAW instanceof List)
+                                {
+                                    @SuppressWarnings("unchecked")
+                                    List<String> list = (List<String>) contactsIdsRAW;
+                                    contactsIds=list;
+                                }
+                                description=doc.getString("description");
+                                interests = doc.getString("interests");
+                                lifestyle = doc.getString("lifestyle");
+                                selectedCity = doc.getString("selectedCity");
+                                Object selectedLocationRAW = doc.get("contactIds");
+
+                                if(selectedLocationRAW instanceof Map)
+                                {
+                                    @SuppressWarnings("unchecked")
+                                    Map<String,Double> map = (Map<String,Double>) selectedLocationRAW;
+                                    selectedLocation=map;
+                                }
+
+                                selectedStreet = doc.getString("selectedStreet");
+
+                            }
+                            long age = doc.getLong("age");
+
+
+                            String fullName = doc.getString("fullName");
+                            String gender = doc.getString("gender");
+                            String userId = doc.getString("userId");
+                            UserProfile user = new UserProfile(fullName,(int)age,gender,lifestyle,interests,userType,selectedCity,selectedStreet,selectedLocation.get("latitude"),selectedLocation.get("longitude"),description);
+                            users.add(user);
+                        }
+
                     }
                     userList.setValue(users);
                 })

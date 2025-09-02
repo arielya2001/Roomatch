@@ -46,7 +46,7 @@ public class CreateProfileViewModel extends ViewModel {
             toastMessage.setValue("שגיאה: משתמש לא מחובר");
             return;
         }
-
+        profile.setUserId(userId);
         db.collection("users").document(userId).set(profile)
                 .addOnSuccessListener(aVoid -> {
                     toastMessage.setValue("פרופיל נשמר בהצלחה");

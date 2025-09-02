@@ -1,6 +1,7 @@
 package com.example.roomatch.model;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.firestore.Exclude;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -48,13 +49,23 @@ public class UserProfile implements Serializable {
     public String getLifestyle() { return lifestyle; }
     public void setLifestyle(String lifestyle) { this.lifestyle = lifestyle; }
     public String getInterests() { return interests; }
+    @Exclude
     public List<String> getLifeStyleslist()
     {
-        return Arrays.asList(this.lifestyle.split(","));
+        if(lifestyle!=null)
+        {
+            return Arrays.asList(this.lifestyle.split(","));
+        }
+        return new ArrayList<String>();
     }
+    @Exclude
     public List<String> getInterestsList()
     {
-        return Arrays.asList(this.interests.split(","));
+        if(interests!=null)
+        {
+            return Arrays.asList(this.interests.split(","));
+        }
+        return new ArrayList<String>();
     }
     public void setInterests(String interests) { this.interests = interests; }
     public String getUserType() { return userType; }

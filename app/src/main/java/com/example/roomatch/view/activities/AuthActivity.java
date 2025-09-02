@@ -136,6 +136,7 @@ public class AuthActivity extends AppCompatActivity {
                                 UserProfile userProfile = new UserProfile();
                                 userProfile.setFullName(acct.getDisplayName());
                                 userProfile.setUserType("");
+                                userProfile.setUserId(uid);
 
                                 db.collection("users").document(uid)
                                         .set(userProfile)
@@ -202,7 +203,7 @@ public class AuthActivity extends AppCompatActivity {
                     UserProfile userProfile = new UserProfile();
                     userProfile.setFullName(username);
                     userProfile.setUserType("");
-
+                    userProfile.setUserId(uid);
                     db.collection("users").document(uid).set(userProfile)
                             .addOnSuccessListener(unused -> {
                                 Toast.makeText(this, "נרשמת בהצלחה", Toast.LENGTH_SHORT).show();
