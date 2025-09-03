@@ -1,83 +1,146 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/partnerLayout"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    tools:context=".view.fragments.PartnerFragment">
+    android:padding="16dp">
 
-    <!-- כותרת -->
-    <TextView
-        android:id="@+id/textViewTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="שותפים פוטנציאליים"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:importantForAccessibility="yes" />
-
-    <!-- שורת סינון -->
     <LinearLayout
-        android:id="@+id/filterLayoutPartner"
+        android:id="@+id/layoutContent"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="8dp"
-        android:gravity="center_vertical">
+        android:layout_height="match_parent">
 
-        <!-- Spinner שדה סינון -->
-        <Spinner
-            android:id="@+id/spinnerPartnerFilterField"
-            android:layout_width="0dp"
+        <!-- Search bar -->
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchViewPartner"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginEnd="4dp" />
+            android:queryHint="חפש לפי שם..."
+            android:iconifiedByDefault="false"
+            android:layout_marginTop="8dp" />
 
-        <!-- Spinner סדר -->
-        <Spinner
-            android:id="@+id/spinnerPartnerOrder"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginEnd="4dp" />
-
-        <!-- כפתור סינון -->
+        <!-- Filter button with the funnel icon (styled like apartment search) -->
         <ImageButton
-            android:id="@+id/buttonPartnerFilter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:src="@mipmap/ic_filter_foreground"
-            android:contentDescription="סנן" />
+            android:id="@+id/buttonToggleFilters"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="2dp"
+            android:background="@mipmap/ic_filter_foreground"
+            android:src="@null"
+            android:contentDescription="סינון"
+            android:padding="0dp"
+            android:scaleType="centerInside"
+            android:foreground="?attr/selectableItemBackgroundBorderless" />
 
-        <!-- כפתור איפוס -->
-        <ImageButton
-            android:id="@+id/buttonPartnerClear"
-            android:layout_width="wrap_content"
+        <!-- Filters container (hidden by default) -->
+        <LinearLayout
+            android:id="@+id/filterCheckboxContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:contentDescription="נקה" />
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- Lifestyle Filter Section -->
+            <Button
+                android:id="@+id/buttonToggleLifestyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="סגנון חיים"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Lifestyle checkboxes (hidden initially) -->
+            <LinearLayout
+                android:id="@+id/lifestyleCheckboxContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone" />
+
+            <!-- Interests Filter Section -->
+            <Button
+                android:id="@+id/buttonToggleInterests"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="תחומי עניין"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Interests checkboxes (hidden initially) -->
+            <LinearLayout
+                android:id="@+id/interestsCheckboxContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone" />
+            
+            <!-- Location Filter Section -->
+            <Button
+                android:id="@+id/buttonToggleLocation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="איפה אני מחפש דירה"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Location checkboxes (hidden initially) -->
+            <LinearLayout
+                android:id="@+id/locationCheckboxContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone" />
+
+            <!-- Reset filters button container for better UX -->
+            <LinearLayout
+                android:id="@+id/resetFilterContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"
+                android:padding="8dp"
+                android:layout_marginTop="8dp">
+                
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                    android:layout_marginEnd="8dp" />
+                    
+                <Button
+                    android:id="@+id/buttonResetFilters"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="אפס את כל הסינונים"
+                    android:textColor="@color/purple_500"
+                    android:background="?attr/selectableItemBackground" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Partner list -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewPartners"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical" />
+
     </LinearLayout>
 
-    <!-- שורת חיפוש -->
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/searchViewPartner"
-        android:layout_width="match_parent"
+    <!-- Floating action button for advanced search -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/buttonAdvancedSearch"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:queryHint="חפש לפי שם"
-        android:iconifiedByDefault="false"
-        android:layout_marginTop="8dp" />
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="12dp"
+        android:contentDescription="חיפוש מתקדם"
+        android:src="@android:drawable/ic_menu_mapmode"
+        app:backgroundTint="@color/purple_500" />
 
-    <!-- RecyclerView -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewPartners"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingTop="12dp"
-        android:contentDescription="רשימת שותפים פוטנציאליים"
-        tools:ignore="SpeakableTextPresentCheck" />
-</LinearLayout>
+</RelativeLayout>

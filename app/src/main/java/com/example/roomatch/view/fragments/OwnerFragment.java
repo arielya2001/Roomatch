@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import androidx.annotation.*;
@@ -17,6 +18,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.roomatch.R;
+import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
 import com.example.roomatch.viewmodel.ViewModelFactoryProvider;
 import com.google.android.gms.maps.model.LatLng;
@@ -30,17 +32,17 @@ import java.util.Arrays;
 
 public class OwnerFragment extends Fragment {
 
+    EditText cityEditText, streetEditText, houseNumberEditText;
     EditText priceEditText, roommatesEditText, descriptionEditText;
-    Button selectImageButton, publishButton, cameraButton;
+    Button selectImageButton, publishButton, cancelButton, cameraButton;
     ImageView imageView;
     Uri imageUri;
     OwnerApartmentsViewModel viewModel;
 
     private String selectedCity;
     private String selectedStreet;
-    private LatLng selectedLocation;
+    private LatLng selectedLocation; // ממפות
 
-    private String selectedHouseNumber;
 
     public OwnerFragment() {}
 
@@ -59,16 +61,19 @@ public class OwnerFragment extends Fragment {
         viewModel = new ViewModelProvider(this, ViewModelFactoryProvider.createFactory())
                 .get(OwnerApartmentsViewModel.class);
 
+        houseNumberEditText = view.findViewById(R.id.editTextHouseNumber);
         priceEditText = view.findViewById(R.id.editTextPrice);
         roommatesEditText = view.findViewById(R.id.editTextRoommates);
         descriptionEditText = view.findViewById(R.id.editTextDescription);
         selectImageButton = view.findViewById(R.id.buttonSelectImage);
         publishButton = view.findViewById(R.id.buttonPublish);
+        cancelButton = view.findViewById(R.id.cancel);
         cameraButton = view.findViewById(R.id.camera);
         imageView = view.findViewById(R.id.imageViewPreview);
 
         selectImageButton.setOnClickListener(v -> openFileChooser());
         publishButton.setOnClickListener(v -> publishApartment());
+        cancelButton.setOnClickListener(v -> resetForm());
         cameraButton.setOnClickListener(v -> openCamera());
 
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), this::showToast);
@@ -82,64 +87,48 @@ public class OwnerFragment extends Fragment {
             }
         });
 
-        // הגדרת AutocompleteSupportFragment
-// אתחול Places אם עדיין לא אותחל
-        if (!com.google.android.libraries.places.api.Places.isInitialized()) {
-            com.google.android.libraries.places.api.Places.initialize(requireContext(), getString(R.string.google_maps_key));
-        }
+        // --- AutocompleteSupportFragment הגדרה של ---
+        AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
+                getChildFragmentManager().findFragmentById(R.id.autocompleteFragmentContainer);
 
-// יצירה דינמית של AutocompleteSupportFragment בתוך FrameLayout
-        AutocompleteSupportFragment autocompleteFragment = new AutocompleteSupportFragment();
+        if (autocompleteFragment != null) {
+            autocompleteFragment.setPlaceFields(Arrays.asList(
+                    Place.Field.ID,
+                    Place.Field.LAT_LNG,
+                    Place.Field.ADDRESS_COMPONENTS
+            ));
 
-        getChildFragmentManager().beginTransaction()
-                .replace(R.id.autocompleteFragmentContainer, autocompleteFragment)
-                .commitNow();
+            autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+                @Override
+                public void onPlaceSelected(@NonNull Place place) {
+                    LatLng latLng = place.getLatLng();
+                    String city = extractComponent(place, "locality");
+                    String street = extractComponent(place, "route");
 
-// הגדרת שדות לקבלה
-        autocompleteFragment.setPlaceFields(Arrays.asList(
-                Place.Field.ID,
-                Place.Field.LAT_LNG,
-                Place.Field.ADDRESS_COMPONENTS
-        ));
-
-// מאזין לבחירת מקום
-        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
-            @Override
-            public void onPlaceSelected(@NonNull Place place) {
-                LatLng latLng = place.getLatLng();
-                String city = extractComponent(place, "locality");
-                String street = extractComponent(place, "route");
-                String houseNumber = extractComponent(place, "street_number"); // ⬅️ חדש
-
-                if (latLng == null || city == null || street == null) {
-                    showToast("יש לבחור כתובת תקינה הכוללת עיר ורחוב");
-                    return;
-                }
-
-                selectedCity = city;
-                selectedStreet = street;
-                selectedHouseNumber = houseNumber != null ? houseNumber : ""; // ✅ שמור בנפרד
-                selectedLocation = latLng;
-
-                TextView addressView = requireView().findViewById(R.id.textViewSelectedAddress);
-                if (addressView != null) {
-                    String displayAddress = "כתובת נבחרה: " + street;
-                    if (!selectedHouseNumber.isEmpty()) {
-                        displayAddress += " " + selectedHouseNumber;
+                    if (latLng == null || city == null || street == null) {
+                        showToast("יש לבחור כתובת תקינה הכוללת עיר ורחוב");
+                        return;
                     }
-                    displayAddress += ", " + city;
-                    addressView.setText(displayAddress);
+
+                    viewModel.setSelectedAddress(city, street, latLng);
+                    showToast("כתובת נבחרה: " + street + ", " + city);
                 }
-            }
 
-            @Override
-            public void onError(@NonNull com.google.android.gms.common.api.Status status) {
-                showToast("שגיאה בבחירת כתובת: " + status.getStatusMessage());
-            }
-        });
-
-
+                @Override
+                public void onError(@NonNull com.google.android.gms.common.api.Status status) {
+                    showToast("שגיאה בבחירת כתובת: " + status.getStatusMessage());
+                }
+            });
+        }
     }
+
+    public void setSelectedAddress(String city, String street, LatLng location) {
+        this.selectedCity = city;
+        this.selectedStreet = street;
+        this.selectedLocation = location;
+    }
+
+
 
     private void showToast(String message) {
         if (getContext() != null) {
@@ -173,7 +162,7 @@ public class OwnerFragment extends Fragment {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, 104);
             return;
         }
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(intent, 105);
     }
 
@@ -211,40 +200,40 @@ public class OwnerFragment extends Fragment {
     }
 
     private void publishApartment() {
+        String houseNumStr = houseNumberEditText.getText().toString().trim();
         String priceStr = priceEditText.getText().toString().trim();
         String roommatesStr = roommatesEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
 
-        if (selectedCity == null || selectedStreet == null || selectedLocation == null ||
-                priceStr.isEmpty() || roommatesStr.isEmpty() || description.isEmpty()) {
-            showToast("יש למלא את כל השדות ולבחור כתובת תקינה");
+        if (houseNumStr.isEmpty() || priceStr.isEmpty() || roommatesStr.isEmpty() || description.isEmpty()) {
+            showToast("כל השדות חייבים להיות מלאים");
             return;
         }
 
-        viewModel.publishApartment(selectedCity, selectedStreet, selectedHouseNumber, priceStr, roommatesStr, description, imageUri, selectedLocation);
+        viewModel.publishApartment(houseNumStr, priceStr, roommatesStr, description, imageUri);
     }
 
+
     private void resetForm() {
-        selectedCity = null;
-        selectedStreet = null;
-        selectedLocation = null;
+        if (cityEditText != null) cityEditText.setText("");
+        if (streetEditText != null) streetEditText.setText("");
+        if (houseNumberEditText != null) houseNumberEditText.setText("");
         if (priceEditText != null) priceEditText.setText("");
         if (roommatesEditText != null) roommatesEditText.setText("");
         if (descriptionEditText != null) descriptionEditText.setText("");
         if (imageView != null) imageView.setImageDrawable(null);
         imageUri = null;
-
-        TextView addressView = requireView().findViewById(R.id.textViewSelectedAddress);
-        if (addressView != null) addressView.setText("לא נבחרה כתובת");
     }
 
+
     private String extractComponent(Place place, String type) {
-        if (place.getAddressComponents() == null) return null;
+        if (place.getAddressComponents() == null) return "";
         for (AddressComponent component : place.getAddressComponents().asList()) {
             if (component.getTypes().contains(type)) {
                 return component.getName();
             }
         }
-        return null;
+        return "";
     }
+
 }

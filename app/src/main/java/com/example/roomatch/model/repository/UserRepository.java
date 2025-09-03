@@ -33,34 +33,6 @@ public class UserRepository {
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
     private final FirebaseStorage storage = FirebaseStorage.getInstance();
 
-    private String currentUserName;
-
-    public void loadCurrentUserName() {
-        String uid = getCurrentUserId();
-        if (uid == null) return;
-
-        db.collection("users").document(uid).get()
-                .addOnSuccessListener(snapshot -> {
-                    UserProfile profile = snapshot.toObject(UserProfile.class);
-                    if (profile != null) {
-                        currentUserName = profile.getFullName();
-                    }
-                });
-    }
-
-    public String getCurrentUserName() {
-        return currentUserName;
-    }
-
-    public Task<String> getUserNameById(String userId) {
-        return getUserById(userId).continueWith(task -> {
-            UserProfile profile = task.getResult();
-            return (profile != null && profile.getFullName() != null) ? profile.getFullName() : "אנונימי";
-        });
-    }
-
-
-
     /* ---------- כללי ---------- */
     public String getCurrentUserId() {
         FirebaseUser user = auth.getCurrentUser();

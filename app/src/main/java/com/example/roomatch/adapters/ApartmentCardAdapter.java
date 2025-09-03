@@ -25,7 +25,7 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
         void onEditApartmentClick(Apartment apartment);
         void onDeleteApartmentClick(Apartment apartment);
 
-//        void onReportApartmentClick(Apartment apartment);
+        void onReportApartmentClick(Apartment apartment);
 
     }
 
@@ -57,19 +57,13 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
         h.houseNumber.setText(String.valueOf(apt.getHouseNumber()));
         h.price.setText(" חודש / " + apt.getPrice() + " ₪");
 
-// מנקה את התמונה הקודמת כדי למנוע בלבול של תמונות ממוחזרות
-        Glide.with(h.itemView.getContext()).clear(h.apartmentImageView);
-
         String img = apt.getImageUrl() != null ? apt.getImageUrl() : "";
         if (!img.isEmpty()) {
             Glide.with(h.itemView.getContext())
                     .load(img)
                     .placeholder(R.drawable.placeholder_image)
                     .into(h.apartmentImageView);
-        } else {
-            h.apartmentImageView.setImageResource(R.drawable.placeholder_image);
         }
-
 
         /*  --- clicks --- */
         h.itemView.setOnClickListener(v -> {
@@ -81,9 +75,9 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
         h.buttonDeleteApartment.setOnClickListener(v -> {
             if (listener != null) listener.onDeleteApartmentClick(apt);
         });
-//        h.buttonReportApartment.setOnClickListener(v -> {
-//            if (listener != null) listener.onReportApartmentClick(apt);
-//        });
+        h.buttonReportApartment.setOnClickListener(v -> {
+            if (listener != null) listener.onReportApartmentClick(apt);
+        });
 
     }
 
@@ -117,7 +111,7 @@ public class ApartmentCardAdapter extends RecyclerView.Adapter<ApartmentCardAdap
             price = itemView.findViewById(R.id.textViewApartmentPrice);
             buttonEditApartment = itemView.findViewById(R.id.buttonEditApartment);
             buttonDeleteApartment = itemView.findViewById(R.id.buttonDeleteApartment);
-//            buttonReportApartment = itemView.findViewById(R.id.buttonReportApartment);
+            buttonReportApartment = itemView.findViewById(R.id.buttonReportApartment);
 
         }
     }

@@ -1,7 +1,6 @@
 package com.example.roomatch.model.repository;
 
 import android.net.Uri;
-import android.util.Log;
 
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.Contact;
@@ -107,22 +106,6 @@ public class ApartmentRepository {
                 });
     }
 
-    public Task<Apartment> getApartmentById(String apartmentId) {
-        return FirebaseFirestore.getInstance()
-                .collection("apartments")
-                .document(apartmentId)
-                .get()
-                .continueWith(task -> {
-                    DocumentSnapshot doc = task.getResult();
-                    if (doc.exists()) {
-                        return doc.toObject(Apartment.class);
-                    } else {
-                        return null;
-                    }
-                });
-    }
-
-
     /**
      * מעדכן דירה קיימת עם פרטים חדשים ותמונה חדשה אם יש.
      */
@@ -225,33 +208,6 @@ public class ApartmentRepository {
                     return groups;
                 });
     }
-    public Task<String> createGroupChatAndReturnId(String ownerId, String apartmentId, String groupId) {
-        return getExistingGroupChatId(groupId, apartmentId).continueWithTask(existingTask -> {
-            String existingId = existingTask.getResult();
-            if (existingId != null) {
-                Log.d("Repository", "🔁 צ'אט קבוצתי כבר קיים: " + existingId);
-                return Tasks.forResult(existingId);
-            }
-
-            return getGroupMemberIds(groupId).continueWithTask(task -> {
-                List<String> memberIds = task.getResult();
-                if (memberIds == null) memberIds = new ArrayList<>();
-
-                Map<String, Object> chatData = new HashMap<>();
-                chatData.put("groupId", groupId);
-                chatData.put("apartmentId", apartmentId);
-                chatData.put("memberIds", memberIds);
-                chatData.put("ownerId", ownerId);
-                chatData.put("createdAt", System.currentTimeMillis());
-
-                return db.collection("group_chats")
-                        .add(chatData)
-                        .continueWith(createdChatTask -> createdChatTask.getResult().getId());
-            });
-        });
-    }
-
-
 
     /**
      * שולח הודעה בשם קבוצה לבעל הדירה.
@@ -426,69 +382,47 @@ public class ApartmentRepository {
         return db.collection("users").document(userId).get();
     }
 
-    public Task<String> sendGroupMessageAndCreateChat(String ownerId, String apartmentId, String groupId) {
+    public Task<Void> sendGroupMessageAndCreateChat(String ownerId, String apartmentId, String groupId) {
         String currentUserId = getCurrentUserId();
         if (currentUserId == null || ownerId == null || apartmentId == null || groupId == null) {
             return Tasks.forException(new IllegalArgumentException("Missing required parameters"));
         }
 
-        // בדיקה אם כבר קיים group_chat כזה
-        return db.collection("group_chats")
-                .whereEqualTo("groupId", groupId)
-                .whereEqualTo("apartmentId", apartmentId)
-                .get()
-                .continueWithTask(existingChatTask -> {
-                    if (!existingChatTask.isSuccessful()) {
-                        throw existingChatTask.getException();
-                    }
+        return getGroupMemberIds(groupId).continueWithTask(task -> {
+            List<String> memberIds = task.getResult();
+            if (memberIds == null) memberIds = new ArrayList<>();
 
-                    // ✅ אם כבר קיים – נחזיר את ה־ID
-                    if (!existingChatTask.getResult().isEmpty()) {
-                        String existingChatId = existingChatTask.getResult().getDocuments().get(0).getId();
-                        return Tasks.forResult(existingChatId);
-                    }
+            // יצירת צ'אט קבוצתי
+            Map<String, Object> chatData = new HashMap<>();
+            chatData.put("groupId", groupId);
+            chatData.put("apartmentId", apartmentId);
+            chatData.put("memberIds", memberIds);
+            chatData.put("ownerId", ownerId);
+            chatData.put("createdAt", System.currentTimeMillis());
 
-                    // ❌ לא קיים – ניצור חדש
-                    return getGroupMemberIds(groupId).continueWithTask(task -> {
-                        List<String> memberIds = task.getResult();
-                        if (memberIds == null) memberIds = new ArrayList<>();
+            return db.collection("group_chats")
+                    .add(chatData)
+                    .continueWithTask(chatTask -> {
+                        if (!chatTask.isSuccessful()) {
+                            throw chatTask.getException();
+                        }
+                        String chatId = chatTask.getResult().getId();
 
-                        Map<String, Object> chatData = new HashMap<>();
-                        chatData.put("groupId", groupId);
-                        chatData.put("apartmentId", apartmentId);
-                        chatData.put("memberIds", memberIds);
-                        chatData.put("ownerId", ownerId);
-                        chatData.put("createdAt", System.currentTimeMillis());
+                        // שליחת הודעה ראשונית כחלק מהצ'אט
+                        Map<String, Object> initialMessage = new HashMap<>();
+                        initialMessage.put("groupChatId", chatId);
+                        initialMessage.put("fromUserId", currentUserId);
+                        initialMessage.put("text", "הקבוצה " + getGroupName(groupId) + " פתחה צ'אט לגבי הדירה");
+                        initialMessage.put("timestamp", System.currentTimeMillis());
 
-                        return db.collection("group_chats").add(chatData)
-                                .continueWithTask(chatTask -> {
-                                    if (!chatTask.isSuccessful()) {
-                                        throw chatTask.getException();
-                                    }
-                                    String newChatId = chatTask.getResult().getId();
-                                    return Tasks.forResult(newChatId);
-                                });
-                    });
-                });
+                        return db.collection("group_messages")
+                                .document(chatId)
+                                .collection("chat")
+                                .add(initialMessage);
+                    })
+                    .continueWithTask(messageTask -> Tasks.forResult(null));
+        });
     }
-    public Task<String> getExistingGroupChatId(String groupId, String apartmentId) {
-        return db.collection("group_chats")
-                .whereEqualTo("groupId", groupId)
-                .whereEqualTo("apartmentId", apartmentId)
-                .limit(1)
-                .get()
-                .continueWith(task -> {
-                    if (!task.isSuccessful()) throw task.getException();
-                    if (!task.getResult().isEmpty()) {
-                        return task.getResult().getDocuments().get(0).getId();
-                    } else {
-                        return null;
-                    }
-                });
-    }
-
-
-
     public Task<List<GroupChat>> getGroupChatsForUser(String userId) {
         Task<QuerySnapshot> asMemberTask = db.collection("group_chats")
                 .whereArrayContains("memberIds", userId)
@@ -578,62 +512,28 @@ public class ApartmentRepository {
                     return messages;
                 });
     }
-    private String getOwnerIdForGroupChatSync(String groupChatId) {
-        try {
-            DocumentSnapshot snapshot = Tasks.await(
-                    db.collection("group_chats").document(groupChatId).get()
-            );
-            if (snapshot.exists()) {
-                return snapshot.getString("ownerId");
-            }
-        } catch (Exception e) {
-            Log.e("Repository", "שגיאה בקבלת ownerId", e);
-        }
-        return null;
-    }
-
 
 
     /**
      * שולח הודעה בצ'אט קבוצתי.
      */
     public Task<Void> sendGroupChatMessage(String groupChatId, String userId, String text) {
-        // נחזיר Task שמבצע את כל הפעולה
-        Task<DocumentSnapshot> groupChatDocTask =
-                db.collection("group_chats").document(groupChatId).get();
+        Map<String, Object> message = new HashMap<>();
+        message.put("fromUserId", userId);
+        message.put("text", text);
+        message.put("timestamp", System.currentTimeMillis());
 
-        return groupChatDocTask.continueWithTask(task -> {
-            if (!task.isSuccessful()) {
-                throw task.getException();
-            }
-
-            DocumentSnapshot doc = task.getResult();
-            String ownerId = doc.getString("ownerId");  // ✅ נשלף ממקום תקני
-
-            if (ownerId == null) {
-                throw new Exception("ownerId is missing in group_chat " + groupChatId);
-            }
-
-            Map<String, Object> message = new HashMap<>();
-            message.put("fromUserId", userId);
-            message.put("toUserId", ownerId);
-            message.put("text", text);
-            message.put("timestamp", System.currentTimeMillis());
-
-            return db.collection("group_messages")
-                    .document(groupChatId)
-                    .collection("chat")
-                    .add(message)
-                    .continueWith(innerTask -> {
-                        if (!innerTask.isSuccessful()) {
-                            throw innerTask.getException();
-                        }
-                        return null;
-                    });
-        });
+        return db.collection("group_messages")
+                .document(groupChatId) // 📄 שומר תחת document בשם groupChatId
+                .collection("chat")    // 📁 תת־collection בשם chat
+                .add(message)
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        throw task.getException();
+                    }
+                    return Tasks.forResult(null);
+                });
     }
-
-
     public Task<Void> reportApartment(String apartmentId, String ownerId, String reason, String details) {
         Map<String, Object> report = new HashMap<>();
         report.put("apartmentId", apartmentId);

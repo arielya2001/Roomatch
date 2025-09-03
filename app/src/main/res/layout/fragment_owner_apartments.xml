@@ -70,13 +70,13 @@
             android:layout_marginEnd="4dp"
             android:layout_weight="1" />
 
-<!--        <Button-->
-<!--            android:id="@+id/buttonOwnerFilter"-->
-<!--            style="@style/button_style"-->
-<!--            android:layout_width="30dp"-->
-<!--            android:layout_height="30dp"-->
-<!--            android:layout_marginEnd="4dp"-->
-<!--            android:background="@mipmap/ic_filter_foreground" />-->
+        <Button
+            android:id="@+id/buttonOwnerFilter"
+            style="@style/button_style"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="4dp"
+            android:background="@mipmap/ic_filter_foreground" />
 
         <TextView
             android:id="@+id/textViewTestMessage"
@@ -86,12 +86,12 @@
             android:text="" />
 
 
-<!--        <Button-->
-<!--            android:id="@+id/buttonOwnerClear"-->
-<!--            style="@style/button_style"-->
-<!--            android:layout_width="35dp"-->
-<!--            android:layout_height="35dp"-->
-<!--            android:background="@android:drawable/ic_menu_close_clear_cancel" />-->
+        <Button
+            android:id="@+id/buttonOwnerClear"
+            style="@style/button_style"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:background="@android:drawable/ic_menu_close_clear_cancel" />
     </LinearLayout>
 
     <!-- רשימת הדירות -->

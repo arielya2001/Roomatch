@@ -27,15 +27,8 @@ public class GroupChatFragment extends Fragment {
     private ImageButton sendButton;
     private GroupChatAdapter adapter;
 
-    private String groupChatId;
-
-    public static GroupChatFragment newInstance(String groupChatId) {
-        GroupChatFragment fragment = new GroupChatFragment();
-        Bundle args = new Bundle();
-        args.putString("groupChatId", groupChatId);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    private String groupId;
+    private String apartmentId;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -58,26 +51,35 @@ public class GroupChatFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         if (getArguments() != null) {
-            groupChatId = getArguments().getString("groupChatId");
+            groupId = getArguments().getString("groupId");
+            apartmentId = getArguments().getString("apartmentId");
 
-            if (groupChatId == null) {
-                Toast.makeText(getContext(), "שגיאה: groupChatId חסר", Toast.LENGTH_SHORT).show();
+            if (groupId == null || apartmentId == null) {
+                Toast.makeText(getContext(), "נתונים חסרים לפתיחת צ'אט", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // ✅ טעינת הודעות מה־Firestore לפי groupChatId
-            viewModel.loadMessages(groupChatId).observe(getViewLifecycleOwner(), messages -> {
-                adapter.updateMessages(messages);
-                recyclerView.scrollToPosition(adapter.getItemCount() - 1);
-            });
-
-            // ✅ שליחת הודעה חדשה לצ'אט
-            sendButton.setOnClickListener(v -> {
-                String text = messageInput.getText().toString().trim();
-                if (!text.isEmpty()) {
-                    viewModel.sendMessage(groupChatId, text);
-                    messageInput.setText("");
+            // 🧠 חיפוש groupChatId אמיתי מה־Firestore
+            viewModel.findGroupChatId(groupId, apartmentId).observe(getViewLifecycleOwner(), foundChatId -> {
+                if (foundChatId == null) {
+                    Toast.makeText(getContext(), "צ'אט קבוצתי לא נמצא", Toast.LENGTH_SHORT).show();
+                    return;
                 }
+
+                // ✅ טעינת הודעות עם ה־chatId שנמצא בפועל
+                viewModel.loadMessages(foundChatId).observe(getViewLifecycleOwner(), messages -> {
+                    adapter.updateMessages(messages);
+                    recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+                });
+
+                // ✅ שליחת הודעה עם ה־chatId האמיתי
+                sendButton.setOnClickListener(v -> {
+                    String text = messageInput.getText().toString().trim();
+                    if (!text.isEmpty()) {
+                        viewModel.sendMessage(foundChatId, text);
+                        messageInput.setText("");
+                    }
+                });
             });
         }
     }

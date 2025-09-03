@@ -24,14 +24,6 @@
         android:iconifiedByDefault="false"
         android:layout_marginBottom="8dp" />
 
-    <!-- Spinner חדש לסינון סוג צ'אט -->
-    <Spinner
-        android:id="@+id/spinnerChatType"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:spinnerMode="dropdown" />
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewChats"
         android:layout_width="match_parent"

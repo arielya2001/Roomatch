@@ -1,33 +1,19 @@
 package com.example.roomatch.model.repository;
 
-import android.content.Context;
 import android.net.Uri;
-import android.util.Log;
 
-import com.android.volley.Request;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.example.roomatch.model.Chat;
 import com.example.roomatch.model.Message;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 public class ChatRepository {
@@ -35,13 +21,6 @@ public class ChatRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final FirebaseStorage storage = FirebaseStorage.getInstance();
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
-
-    private final Context context;
-
-    public ChatRepository(Context context) {
-        this.context = context.getApplicationContext(); // שמירה על context בטוח
-    }
-
 
     public Task<DocumentReference> sendMessage(String chatId, Message message) {
         if (chatId == null || message == null || message.getFromUserId() == null || message.getToUserId() == null) {
@@ -52,101 +31,8 @@ public class ChatRepository {
         return db.collection("messages")
                 .document(chatId)
                 .collection("chat")
-                .add(message)
-                .addOnSuccessListener(docRef -> {});
+                .add(message);
     }
-    public Task<DocumentSnapshot> getGroupChatById(String groupChatId) {
-        return db.collection("group_chats")
-                .document(groupChatId)
-                .get();
-    }
-
-
-    public Task<List<DocumentSnapshot>> getAllGroupChatsForUser(String userId) {
-        Task<QuerySnapshot> byMember = db.collection("group_chats")
-                .whereArrayContains("memberIds", userId)
-                .get();
-
-        Task<QuerySnapshot> byOwner = db.collection("group_chats")
-                .whereEqualTo("ownerId", userId)
-                .get();
-
-        return Tasks.whenAllSuccess(byMember, byOwner)
-                .continueWith(task -> {
-                    Set<String> seen = new HashSet<>();
-                    List<DocumentSnapshot> combined = new ArrayList<>();
-
-                    for (Object result : task.getResult()) {
-                        QuerySnapshot qs = (QuerySnapshot) result;
-                        for (DocumentSnapshot doc : qs.getDocuments()) {
-                            if (seen.add(doc.getId())) {
-                                combined.add(doc);
-                            }
-                        }
-                    }
-
-                    return combined;
-                });
-    }
-
-
-
-    public Task<DocumentSnapshot> getLastGroupMessage(String groupChatId) {
-        return db.collection("group_messages")
-                .document(groupChatId)
-                .collection("chat")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(1)
-                .get()
-                .continueWith(task -> {
-                    if (!task.isSuccessful() || task.getResult().isEmpty()) {
-                        return null;
-                    }
-                    return task.getResult().getDocuments().get(0);
-                });
-    }
-
-
-    private void sendNotificationToRecipient(Message message) {
-        db.collection("users").document(message.getToUserId())
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    String token = snapshot.getString("fcmToken");
-                    if (token != null) {
-                        try {
-                            JSONObject notification = new JSONObject();
-                            notification.put("to", token);
-
-                            JSONObject body = new JSONObject();
-                            body.put("title", "Roomatch");
-                            body.put("body", "הודעה חדשה לגבי דירה שלך");
-                            notification.put("notification", body);
-
-                            JsonObjectRequest request = new JsonObjectRequest(
-                                    Request.Method.POST,
-                                    "https://fcm.googleapis.com/fcm/send",
-                                    notification,
-                                    response -> Log.d("FCM", "Notification sent"),
-                                    error -> Log.e("FCM", "Notification error", error)
-                            ) {
-                                @Override
-                                public Map<String, String> getHeaders() {
-                                    Map<String, String> headers = new HashMap<>();
-                                    headers.put("Authorization", "key=AIzaSyBHvJSGRqykrqDtYB-TN8C4C70OYPi_IMI"); // ⬅️ שים פה את מפתח השרת שלך
-                                    headers.put("Content-Type", "application/json");
-                                    return headers;
-                                }
-                            };
-
-                            Volley.newRequestQueue(context).add(request);
-
-                        } catch (Exception e) {
-                            Log.e("FCM", "Failed to send notification", e);
-                        }
-                    }
-                });
-    }
-
 
     public Task<DocumentReference> sendMessageWithImage(String chatId, Message message, Uri imageUri) {
         if (chatId == null || message == null || message.getFromUserId() == null || message.getToUserId() == null) {

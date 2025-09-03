@@ -9,29 +9,13 @@ public class GroupChat {
     private List<String> memberIds;
     private String ownerId;
     private long createdAt;
-
     private String groupName;
-    private String lastMessage;
     private long lastMessageTimestamp;
-
-    private Message lastMessageObject; // חדש
-
-
-
-    public Message getLastMessageObject() {
-        return lastMessageObject;
-    }
-
-    public void setLastMessageObject(Message lastMessageObject) {
-        this.lastMessageObject = lastMessageObject;
-    }
-
+    private String lastMessage;
 
     // חובה: constructor ריק לפיירבייס
     public GroupChat() {
     }
-
-
 
     public GroupChat(String id, String groupId, String apartmentId, List<String> memberIds, String ownerId, long createdAt) {
         this.id = id;
@@ -40,32 +24,9 @@ public class GroupChat {
         this.memberIds = memberIds;
         this.ownerId = ownerId;
         this.createdAt = createdAt;
+        this.groupName = "";
+        this.lastMessageTimestamp = System.currentTimeMillis();
     }
-
-    public String getGroupName() {
-        return groupName != null ? groupName : groupId;
-    }
-
-    public void setGroupName(String groupName) {
-        this.groupName = groupName;
-    }
-
-    public String getLastMessage() {
-        return lastMessage;
-    }
-
-    public void setLastMessage(String lastMessage) {
-        this.lastMessage = lastMessage;
-    }
-
-    public long getLastMessageTimestamp() {
-        return lastMessageTimestamp;
-    }
-
-    public void setLastMessageTimestamp(long lastMessageTimestamp) {
-        this.lastMessageTimestamp = lastMessageTimestamp;
-    }
-
 
     // Getters
     public String getId() {
@@ -115,5 +76,29 @@ public class GroupChat {
 
     public void setCreatedAt(long createdAt) {
         this.createdAt = createdAt;
+    }
+    
+    public String getGroupName() {
+        return groupName;
+    }
+    
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+    
+    public long getLastMessageTimestamp() {
+        return lastMessageTimestamp;
+    }
+    
+    public void setLastMessageTimestamp(long lastMessageTimestamp) {
+        this.lastMessageTimestamp = lastMessageTimestamp;
+    }
+    
+    public String getLastMessage() {
+        return lastMessage;
+    }
+    
+    public void setLastMessage(String lastMessage) {
+        this.lastMessage = lastMessage;
     }
 }

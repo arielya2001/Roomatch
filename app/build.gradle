@@ -54,12 +54,12 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'com.google.firebase:firebase-storage'
+    implementation 'com.google.firebase:firebase-messaging'
     implementation 'com.google.android.gms:play-services-auth:20.7.0'
     implementation 'com.google.android.gms:play-services-tasks:18.0.2'
 
     implementation 'com.github.bumptech.glide:glide:4.16.0'
     implementation libs.recyclerview
-    implementation libs.firebase.messaging
     annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
 
     /* ─────────── Unit‑tests (local JVM) ─────────── */
@@ -93,5 +93,7 @@ dependencies {
     testImplementation 'androidx.arch.core:core-testing:2.1.0'
     testImplementation 'org.mockito:mockito-core:4.11.0'
     testImplementation 'org.robolectric:robolectric:4.11.1'
+
+
 }
 
