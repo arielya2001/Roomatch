@@ -214,6 +214,12 @@
             </LinearLayout>
 
 
+            <TextView
+                android:id="@+id/locationTextView"
+                android:layout_width="match_parent"
+                android:layout_height="34dp"
+                android:text="TextView" />
+
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/autocompleteFragmentContainer"
                 android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"

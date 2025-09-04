@@ -43,7 +43,7 @@ public class ProfileFragment extends Fragment {
 
     private RadioButton radioMale, radioFemale, radioOther;
 
-    private TextView  textGender,textWhere,textProfileLifeStyles,textProfileInterests,labelLifeStyles,labelInterests;
+    private TextView  textGender,textWhere,textProfileLifeStyles,textProfileInterests,labelLifeStyles,labelInterests,location;
 
     private String selectedCity="";
     private String selectedStreet="";
@@ -103,6 +103,7 @@ public class ProfileFragment extends Fragment {
         cancelEditButton = view.findViewById(R.id.cancelButton);
         labelLifeStyles=view.findViewById(R.id.labelProfileLifeStyles);
         labelInterests=view.findViewById(R.id.labelProfileInterests);
+        location = view.findViewById(R.id.locationTextView);
         labelInterests.setVisibility(View.GONE);
         labelLifeStyles.setVisibility(View.GONE);
         updateProfileButton.setOnClickListener(v ->editClicked() );
@@ -128,6 +129,7 @@ public class ProfileFragment extends Fragment {
                 textProfileInterests.setText(safe(profile.getInterests()));
                 lifeStylesFragment.setBoxes(profile.getLifestyle());
                 interestsFragment.setBoxes(profile.getInterests());
+                location.setText(profile.getLat()+", "+profile.getLng());
                 if ("owner".equals(profile.getUserType())) {
                     LinearLayout seekerDetails = view.findViewById(R.id.seekerProfileDetails);
                     seekerDetails.setVisibility(View.GONE);
@@ -201,6 +203,7 @@ public class ProfileFragment extends Fragment {
                     viewModel.setSelectedAddress(city, street, latLng);
                     showToast("כתובת נבחרה: " + street + ", " + city);
                     textWhere.setText(city+", "+street);
+                    location.setText(latLng.latitude+", "+latLng.longitude);
                 }
 
                 @Override
@@ -215,14 +218,14 @@ public class ProfileFragment extends Fragment {
 
     private void updateLifeStyles(List<String> updatedList)
     {
-        String lifeStyleStr=String.join(",",updatedList);
+        String lifeStyleStr=String.join(", ",updatedList);
         textProfileLifeStyles.setText(safe(lifeStyleStr));
 
     }
 
     private void updateInterests(List<String> updatedList)
     {
-        String interestsStr=String.join(",",updatedList);
+        String interestsStr=String.join(", ",updatedList);
         textProfileInterests.setText(safe(interestsStr));
 
     }

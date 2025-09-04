@@ -11,6 +11,7 @@ import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentContainerView;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.roomatch.R;
@@ -28,10 +29,14 @@ public class CreateProfileFragment extends Fragment {
     private EditText editFullName, editAge,editDescription;
     private RadioGroup userTypeGroup, genderGroup;
     private Button saveProfileButton;
-    private CheckBox checkboxClean, checkboxSmoker, checkboxNightOwl, checkboxQuiet, checkboxParty;
-    private CheckBox checkboxMusic, checkboxSports, checkboxTravel, checkboxCooking, checkboxReading;
+    //private CheckBox checkboxClean, checkboxSmoker, checkboxNightOwl, checkboxQuiet, checkboxParty;
+    //private CheckBox checkboxMusic, checkboxSports, checkboxTravel, checkboxCooking, checkboxReading;
     private TextView lifestyleLabel, interestsLabel;
-    private LinearLayout lifestyleCheckboxes, interestsCheckboxes;
+    //private LinearLayout lifestyleCheckboxes, interestsCheckboxes;
+
+    private FragmentContainerView lifeStyles, interests;
+    private LifeStylesFragment lifeStylesFragment;
+    private InterestsFragment interestsFragment;
 
     private CreateProfileViewModel viewModel;
 
@@ -57,22 +62,28 @@ public class CreateProfileFragment extends Fragment {
         editFullName = view.findViewById(R.id.editFullName);
         editAge = view.findViewById(R.id.editprofileAge);
         genderGroup = view.findViewById(R.id.genderGroup);
-        checkboxClean = view.findViewById(R.id.checkboxClean);
-        checkboxSmoker = view.findViewById(R.id.checkboxSmoker);
-        checkboxNightOwl = view.findViewById(R.id.checkboxNightOwl);
-        checkboxQuiet = view.findViewById(R.id.checkboxQuiet);
-        checkboxParty = view.findViewById(R.id.checkboxParty);
-        checkboxMusic = view.findViewById(R.id.checkboxMusic);
-        checkboxSports = view.findViewById(R.id.checkboxSports);
-        checkboxTravel = view.findViewById(R.id.checkboxTravel);
-        checkboxCooking = view.findViewById(R.id.checkboxCooking);
-        checkboxReading = view.findViewById(R.id.checkboxReading);
+//        checkboxClean = view.findViewById(R.id.checkboxClean);
+//        checkboxSmoker = view.findViewById(R.id.checkboxSmoker);
+//        checkboxNightOwl = view.findViewById(R.id.checkboxNightOwl);
+//        checkboxQuiet = view.findViewById(R.id.checkboxQuiet);
+//        checkboxParty = view.findViewById(R.id.checkboxParty);
+//        checkboxMusic = view.findViewById(R.id.checkboxMusic);
+//        checkboxSports = view.findViewById(R.id.checkboxSports);
+//        checkboxTravel = view.findViewById(R.id.checkboxTravel);
+//        checkboxCooking = view.findViewById(R.id.checkboxCooking);
+//        checkboxReading = view.findViewById(R.id.checkboxReading);
         userTypeGroup = view.findViewById(R.id.userTypeGroup);
         saveProfileButton = view.findViewById(R.id.buttonSaveProfile);
         lifestyleLabel = view.findViewById(R.id.lifestyleLabel);
         interestsLabel = view.findViewById(R.id.interestsLabel);
-        lifestyleCheckboxes = view.findViewById(R.id.lifestyleCheckboxes);
-        interestsCheckboxes = view.findViewById(R.id.interestsCheckboxes);
+        lifeStyles=view.findViewById(R.id.createProfileLifeStyles);
+        interests=view.findViewById(R.id.createProfileInterests);
+        lifeStylesFragment=(LifeStylesFragment) getChildFragmentManager().findFragmentById(R.id.createProfileLifeStyles);
+        lifeStylesFragment.setOnLifestyleChangedListener(updatedList -> updateLifeStyles(updatedList));
+        interestsFragment=(InterestsFragment)getChildFragmentManager().findFragmentById(R.id.createProfileInterests);
+        interestsFragment.setOnInterestsChangedListener(updatedInterests -> updateInterests(updatedInterests));
+        //lifestyleCheckboxes = view.findViewById(R.id.lifestyleCheckboxes);
+        //interestsCheckboxes = view.findViewById(R.id.interestsCheckboxes);
         editDescription=view.findViewById(R.id.editCreateDescription);
 
 
@@ -82,7 +93,7 @@ public class CreateProfileFragment extends Fragment {
         saveProfileButton.setOnClickListener(v -> saveProfile());
 
         userTypeGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            if (lifestyleLabel == null || interestsLabel == null || lifestyleCheckboxes == null || interestsCheckboxes == null) {
+            if (lifestyleLabel == null || interestsLabel == null || lifeStylesFragment == null || interestsFragment == null) {
                 Log.e("CreateProfileFragment", "One or more views are null");
                 return;
             }
@@ -104,11 +115,21 @@ public class CreateProfileFragment extends Fragment {
         });
     }
 
+    private void updateInterests(Object updatedInterests) {
+
+    }
+
+    private void updateLifeStyles(Object updatedList) {
+        //String lifeStyleStr=String.join(",",updatedList);
+        //textProfileLifeStyles.setText(safe(lifeStyleStr));
+
+    }
+
     private void setVisibility(int visibility) {
         if (lifestyleLabel != null) lifestyleLabel.setVisibility(visibility);
         if (interestsLabel != null) interestsLabel.setVisibility(visibility);
-        if (lifestyleCheckboxes != null) lifestyleCheckboxes.setVisibility(visibility);
-        if (interestsCheckboxes != null) interestsCheckboxes.setVisibility(visibility);
+        if (lifeStyles != null) lifeStyles.setVisibility(visibility);
+        if (interests != null) interests.setVisibility(visibility);
         if(editDescription!=null) editDescription.setVisibility(visibility);
     }
 
@@ -118,22 +139,23 @@ public class CreateProfileFragment extends Fragment {
         int selectedGenderId = genderGroup.getCheckedRadioButtonId();
         int selectedUserTypeId = userTypeGroup.getCheckedRadioButtonId();
 
+
         // Collect lifestyle
-        List<String> lifestyleList = new ArrayList<>();
-        if (checkboxClean.isChecked()) lifestyleList.add("נקי");
-        if (checkboxSmoker.isChecked()) lifestyleList.add("מעשן");
-        if (checkboxNightOwl.isChecked()) lifestyleList.add("חיית לילה");
-        if (checkboxQuiet.isChecked()) lifestyleList.add("שקט");
-        if (checkboxParty.isChecked()) lifestyleList.add("אוהב מסיבות");
+        List<String> lifestyleList = lifeStylesFragment.getLifeStyles();
+//        if (checkboxClean.isChecked()) lifestyleList.add("נקי");
+//        if (checkboxSmoker.isChecked()) lifestyleList.add("מעשן");
+//        if (checkboxNightOwl.isChecked()) lifestyleList.add("חיית לילה");
+//        if (checkboxQuiet.isChecked()) lifestyleList.add("שקט");
+//        if (checkboxParty.isChecked()) lifestyleList.add("אוהב מסיבות");
         String lifestyle = String.join(", ", lifestyleList);
 
         // Collect interests
-        List<String> interestsList = new ArrayList<>();
-        if (checkboxMusic.isChecked()) interestsList.add("מוזיקה");
-        if (checkboxSports.isChecked()) interestsList.add("ספורט");
-        if (checkboxTravel.isChecked()) interestsList.add("טיולים");
-        if (checkboxCooking.isChecked()) interestsList.add("בישול");
-        if (checkboxReading.isChecked()) interestsList.add("קריאה");
+        List<String> interestsList = interestsFragment.getInterests();
+//        if (checkboxMusic.isChecked()) interestsList.add("מוזיקה");
+//        if (checkboxSports.isChecked()) interestsList.add("ספורט");
+//        if (checkboxTravel.isChecked()) interestsList.add("טיולים");
+//        if (checkboxCooking.isChecked()) interestsList.add("בישול");
+//        if (checkboxReading.isChecked()) interestsList.add("קריאה");
         String interests = String.join(", ", interestsList);
 
         String description = editDescription.getText().toString();

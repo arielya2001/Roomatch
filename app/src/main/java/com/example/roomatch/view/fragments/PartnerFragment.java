@@ -4,16 +4,20 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentContainerView;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -42,22 +46,34 @@ public class PartnerFragment extends Fragment {
     private Button resetFiltersButton;
 
     private Button toggleLifestyleButton;
-    private LinearLayout lifestyleCheckboxContainer;
+    //private LinearLayout lifestyleCheckboxContainer;
 
     private Button toggleInterestsButton;
-    private LinearLayout interestsCheckboxContainer;
+    //private LinearLayout interestsCheckboxContainer;
+
+    private FragmentContainerView autoComplete, lifeStyles, interests;
+
+    private LifeStylesFragment lifeStylesFragment;
+    private InterestsFragment interestsFragment;
     
     private Button toggleLocationButton;
-    private LinearLayout locationCheckboxContainer;
+    //private LinearLayout locationCheckboxContainer;
+    private Spinner radiusSpinner;
 
-    private final Set<String> selectedLifestyles = new HashSet<>();
-    private final Set<String> selectedInterests = new HashSet<>();
+    private int selectedRadius = Integer.MAX_VALUE;
+
+    //private final Set<String> selectedLifestyles = new HashSet<>();
+    //private final Set<String> selectedInterests = new HashSet<>();
+    private  List<String> selectedLifestyles=new ArrayList<>();
+    private  List<String> selectedInterests=new ArrayList<>();
     private final Set<String> selectedLocations = new HashSet<>();
 
     private boolean filterMenuVisible = false;
     private boolean lifestyleVisible = false;
     private boolean interestsVisible = false;
     private boolean locationVisible = false;
+
+
 
     public PartnerFragment() {}
 
@@ -83,11 +99,20 @@ public class PartnerFragment extends Fragment {
         filterContainer = view.findViewById(R.id.filterCheckboxContainer);
         resetFiltersButton = view.findViewById(R.id.buttonResetFilters);
         toggleLifestyleButton = view.findViewById(R.id.buttonToggleLifestyle);
-        lifestyleCheckboxContainer = view.findViewById(R.id.lifestyleCheckboxContainer);
+        //lifestyleCheckboxContainer = view.findViewById(R.id.lifestyleCheckboxContainer);
         toggleInterestsButton = view.findViewById(R.id.buttonToggleInterests);
-        interestsCheckboxContainer = view.findViewById(R.id.interestsCheckboxContainer);
+        //interestsCheckboxContainer = view.findViewById(R.id.interestsCheckboxContainer);
         toggleLocationButton = view.findViewById(R.id.buttonToggleLocation);
-        locationCheckboxContainer = view.findViewById(R.id.locationCheckboxContainer);
+        radiusSpinner = view.findViewById(R.id.radiusSpinner);
+        setRadiusSpinner();
+
+        //locationCheckboxContainer = view.findViewById(R.id.locationCheckboxContainer);
+        lifeStyles=view.findViewById(R.id.seekerLifeStyles);
+        interests=view.findViewById(R.id.seekerInterests);
+        lifeStylesFragment=(LifeStylesFragment) getChildFragmentManager().findFragmentById(R.id.seekerLifeStyles);
+        lifeStylesFragment.setOnLifestyleChangedListener(updatedList -> updateLifeStyles(updatedList));
+        interestsFragment=(InterestsFragment)getChildFragmentManager().findFragmentById(R.id.seekerInterests);
+        interestsFragment.setOnInterestsChangedListener(updatedInterests -> updateInterests(updatedInterests));
 
         // Setup RecyclerView
         partnersRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -129,19 +154,19 @@ public class PartnerFragment extends Fragment {
         // Toggle Lifestyle section
         toggleLifestyleButton.setOnClickListener(v -> {
             lifestyleVisible = !lifestyleVisible;
-            lifestyleCheckboxContainer.setVisibility(lifestyleVisible ? View.VISIBLE : View.GONE);
+            lifeStyles.setVisibility(lifestyleVisible ? View.VISIBLE : View.GONE);
         });
 
         // Toggle Interests section
         toggleInterestsButton.setOnClickListener(v -> {
             interestsVisible = !interestsVisible;
-            interestsCheckboxContainer.setVisibility(interestsVisible ? View.VISIBLE : View.GONE);
+            interests.setVisibility(interestsVisible ? View.VISIBLE : View.GONE);
         });
         
         // Toggle Location section
         toggleLocationButton.setOnClickListener(v -> {
             locationVisible = !locationVisible;
-            locationCheckboxContainer.setVisibility(locationVisible ? View.VISIBLE : View.GONE);
+            radiusSpinner.setVisibility(locationVisible ? View.VISIBLE : View.GONE);
         });
 
         // Reset all filters - Amélioration de l'UX
@@ -156,49 +181,105 @@ public class PartnerFragment extends Fragment {
         setupFilterCheckboxes();
     }
 
+    private void setRadiusSpinner() {
+        List<String> items = Arrays.asList("כולם", "10 KM", "50 KM", "100 KM","150 KM");
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                items
+        );
+        adapter.setDropDownViewResource(
+                androidx.appcompat.R.layout.support_simple_spinner_dropdown_item
+        );
+        radiusSpinner.setAdapter(adapter);
+
+        radiusSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
+                String selected = (String) parent.getItemAtPosition(position);
+                switch (selected)
+                {
+                    case "10 KM":
+                        selectedRadius=10;
+                        break;
+
+                    case  "50 KM":
+                        selectedRadius=50;
+                        break;
+
+                    case "100 KM":
+                        selectedRadius =100;
+                        break;
+
+                    case "150 KM":
+                        selectedRadius=150;
+                        break;
+
+                    case "כולם":
+                        selectedRadius=Integer.MAX_VALUE;
+                        break;
+
+
+                }
+                applyAllFilters();
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) { /* אופציונלי */ }
+        });
+    }
+
+    private void updateInterests(List<String> updatedInterests) {
+        selectedInterests=interestsFragment.getInterests();
+        applyAllFilters();
+    }
+
+    private void updateLifeStyles(List<String> updatedList) {
+        selectedLifestyles=lifeStylesFragment.getLifeStyles();
+        applyAllFilters();
+    }
+
     private void setupFilterCheckboxes() {
-        List<String> lifestyles = Arrays.asList("דתי", "חילוני", "מסורתי", "נקי", "שקט", "מעשן");
-        List<String> interests = Arrays.asList("מוזיקה", "ספורט", "טיולים", "בישול", "קריאה", "סרטים", "טכנולוגיה");
+        //List<String> lifestyles = LifeStylesFragment.getAlllifeStyles();
+        //List<String> interests = Arrays.asList("מוזיקה", "ספורט", "טיולים", "בישול", "קריאה", "סרטים", "טכנולוגיה");
         List<String> locations = Arrays.asList("תל אביב", "ירושלים", "חיפה", "באר שבע", "ראשון לציון", "נתניה", "רמת גן");
 
         // Style de vie checkboxes
-        for (String lifestyle : lifestyles) {
-            CheckBox cb = new CheckBox(getContext());
-            cb.setText(lifestyle);
-            cb.setPadding(8, 8, 8, 8);
-            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                if (isChecked) selectedLifestyles.add(lifestyle);
-                else selectedLifestyles.remove(lifestyle);
-                applyAllFilters();
-            });
-            lifestyleCheckboxContainer.addView(cb);
-        }
+//        for (String lifestyle : lifestyles) {
+//            CheckBox cb = new CheckBox(getContext());
+//            cb.setText(lifestyle);
+//            cb.setPadding(8, 8, 8, 8);
+//            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
+//                if (isChecked) selectedLifestyles.add(lifestyle);
+//                else selectedLifestyles.remove(lifestyle);
+//                applyAllFilters();
+//            });
+//            lifestyleCheckboxContainer.addView(cb);
+//        }
 
         // Intérêts checkboxes
-        for (String interest : interests) {
-            CheckBox cb = new CheckBox(getContext());
-            cb.setText(interest);
-            cb.setPadding(8, 8, 8, 8);
-            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                if (isChecked) selectedInterests.add(interest);
-                else selectedInterests.remove(interest);
-                applyAllFilters();
-            });
-            interestsCheckboxContainer.addView(cb);
-        }
+//        for (String interest : interests) {
+//            CheckBox cb = new CheckBox(getContext());
+//            cb.setText(interest);
+//            cb.setPadding(8, 8, 8, 8);
+//            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
+//                if (isChecked) selectedInterests.add(interest);
+//                else selectedInterests.remove(interest);
+//                applyAllFilters();
+//            });
+//            interestsCheckboxContainer.addView(cb);
+//        }
         
         // Localisation checkboxes
-        for (String location : locations) {
-            CheckBox cb = new CheckBox(getContext());
-            cb.setText(location);
-            cb.setPadding(8, 8, 8, 8);
-            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                if (isChecked) selectedLocations.add(location);
-                else selectedLocations.remove(location);
-                applyAllFilters();
-            });
-            locationCheckboxContainer.addView(cb);
-        }
+//        for (String location : locations) {
+//            CheckBox cb = new CheckBox(getContext());
+//            cb.setText(location);
+//            cb.setPadding(8, 8, 8, 8);
+//            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
+//                if (isChecked) selectedLocations.add(location);
+//                else selectedLocations.remove(location);
+//                applyAllFilters();
+//            });
+//            locationCheckboxContainer.addView(cb);
+//        }
     }
 
     private void clearAllCheckboxes(LinearLayout container) {
@@ -212,23 +293,27 @@ public class PartnerFragment extends Fragment {
     
     private void applyAllFilters() {
         viewModel.applyCompleteFilter(
-            new ArrayList<>(selectedLifestyles),
-            new ArrayList<>(selectedInterests),
-            new ArrayList<>(selectedLocations),
+            selectedLifestyles,
+            selectedInterests,
+            selectedRadius,
             searchViewName.getQuery().toString()
         );
     }
     
     private void resetAllFilters() {
         selectedLifestyles.clear();
+        lifeStylesFragment.setBoxes("");
         selectedInterests.clear();
+        interestsFragment.setBoxes("");
         selectedLocations.clear();
         viewModel.clearPartnerFilter();
 
-        clearAllCheckboxes(lifestyleCheckboxContainer);
-        clearAllCheckboxes(interestsCheckboxContainer);
-        clearAllCheckboxes(locationCheckboxContainer);
+        //clearAllCheckboxes(lifestyleCheckboxContainer);
+        //clearAllCheckboxes(interestsCheckboxContainer);
+        //clearAllCheckboxes(locationCheckboxContainer);
 
+        radiusSpinner.setSelection(0);
+        selectedRadius=Integer.MAX_VALUE;
         searchViewName.setQuery("", false);
         searchViewName.clearFocus();
         

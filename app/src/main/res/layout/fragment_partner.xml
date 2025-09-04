@@ -51,12 +51,15 @@
                 android:layout_marginBottom="8dp" />
 
             <!-- Lifestyle checkboxes (hidden initially) -->
-            <LinearLayout
-                android:id="@+id/lifestyleCheckboxContainer"
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/seekerLifeStyles"
+                android:name="com.example.roomatch.view.fragments.LifeStylesFragment"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone" />
+                android:layout_height="match_parent"
+                android:layout_gravity="right"
+                android:visibility="gone"
+
+                />
 
             <!-- Interests Filter Section -->
             <Button
@@ -68,11 +71,12 @@
                 android:layout_marginBottom="8dp" />
 
             <!-- Interests checkboxes (hidden initially) -->
-            <LinearLayout
-                android:id="@+id/interestsCheckboxContainer"
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/seekerInterests"
+                android:name="com.example.roomatch.view.fragments.InterestsFragment"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
+                android:layout_height="match_parent"
+                android:layout_gravity="right"
                 android:visibility="gone" />
             
             <!-- Location Filter Section -->
@@ -84,13 +88,23 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Location checkboxes (hidden initially) -->
-            <LinearLayout
-                android:id="@+id/locationCheckboxContainer"
+
+            <!-- location radius spinner -->
+            <Spinner
+                android:id="@+id/radiusSpinner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone" />
+                android:visibility="gone"
+                />
+
+
+            <!-- Location checkboxes (hidden initially) -->
+<!--            <LinearLayout-->
+<!--                android:id="@+id/locationCheckboxContainer"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:orientation="vertical"-->
+<!--                android:visibility="gone" />-->
 
             <!-- Reset filters button container for better UX -->
             <LinearLayout
@@ -132,15 +146,15 @@
     </LinearLayout>
 
     <!-- Floating action button for advanced search -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/buttonAdvancedSearch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="12dp"
-        android:contentDescription="חיפוש מתקדם"
-        android:src="@android:drawable/ic_menu_mapmode"
-        app:backgroundTint="@color/purple_500" />
+<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--        android:id="@+id/buttonAdvancedSearch"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_alignParentEnd="true"-->
+<!--        android:layout_alignParentBottom="true"-->
+<!--        android:layout_margin="12dp"-->
+<!--        android:contentDescription="חיפוש מתקדם"-->
+<!--        android:src="@android:drawable/ic_menu_mapmode"-->
+<!--        app:backgroundTint="@color/purple_500" />-->
 
 </RelativeLayout>

@@ -73,7 +73,7 @@ public class InterestsFragment extends Fragment {
     }
 
     public void setBoxes(String interests) {
-        List<String> interestsList = Arrays.asList(interests.split(","));
+        List<String> interestsList = Arrays.asList(interests.split(", "));
         checkboxMusic.setChecked(false);
         checkboxSports.setChecked(false);
         checkboxTravel.setChecked(false);
@@ -99,5 +99,15 @@ public class InterestsFragment extends Fragment {
                     break;
             }
         }
+    }
+    public static List<String> getAllInterests()
+    {
+        List<String> interests =  new ArrayList<String>();
+        interests.add("מוזיקה");
+        interests.add("ספורט");
+        interests.add("טיולים");
+        interests.add("בישול");
+        interests.add("קריאה");
+        return interests;
     }
 }

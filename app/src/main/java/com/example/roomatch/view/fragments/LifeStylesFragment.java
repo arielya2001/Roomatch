@@ -90,7 +90,7 @@ public class LifeStylesFragment extends Fragment {
     }
 
     public void setBoxes(String lifeStyles) {
-        List<String> lifeStylesList = Arrays.asList(lifeStyles.split(","));
+        List<String> lifeStylesList = Arrays.asList(lifeStyles.split(", "));
         checkBoxClean.setChecked(false);
         checkBoxSmoker.setChecked(false);
         checkBoxNightOwl.setChecked(false);
@@ -116,5 +116,15 @@ public class LifeStylesFragment extends Fragment {
                     break;
             }
         }
+    }
+    public static List<String> getAlllifeStyles()
+    {
+        List<String> lifeStyles =  new ArrayList<String>();
+        lifeStyles.add("נקי");
+        lifeStyles.add("מעשן");
+        lifeStyles.add("חיית לילה");
+        lifeStyles.add("שקט");
+        lifeStyles.add("אוהב מסיבות");
+        return lifeStyles;
     }
 }

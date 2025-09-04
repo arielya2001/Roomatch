@@ -134,38 +134,15 @@
             android:textStyle="bold"
             android:layout_marginTop="16dp"
             android:visibility="gone" />
-        <LinearLayout
-            android:id="@+id/lifestyleCheckboxes"
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/createProfileLifeStyles"
+            android:name="com.example.roomatch.view.fragments.LifeStylesFragment"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
+            android:layout_height="match_parent"
+            android:layout_gravity="right"
+            android:visibility="gone"
 
-            <CheckBox android:id="@+id/checkboxClean"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="נקי" />
-
-            <CheckBox android:id="@+id/checkboxSmoker"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="מעשן" />
-
-            <CheckBox android:id="@+id/checkboxNightOwl"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="חיית לילה" />
-
-            <CheckBox android:id="@+id/checkboxQuiet"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="שקט" />
-
-            <CheckBox android:id="@+id/checkboxParty"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="אוהב מסיבות" />
-        </LinearLayout>
+            />
 
         <TextView
             android:id="@+id/interestsLabel"
@@ -176,38 +153,13 @@
             android:layout_marginTop="16dp"
             android:visibility="gone" />
 
-        <LinearLayout
-            android:id="@+id/interestsCheckboxes"
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/createProfileInterests"
+            android:name="com.example.roomatch.view.fragments.InterestsFragment"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <CheckBox android:id="@+id/checkboxMusic"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="מוזיקה" />
-
-            <CheckBox android:id="@+id/checkboxSports"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ספורט" />
-
-            <CheckBox android:id="@+id/checkboxTravel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="טיולים" />
-
-            <CheckBox android:id="@+id/checkboxCooking"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="בישול" />
-
-            <CheckBox android:id="@+id/checkboxReading"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="קריאה" />
-        </LinearLayout>
+            android:layout_height="match_parent"
+            android:layout_gravity="right"
+            android:visibility="gone" />
 
 
 

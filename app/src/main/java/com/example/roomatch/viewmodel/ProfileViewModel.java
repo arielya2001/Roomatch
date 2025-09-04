@@ -12,6 +12,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ProfileViewModel extends ViewModel {
 
@@ -35,6 +36,9 @@ public class ProfileViewModel extends ViewModel {
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         UserProfile userProfile = doc.toObject(UserProfile.class);
+                        Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
+                        userProfile.setLat(loc.get("latitude"));
+                        userProfile.setLat(loc.get("longitude"));
                         profile.setValue(userProfile);
                     } else {
                         toastMessage.setValue("פרופיל לא נמצא");

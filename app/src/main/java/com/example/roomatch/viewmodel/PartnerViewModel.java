@@ -6,6 +6,8 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.roomatch.model.UserProfile;
+import com.example.roomatch.model.repository.UserRepository;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -23,8 +25,15 @@ public class PartnerViewModel extends ViewModel {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
 
+    private final UserRepository repository = new UserRepository();
+
+    private final MutableLiveData<UserProfile> profile = new MutableLiveData<>();
+
+    public LiveData<UserProfile> getProfile() { return profile; }
+
     public PartnerViewModel() {
         loadPartnersFromRepository();
+        loadProfile();
     }
 
     private void loadPartnersFromRepository() {
@@ -35,15 +44,44 @@ public class PartnerViewModel extends ViewModel {
                     allPartners.clear();
                     for (DocumentSnapshot doc : queryDocumentSnapshots) {
                         UserProfile profile = doc.toObject(UserProfile.class);
+                        try
+                        {
+                            Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
+                            profile.setLat(loc.get("latitude"));
+                            profile.setLat(loc.get("longitude"));
+                        }
+                        catch (Exception ex)
+                        {
+                            profile.setLat(0);
+                            profile.setLng(0);
+                        }
                         if (profile != null) {
                             allPartners.add(profile);
                         }
                     }
                     partners.setValue(new ArrayList<>(allPartners));
+
                 })
                 .addOnFailureListener(e -> {
                     toastMessage.setValue("שגיאה בטעינת שותפים: " + e.getMessage());
                 });
+    }
+
+    public void loadProfile() {
+        repository.getMyProfile()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        UserProfile userProfile = doc.toObject(UserProfile.class);
+                        Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
+                        userProfile.setLat(loc.get("latitude"));
+                        userProfile.setLat(loc.get("longitude"));
+                        profile.setValue(userProfile);
+                    } else {
+                        toastMessage.setValue("פרופיל לא נמצא");
+                    }
+                })
+                .addOnFailureListener(e ->
+                        toastMessage.setValue("שגיאה בטעינת פרופיל: " + e.getMessage()));
     }
 
     public LiveData<List<UserProfile>> getPartners() {
@@ -114,7 +152,7 @@ public class PartnerViewModel extends ViewModel {
     }
     
     public void applyCompleteFilter(List<String> lifestyles, List<String> interests, 
-                                   List<String> locations, String nameQuery) {
+                                   int radius, String nameQuery) {
         List<UserProfile> result = new ArrayList<>();
         
         for (UserProfile profile : allPartners) {
@@ -123,20 +161,32 @@ public class PartnerViewModel extends ViewModel {
                  profile.getFullName().toLowerCase().contains(nameQuery.toLowerCase()));
             
             boolean matchLifestyle = lifestyles.isEmpty() ||
-                lifestyles.stream().anyMatch(l ->
+                lifestyles.stream().allMatch(l ->
                     profile.getLifestyle() != null && profile.getLifestyle().contains(l));
 
             boolean matchInterest = interests.isEmpty() ||
-                interests.stream().anyMatch(i ->
+                interests.stream().allMatch(i ->
                     profile.getInterests() != null && profile.getInterests().contains(i));
             
             // Pour la localisation, on vérifie si l'utilisateur cherche dans les mêmes villes
-            boolean matchLocation = locations.isEmpty();
-            if (!locations.isEmpty() && profile.getUserId() != null) {
-                // On pourrait récupérer la préférence de localisation depuis Firestore
-                // Pour l'instant, on fait un match basique
-                matchLocation = true; // Simplifié pour l'exemple
+            boolean matchLocation=false;
+            UserProfile current = getProfile().getValue();
+            LatLng loc = current.getSelectedLocation();
+            LatLng otherLoc = profile.getSelectedLocation();
+            //מחשב מרחק בין שני מיקומים
+            float[] results = new float[1]; // meters
+            Location.distanceBetween(loc.latitude, loc.longitude, otherLoc.latitude, otherLoc.longitude, results);
+            double dist =  results[0] / 1000.0; // km
+            //בודק האם המרחק קטן מרדיוס
+            if(dist<=radius)
+            {
+                matchLocation=true;
             }
+//            if (!locations.isEmpty() && profile.getUserId() != null) {
+//                // On pourrait récupérer la préférence de localisation depuis Firestore
+//                // Pour l'instant, on fait un match basique
+//                matchLocation = true; // Simplifié pour l'exemple
+//            }
 
             if (matchName && matchLifestyle && matchInterest && matchLocation) {
                 result.add(profile);
@@ -144,11 +194,11 @@ public class PartnerViewModel extends ViewModel {
         }
         
         // Trier par distance si des localisations sont spécifiées
-        if (!locations.isEmpty()) {
-            result.sort((p1, p2) -> {
-                return 0;
-            });
-        }
+//        if (!locations.isEmpty()) {
+//            result.sort((p1, p2) -> {
+//                return 0;
+//            });
+//        }
         
         partners.setValue(result);
     }
@@ -178,4 +228,6 @@ public class PartnerViewModel extends ViewModel {
         
         db.collection("notifications").add(notification);
     }
+
+
 }

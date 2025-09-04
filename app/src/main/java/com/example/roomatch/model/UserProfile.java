@@ -20,12 +20,12 @@ public class UserProfile implements Serializable {
     private String selectedCity;
     private String selectedStreet;
     private String description;
-    private double lat, lng;
+    private double lat=0, lng=0;
 
     // קונסטרקטור ריק עבור Firebase
     public UserProfile() {}
 
-    public UserProfile(String fullName, int age, String gender, String lifestyle, String interests, String userType,String city,String street,Double lat, double lng,String description) {
+    public UserProfile(String fullName, int age, String gender, String lifestyle, String interests, String userType,String city,String street,double lat, double lng,String description) {
         this.fullName = fullName;
         this.age = age;
         this.gender = gender;
@@ -78,11 +78,13 @@ public class UserProfile implements Serializable {
 
     public String getSelectedCity(){return this.selectedCity;}
     public String getSelectedStreet(){return this.selectedStreet; }
-    public LatLng getSelectedLocation(){return  new LatLng(this.lat,this.lng);}
-
+    public LatLng getSelectedLocation(){try{return  new LatLng(this.lat,this.lng);}catch (Exception ex){return new LatLng(0,0);}}
+    public void setLat(double lat) {this.lat=lat;}
+    public void setLng(double lng) {this.lng=lng;}
     public String getDescription(){return this.description;}
     public void setDescription(String description){this.description=description;}
-
+    public double getLat(){return this.lat;}
+    public double getLng(){return this.lng;}
 
     public void setContactIds(List<String> contactIds) {
         this.contactIds = contactIds;
