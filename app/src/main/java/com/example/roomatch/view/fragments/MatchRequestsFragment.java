@@ -1,9 +1,12 @@
 package com.example.roomatch.view.fragments;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -15,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.MatchRequestsAdapter;
+import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.viewmodel.MatchRequestsViewModel;
 
 import java.util.ArrayList;
@@ -24,6 +28,7 @@ public class MatchRequestsFragment extends Fragment {
     private MatchRequestsViewModel viewModel;
     private RecyclerView recyclerView;
     private MatchRequestsAdapter adapter;
+
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -60,6 +65,10 @@ public class MatchRequestsFragment extends Fragment {
                 }
             }
         });
+        adapter.setOnItemClickListener((contact, position) -> {
+            String uid =  contact.getUserId();
+
+        });
         recyclerView.setAdapter(adapter);
 
         // תצפית על רשימת הבקשות
@@ -81,5 +90,33 @@ public class MatchRequestsFragment extends Fragment {
 
         // טעינת הבקשות
         viewModel.loadMatchRequests();
+    }
+
+    private void showShowProfileDialog(UserProfile profile)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_show_profile, null);
+        builder.setView(dialogView);
+
+        TextView name=dialogView.findViewById(R.id.textShowProfileName);
+        TextView age=dialogView.findViewById(R.id.textShowProfileAge);
+        TextView gender=dialogView.findViewById(R.id.textShowProfileGender);
+        TextView lifestyles=dialogView.findViewById(R.id.textShowProfileLifestyles);
+        TextView interests=dialogView.findViewById(R.id.textShowProfileInterests);
+        TextView description=dialogView.findViewById(R.id.textShowProfileDescription);
+        Button exit = dialogView.findViewById(R.id.buttonShowProfileExit);
+
+        name.setText(profile.getFullName());
+        age.setText(profile.getAge()+"");
+        gender.setText(profile.getGender());
+        lifestyles.setText(profile.getLifestyle());
+        interests.setText(profile.getInterests());
+        description.setText(profile.getDescription());
+
+        AlertDialog dialog = builder.create();
+
+        exit.setOnClickListener(v->{dialog.dismiss();});
+
+        dialog.show();
     }
 }

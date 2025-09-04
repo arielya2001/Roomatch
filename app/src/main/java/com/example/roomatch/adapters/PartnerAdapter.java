@@ -103,14 +103,25 @@ public class PartnerAdapter extends
         public void bind(UserProfile profile) {
             nameText.setText(profile.getFullName());
             lifestyleText.setText(profile.getLifestyle());
-            UserProfile current = getProfile().getValue();
-            LatLng loc = current.getSelectedLocation();
-            LatLng otherLoc = profile.getSelectedLocation();
-            //מחשב מרחק בין שני מיקומים
-            float[] results = new float[1]; // meters
-            Location.distanceBetween(loc.latitude, loc.longitude, otherLoc.latitude, otherLoc.longitude, results);
-            double dist =  results[0] / 1000.0; // km
-            distance.setText(String.format(java.util.Locale.US, "%.2f", dist)+"KM");
+            double dist;
+            if(getProfile().getValue()!=null)
+            {
+                UserProfile current = getProfile().getValue();
+                LatLng loc = current.getSelectedLocation();
+                LatLng otherLoc = profile.getSelectedLocation();
+                //מחשב מרחק בין שני מיקומים
+                float[] results = new float[1]; // meters
+                Location.distanceBetween(loc.latitude, loc.longitude, otherLoc.latitude, otherLoc.longitude, results);
+                dist =  results[0] / 1000.0; // km
+
+            }
+            else {
+                dist=Double.MAX_VALUE;
+            }
+            if(dist!=Double.MAX_VALUE)
+                distance.setText(String.format(java.util.Locale.US, "%.2f", dist)+"KM");
+            else
+                distance.setText("unavailable");
             btnView.setOnClickListener(v -> profileClickListener.onProfileClick(profile));
             btnMatch.setOnClickListener(v -> matchClickListener.onMatchRequest(profile));
             btnReport.setOnClickListener(v -> reportClickListener.onReport(profile));

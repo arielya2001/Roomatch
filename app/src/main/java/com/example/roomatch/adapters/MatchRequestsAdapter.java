@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.model.Contact;
+import com.example.roomatch.model.repository.UserRepository;
 
 import java.util.List;
 
@@ -22,7 +23,20 @@ public class MatchRequestsAdapter extends RecyclerView.Adapter<MatchRequestsAdap
         void onReject(String requestId);
     }
 
+
+
+    public interface OnItemClickListener {
+        void onItemClick(Contact contact, int position);
+    }
+
+    private OnItemClickListener itemClickListener;
+
+    public void setOnItemClickListener(OnItemClickListener l) {
+        this.itemClickListener = l;
+    }
+
     private List<Contact> requests;
+
     private final OnRequestActionListener listener;
 
     public MatchRequestsAdapter(OnRequestActionListener listener) {
@@ -45,6 +59,13 @@ public class MatchRequestsAdapter extends RecyclerView.Adapter<MatchRequestsAdap
             holder.statusTextView.setText("סטטוס: " + (request.getStatus() != null ? request.getStatus() : "לא ידוע"));
             holder.approveButton.setOnClickListener(v -> listener.onApprove(request.getUserId()));
             holder.rejectButton.setOnClickListener(v -> listener.onReject(request.getUserId()));
+            holder.itemView.setOnClickListener(v -> {
+                int pos = holder.getBindingAdapterPosition();
+                if (pos != RecyclerView.NO_POSITION && itemClickListener != null) {
+                    itemClickListener.onItemClick(requests.get(pos), pos); // בטוח מול ריסייקל
+                }
+            });
+
         }
     }
 
@@ -57,6 +78,8 @@ public class MatchRequestsAdapter extends RecyclerView.Adapter<MatchRequestsAdap
         this.requests = requests;
         notifyDataSetChanged();
     }
+
+
 
     static class RequestViewHolder extends RecyclerView.ViewHolder {
         TextView nameTextView;
@@ -71,5 +94,7 @@ public class MatchRequestsAdapter extends RecyclerView.Adapter<MatchRequestsAdap
             approveButton =(ImageButton) itemView.findViewById(R.id.approveButton);
             rejectButton = (ImageButton) itemView.findViewById(R.id.rejectButton);
         }
+
+
     }
 }
