@@ -9,6 +9,9 @@ public class GroupChat {
     private List<String> memberIds;
     private String ownerId;
     private long createdAt;
+    private String groupName;
+    private long lastMessageTimestamp;
+    private String lastMessage;
 
     // חובה: constructor ריק לפיירבייס
     public GroupChat() {
@@ -21,6 +24,8 @@ public class GroupChat {
         this.memberIds = memberIds;
         this.ownerId = ownerId;
         this.createdAt = createdAt;
+        this.groupName = "";
+        this.lastMessageTimestamp = System.currentTimeMillis();
     }
 
     // Getters
@@ -71,5 +76,29 @@ public class GroupChat {
 
     public void setCreatedAt(long createdAt) {
         this.createdAt = createdAt;
+    }
+    
+    public String getGroupName() {
+        return groupName;
+    }
+    
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+    
+    public long getLastMessageTimestamp() {
+        return lastMessageTimestamp;
+    }
+    
+    public void setLastMessageTimestamp(long lastMessageTimestamp) {
+        this.lastMessageTimestamp = lastMessageTimestamp;
+    }
+    
+    public String getLastMessage() {
+        return lastMessage;
+    }
+    
+    public void setLastMessage(String lastMessage) {
+        this.lastMessage = lastMessage;
     }
 }

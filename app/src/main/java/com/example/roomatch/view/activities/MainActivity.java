@@ -30,6 +30,7 @@ import com.example.roomatch.view.fragments.PartnerFragment;
 import com.example.roomatch.view.fragments.ProfileFragment;
 import com.example.roomatch.view.fragments.SeekerHomeFragment;
 import com.example.roomatch.view.fragments.SharedGroupsFragment;
+import com.example.roomatch.utils.NotificationHelper;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
@@ -60,6 +61,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), getString(R.string.google_maps_key), Locale.getDefault());
         }
+        
+        NotificationHelper.createNotificationChannel(this);
 
         bottomNav = findViewById(R.id.bottom_navigation);
         drawerLayout = findViewById(R.id.drawer_layout);
@@ -87,19 +90,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (initialFragment != null) {
             switch (initialFragment) {
                 case "owner_apartments":
+                    userType = "owner";
+                    setupDrawerForUserType(userType);
                     replaceFragment(new OwnerApartmentsFragment());
-                    setupBottomNav("owner");
+                    setupBottomNav(userType);
                     break;
                 case "seeker_home":
+                    userType = "seeker";
+                    setupDrawerForUserType(userType);
                     replaceFragment(new SeekerHomeFragment());
-                    setupBottomNav("seeker");
+                    setupBottomNav(userType);
                     break;
                 case "create_profile":
                     replaceFragment(new CreateProfileFragment());
                     break;
                 case "menu_apartments":
+                    userType = "seeker";
+                    setupDrawerForUserType(userType);
                     replaceFragment(new ApartmentSearchFragment());
-                    setupBottomNav("seeker");
+                    setupBottomNav(userType);
                     break;
             }
         } else {
@@ -134,17 +143,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     userType = userProfile.getUserType();
                     Log.d("MainActivity", "User type: " + userType);
 
-                    if ("owner".equals(userType)) {
-                        toolbar.setVisibility(Toolbar.GONE); // הסתרת ה־Toolbar מה-Activity
-                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
-                    } else if ("seeker".equals(userType)) {
-                        setSupportActionBar(toolbar); // שימוש בתפריט
-                        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
-                                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-                        drawerLayout.addDrawerListener(drawerToggle);
-                        drawerToggle.syncState();
-                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
-                    }
+                    setupDrawerForUserType(userType);
 
 
                     if (userType == null || userType.isEmpty()) {
@@ -248,6 +247,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onDestroy();
         if (drawerToggle != null) {
             drawerLayout.removeDrawerListener(drawerToggle);
+        }
+    }
+    
+    private void setupDrawerForUserType(String userType) {
+        if ("owner".equals(userType)) {
+            toolbar.setVisibility(Toolbar.GONE);
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        } else if ("seeker".equals(userType)) {
+            toolbar.setVisibility(Toolbar.VISIBLE);
+            setSupportActionBar(toolbar);
+            
+            // Configurer le drawer toggle
+            drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
+                    R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+            drawerLayout.addDrawerListener(drawerToggle);
+            drawerToggle.syncState();
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
         }
     }
 
