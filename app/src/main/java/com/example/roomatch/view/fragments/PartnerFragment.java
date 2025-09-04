@@ -1,5 +1,6 @@
 package com.example.roomatch.view.fragments;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,7 @@ import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -322,6 +324,7 @@ public class PartnerFragment extends Fragment {
     
     private void showProfileDialog(UserProfile profile) {
         viewModel.showProfileDialog(profile);
+        showShowProfileDialog(profile);
     }
     
     private void showReportDialog(UserProfile profile) {
@@ -342,6 +345,37 @@ public class PartnerFragment extends Fragment {
         
         builder.setNegativeButton("ביטול", (dialog, which) -> dialog.cancel());
         builder.show();
+    }
+    private void showShowProfileDialog(@NonNull UserProfile profile) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_show_profile, null);
+        builder.setView(dialogView);
+
+        TextView name       = dialogView.findViewById(R.id.textShowProfileName);
+        TextView age        = dialogView.findViewById(R.id.textShowProfileAge);
+        TextView gender     = dialogView.findViewById(R.id.textShowProfileGender);
+        TextView lifestyles = dialogView.findViewById(R.id.textShowProfileLifestyles);
+        TextView interests  = dialogView.findViewById(R.id.textShowProfileInterests);
+        TextView description= dialogView.findViewById(R.id.textShowProfileDescription);
+        Button exit         = dialogView.findViewById(R.id.buttonShowProfileExit);
+
+        String safeName   = profile.getFullName()   != null ? profile.getFullName()   : "—";
+        String safeAge    = (profile.getAge() != null && profile.getAge() > 0) ? String.valueOf(profile.getAge()) : "—";
+        String safeGender = profile.getGender()     != null ? profile.getGender()     : "—";
+        String safeLife   = profile.getLifestyle()  != null ? profile.getLifestyle()  : "—";
+        String safeInter  = profile.getInterests()  != null ? profile.getInterests()  : "—";
+        String safeDesc   = profile.getDescription()!= null ? profile.getDescription(): "—";
+
+        name.setText(safeName);
+        age.setText(safeAge);
+        gender.setText(safeGender);
+        lifestyles.setText(safeLife);
+        interests.setText(safeInter);
+        description.setText(safeDesc);
+
+        AlertDialog dialog = builder.create();
+        exit.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
     
 }

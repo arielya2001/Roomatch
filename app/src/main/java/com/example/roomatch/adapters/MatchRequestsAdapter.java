@@ -60,7 +60,7 @@ public class MatchRequestsAdapter extends RecyclerView.Adapter<MatchRequestsAdap
             holder.approveButton.setOnClickListener(v -> listener.onApprove(request.getUserId()));
             holder.rejectButton.setOnClickListener(v -> listener.onReject(request.getUserId()));
             holder.itemView.setOnClickListener(v -> {
-                int pos = holder.getBindingAdapterPosition();
+                int pos = position;
                 if (pos != RecyclerView.NO_POSITION && itemClickListener != null) {
                     itemClickListener.onItemClick(requests.get(pos), pos); // בטוח מול ריסייקל
                 }

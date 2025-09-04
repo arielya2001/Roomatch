@@ -44,11 +44,13 @@ public class PartnerViewModel extends ViewModel {
                     allPartners.clear();
                     for (DocumentSnapshot doc : queryDocumentSnapshots) {
                         UserProfile profile = doc.toObject(UserProfile.class);
+                        profile.setUserId(doc.getId());
                         try
                         {
                             Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
                             profile.setLat(loc.get("latitude"));
-                            profile.setLat(loc.get("longitude"));
+                            profile.setLng(loc.get("longitude"));
+
                         }
                         catch (Exception ex)
                         {
@@ -101,21 +103,22 @@ public class PartnerViewModel extends ViewModel {
     }
 
     public void sendMatchRequest(UserProfile profile) {
-        String currentUserId = auth.getCurrentUser().getUid();
-        Map<String, Object> matchRequest = new HashMap<>();
-        matchRequest.put("fromUserId", currentUserId);
-        matchRequest.put("toUserId", profile.getUserId());
-        matchRequest.put("status", "pending");
-        matchRequest.put("timestamp", System.currentTimeMillis());
-        
-        db.collection("matchRequests").add(matchRequest)
-            .addOnSuccessListener(ref -> {
-                toastMessage.setValue("נשלחה בקשת התאמה ל־" + profile.getFullName());
-                sendNotificationToUser(profile.getUserId(), "בקשת התאמה חדשה");
-            })
-            .addOnFailureListener(e -> 
-                toastMessage.setValue("שגיאה בשליחת הבקשה")
-            );
+        String currentUserId = repository.getCurrentUserId();
+        String targetUserId = profile.getUserId();
+
+        if (currentUserId == null || targetUserId == null) {
+            toastMessage.setValue("שגיאה: משתמש לא תקין");
+            return;
+        }
+
+        repository.sendMatchRequest(currentUserId, targetUserId)
+                .addOnSuccessListener(aVoid -> {
+                    toastMessage.setValue("נשלחה בקשת התאמה ל־" + profile.getFullName());
+                    sendNotificationToUser(targetUserId, "בקשת התאמה חדשה");
+                })
+                .addOnFailureListener(e ->
+                        toastMessage.setValue("שגיאה בשליחת הבקשה: " + e.getMessage())
+                );
     }
 
     public void applyPartnerSearchByName(String query) {

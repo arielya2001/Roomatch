@@ -45,7 +45,7 @@ public class PartnerAdapter extends
                         UserProfile userProfile = doc.toObject(UserProfile.class);
                         Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
                         userProfile.setLat(loc.get("latitude"));
-                        userProfile.setLat(loc.get("longitude"));
+                        userProfile.setLng(loc.get("longitude"));
                         profile.setValue(userProfile);
                     } else {
                         //toastMessage.setValue("פרופיל לא נמצא");
@@ -122,9 +122,10 @@ public class PartnerAdapter extends
                 distance.setText(String.format(java.util.Locale.US, "%.2f", dist)+"KM");
             else
                 distance.setText("unavailable");
-            btnView.setOnClickListener(v -> profileClickListener.onProfileClick(profile));
+            itemView.setOnClickListener(v -> profileClickListener.onProfileClick(profile));
             btnMatch.setOnClickListener(v -> matchClickListener.onMatchRequest(profile));
             btnReport.setOnClickListener(v -> reportClickListener.onReport(profile));
+            btnView.setOnClickListener(c->profileClickListener.onProfileClick(profile));
         }
     }
 }

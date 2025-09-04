@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.MatchRequestsAdapter;
 import com.example.roomatch.model.UserProfile;
+import com.example.roomatch.model.repository.UserRepository;
 import com.example.roomatch.viewmodel.MatchRequestsViewModel;
 
 import java.util.ArrayList;
@@ -28,6 +29,8 @@ public class MatchRequestsFragment extends Fragment {
     private MatchRequestsViewModel viewModel;
     private RecyclerView recyclerView;
     private MatchRequestsAdapter adapter;
+
+    private UserRepository repository = new UserRepository();
 
 
     @Override
@@ -66,7 +69,21 @@ public class MatchRequestsFragment extends Fragment {
             }
         });
         adapter.setOnItemClickListener((contact, position) -> {
-            String uid =  contact.getUserId();
+            String uid =  contact.getFromUserId();
+            repository.getUserById(uid)
+            .addOnSuccessListener(profile -> {
+                if (!isAdded()) return; // הגנה במקרה שהפרגמנט כבר הוסר
+                if (profile != null) {
+                    showShowProfileDialog(profile);
+                } else {
+                    Toast.makeText(getContext(), "לא נמצא פרופיל למשתמש", Toast.LENGTH_SHORT).show();
+                }
+            })
+                    .addOnFailureListener(e -> {
+                        if (!isAdded()) return;
+                        Toast.makeText(getContext(), "שגיאה בטעינת פרופיל: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+
 
         });
         recyclerView.setAdapter(adapter);
@@ -92,31 +109,36 @@ public class MatchRequestsFragment extends Fragment {
         viewModel.loadMatchRequests();
     }
 
-    private void showShowProfileDialog(UserProfile profile)
-    {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_show_profile, null);
+    private void showShowProfileDialog(@NonNull UserProfile profile) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_show_profile, null);
         builder.setView(dialogView);
 
-        TextView name=dialogView.findViewById(R.id.textShowProfileName);
-        TextView age=dialogView.findViewById(R.id.textShowProfileAge);
-        TextView gender=dialogView.findViewById(R.id.textShowProfileGender);
-        TextView lifestyles=dialogView.findViewById(R.id.textShowProfileLifestyles);
-        TextView interests=dialogView.findViewById(R.id.textShowProfileInterests);
-        TextView description=dialogView.findViewById(R.id.textShowProfileDescription);
-        Button exit = dialogView.findViewById(R.id.buttonShowProfileExit);
+        TextView name       = dialogView.findViewById(R.id.textShowProfileName);
+        TextView age        = dialogView.findViewById(R.id.textShowProfileAge);
+        TextView gender     = dialogView.findViewById(R.id.textShowProfileGender);
+        TextView lifestyles = dialogView.findViewById(R.id.textShowProfileLifestyles);
+        TextView interests  = dialogView.findViewById(R.id.textShowProfileInterests);
+        TextView description= dialogView.findViewById(R.id.textShowProfileDescription);
+        Button exit         = dialogView.findViewById(R.id.buttonShowProfileExit);
 
-        name.setText(profile.getFullName());
-        age.setText(profile.getAge()+"");
-        gender.setText(profile.getGender());
-        lifestyles.setText(profile.getLifestyle());
-        interests.setText(profile.getInterests());
-        description.setText(profile.getDescription());
+        String safeName   = profile.getFullName()   != null ? profile.getFullName()   : "—";
+        String safeAge    = (profile.getAge() != null && profile.getAge() > 0) ? String.valueOf(profile.getAge()) : "—";
+        String safeGender = profile.getGender()     != null ? profile.getGender()     : "—";
+        String safeLife   = profile.getLifestyle()  != null ? profile.getLifestyle()  : "—";
+        String safeInter  = profile.getInterests()  != null ? profile.getInterests()  : "—";
+        String safeDesc   = profile.getDescription()!= null ? profile.getDescription(): "—";
+
+        name.setText(safeName);
+        age.setText(safeAge);
+        gender.setText(safeGender);
+        lifestyles.setText(safeLife);
+        interests.setText(safeInter);
+        description.setText(safeDesc);
 
         AlertDialog dialog = builder.create();
-
-        exit.setOnClickListener(v->{dialog.dismiss();});
-
+        exit.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
+
 }
