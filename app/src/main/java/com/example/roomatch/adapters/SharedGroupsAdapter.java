@@ -1,16 +1,22 @@
 package com.example.roomatch.adapters;
 
+import android.app.AlertDialog;
+import android.content.Context;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.model.SharedGroup;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,6 +81,45 @@ public class SharedGroupsAdapter extends RecyclerView.Adapter<SharedGroupsAdapte
             holder.managerNameTextView.setText("אין מנהל");
             holder.managerCrown.setVisibility(View.GONE);
         }
+
+        // הצגת כפתור עריכה רק אם המשתמש הנוכחי הוא מנהל הקבוצה
+        if (adminId != null && adminId.equals(currentUserId)) {
+            holder.editGroupNameButton.setVisibility(View.VISIBLE);
+            holder.editGroupNameButton.setOnClickListener(v -> {
+                showEditGroupNameDialog(v.getContext(), group);
+            });
+        } else {
+            holder.editGroupNameButton.setVisibility(View.GONE);
+        }
+    }
+
+    private void showEditGroupNameDialog(Context context, SharedGroup group) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("עריכת שם הקבוצה");
+
+        final EditText input = new EditText(context);
+        input.setText(group.getName());
+        builder.setView(input);
+
+        builder.setPositiveButton("שמור", (dialog, which) -> {
+            String newName = input.getText().toString().trim();
+            if (!newName.isEmpty()) {
+                FirebaseFirestore.getInstance()
+                        .collection("shared_groups")
+                        .document(group.getId())
+                        .update("name", newName)
+                        .addOnSuccessListener(aVoid -> {
+                            group.setName(newName);
+                            notifyDataSetChanged();
+                            Toast.makeText(context, "שם הקבוצה עודכן", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e ->
+                                Toast.makeText(context, "שגיאה בעדכון השם", Toast.LENGTH_SHORT).show());
+            }
+        });
+
+        builder.setNegativeButton("ביטול", (dialog, which) -> dialog.cancel());
+        builder.show();
     }
 
     private String getAdminId(SharedGroup group) {
@@ -96,6 +141,7 @@ public class SharedGroupsAdapter extends RecyclerView.Adapter<SharedGroupsAdapte
         TextView membersTextView;
         TextView managerNameTextView;
         TextView managerCrown;
+        ImageView editGroupNameButton;
 
         GroupViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -103,6 +149,7 @@ public class SharedGroupsAdapter extends RecyclerView.Adapter<SharedGroupsAdapte
             membersTextView = itemView.findViewById(R.id.membersTextView);
             managerNameTextView = itemView.findViewById(R.id.managerNameTextView);
             managerCrown = itemView.findViewById(R.id.managerCrown);
+            editGroupNameButton = itemView.findViewById(R.id.editGroupNameButton);
         }
     }
 }
