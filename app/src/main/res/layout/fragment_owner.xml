@@ -12,23 +12,24 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="כתובת (בחר כתובת ולאחר מכן הזן מספר בית)" />
+            android:text="בחר כתובת מתוך ההשלמה האוטומטית של גוגל" />
 
         <!-- השלמת כתובת חכמה -->
-        <androidx.fragment.app.FragmentContainerView
+        <FrameLayout
             android:id="@+id/autocompleteFragmentContainer"
-            android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
-        <!-- שדה להזנת מספר בית בלבד -->
-        <EditText
-            android:id="@+id/editTextHouseNumber"
+        <!-- הצגת כתובת שנבחרה -->
+        <TextView
+            android:id="@+id/textViewSelectedAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="מספר בית"
-            android:inputType="number"
+            android:text="לא נבחרה כתובת"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:padding="8dp"
             android:layout_marginTop="8dp" />
 
         <EditText
@@ -87,16 +88,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/cancel"
-                style="@style/Theme.Roomatch"
-                android:layout_width="50dp"
-                android:layout_height="match_parent"
-                android:layout_gravity="bottom"
-                android:layout_margin="5dp"
-                android:layout_weight="1"
-                android:text="ביטול" />
 
             <Button
                 android:id="@+id/buttonPublish"

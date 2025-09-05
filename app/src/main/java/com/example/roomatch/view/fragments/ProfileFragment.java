@@ -127,8 +127,12 @@ public class ProfileFragment extends Fragment {
                 textWhere.setText(safe(selectedCity)+", "+safe(selectedStreet));
                 textProfileLifeStyles.setText(safe(profile.getLifestyle()));
                 textProfileInterests.setText(safe(profile.getInterests()));
-                lifeStylesFragment.setBoxes(profile.getLifestyle());
-                interestsFragment.setBoxes(profile.getInterests());
+                if(profile.getUserType().equals("seeker"))
+                {
+                    lifeStylesFragment.setBoxes(profile.getLifestyle());
+                    interestsFragment.setBoxes(profile.getInterests());
+                }
+
                 location.setText(profile.getLat()+", "+profile.getLng());
                 if ("owner".equals(profile.getUserType())) {
                     LinearLayout seekerDetails = view.findViewById(R.id.seekerProfileDetails);

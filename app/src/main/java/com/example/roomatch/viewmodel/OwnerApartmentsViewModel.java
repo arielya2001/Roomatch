@@ -120,45 +120,50 @@ public class OwnerApartmentsViewModel extends ViewModel {
         filteredApartments.setValue(result);
     }
 
-    public void publishApartment(String houseNumStr, String priceStr, String roommatesStr,
-                                 String description, Uri imageUri) {
-        if (selectedCity == null || selectedStreet == null || selectedLocation == null) {
-            toastMessage.setValue("יש לבחור כתובת אוטומטית לפני פרסום");
+    public void publishApartment(String city, String street, String houseNumberStr,
+                                 String priceStr, String roommatesStr, String description,
+                                 Uri imageUri, LatLng location) {
+
+        if (city == null || street == null || location == null ||
+                priceStr == null || roommatesStr == null || description == null ||
+                city.isEmpty() || street.isEmpty() || priceStr.isEmpty() ||
+                roommatesStr.isEmpty() || description.isEmpty()) {
+            toastMessage.setValue("כל השדות חייבים להיות מלאים");
             publishSuccess.setValue(false);
             return;
         }
 
-        String validationError = validateInputs(selectedCity, selectedStreet, houseNumStr, priceStr, roommatesStr, description);
-        if (validationError != null) {
-            toastMessage.setValue(validationError);
-            publishSuccess.setValue(false);
-            return;
-        }
-
-        int houseNumber, price, roommatesNeeded;
+        int price, roommatesNeeded, houseNumber;
         try {
-            houseNumber = Integer.parseInt(houseNumStr);
             price = Integer.parseInt(priceStr);
             roommatesNeeded = Integer.parseInt(roommatesStr);
+            houseNumber = (houseNumberStr != null && !houseNumberStr.isEmpty())
+                    ? Integer.parseInt(houseNumberStr) : -1;
+
+            if (price < 0 || roommatesNeeded < 0 || houseNumber < -1) {
+                toastMessage.setValue("שדות מספריים חייבים להיות חיוביים");
+                publishSuccess.setValue(false);
+                return;
+            }
         } catch (NumberFormatException e) {
-            toastMessage.setValue("מספרים לא תקינים בשדות כמות/מחיר/מספר בית");
+            toastMessage.setValue("שדות מספריים חייבים להיות מספרים תקינים");
             publishSuccess.setValue(false);
             return;
         }
-
         Apartment apartment = new Apartment(
                 null,
                 getCurrentUserId(),
-                selectedCity,
-                selectedStreet,
+                city,
+                street,
                 houseNumber,
                 price,
                 roommatesNeeded,
                 description,
                 null,
-                selectedLocation.latitude,
-                selectedLocation.longitude
+                location.latitude,
+                location.longitude
         );
+
 
         repository.publishApartment(apartment, imageUri)
                 .addOnSuccessListener(docRef -> {
@@ -171,6 +176,7 @@ public class OwnerApartmentsViewModel extends ViewModel {
                     publishSuccess.setValue(false);
                 });
     }
+
 
 
     public void updateApartment(String apartmentId, String city, String street, String houseNumStr,

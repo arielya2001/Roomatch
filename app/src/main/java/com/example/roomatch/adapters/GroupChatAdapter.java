@@ -14,6 +14,7 @@ import com.example.roomatch.R;
 import com.example.roomatch.model.GroupChatMessage;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.GroupChatViewHolder> {
@@ -52,13 +53,22 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
         return messages.size();
     }
 
+
     public void updateMessages(List<GroupChatMessage> newMessages) {
         messages.clear();
         if (newMessages != null) {
+            // סינון הודעות עם timestamp לא חוקי (0 או שלילי)
+            newMessages.removeIf(m -> m.getTimestamp() <= 0);
+
+            // מיון לפי timestamp
+            newMessages.sort(Comparator.comparingLong(GroupChatMessage::getTimestamp));
+
             messages.addAll(newMessages);
         }
         notifyDataSetChanged();
     }
+
+
 
     static class GroupChatViewHolder extends RecyclerView.ViewHolder {
         TextView textViewMessage, textViewSenderName;

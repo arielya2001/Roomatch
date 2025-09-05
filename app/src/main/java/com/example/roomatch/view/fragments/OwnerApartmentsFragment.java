@@ -45,12 +45,10 @@ public class OwnerApartmentsFragment extends Fragment {
     private Button buttonFilter, buttonClear;
 
     private final Map<String, String> fieldMap = new HashMap<>() {{
-        put("עיר", "city");
-        put("רחוב", "street");
-        put("מספר בית", "houseNumber");
         put("מחיר", "price");
         put("מספר שותפים", "roommatesNeeded");
     }};
+
 
     public OwnerApartmentsFragment() {}
 
@@ -79,12 +77,12 @@ public class OwnerApartmentsFragment extends Fragment {
 
         spinnerFilterField = view.findViewById(R.id.spinnerOwnerFilterField);
         spinnerOrder = view.findViewById(R.id.spinnerOwnerOrder);
-        buttonFilter = view.findViewById(R.id.buttonOwnerFilter);
-        buttonClear = view.findViewById(R.id.buttonOwnerClear);
+//        buttonFilter = view.findViewById(R.id.buttonOwnerFilter);
+//        buttonClear = view.findViewById(R.id.buttonOwnerClear);
         searchView = view.findViewById(R.id.searchViewOwner);
 
         ArrayAdapter<String> fieldAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item,
-                new String[]{"עיר", "רחוב", "מספר בית", "מחיר", "מספר שותפים"});
+                new String[]{"מחיר", "מספר שותפים"});
         fieldAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerFilterField.setAdapter(fieldAdapter);
 
@@ -108,16 +106,16 @@ public class OwnerApartmentsFragment extends Fragment {
             public void onDeleteApartmentClick(Apartment apartment) {
                 confirmAndDelete(apartment);
             }
-            @Override
-            public void onReportApartmentClick(Apartment apartment) {
-                showReportDialog(apartment);
-            }
+//            @Override
+//            public void onReportApartmentClick(Apartment apartment) {
+//                showReportDialog(apartment);
+//            }
 
         });
         recyclerView.setAdapter(adapter);
 
-        buttonFilter.setOnClickListener(v -> applyFilter());
-        buttonClear.setOnClickListener(v -> resetFilter());
+//        buttonFilter.setOnClickListener(v -> applyFilter());
+//        buttonClear.setOnClickListener(v -> resetFilter());
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -165,6 +163,27 @@ public class OwnerApartmentsFragment extends Fragment {
                 getActivity().finish();
             }
         }
+        spinnerFilterField.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                triggerAutoFilter();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        spinnerOrder.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                triggerAutoFilter();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        spinnerOrder.setAdapter(orderAdapter);
+
     }
 
     private void applyFilter() {
@@ -187,6 +206,19 @@ public class OwnerApartmentsFragment extends Fragment {
         searchView.setQuery("", false);
         searchView.clearFocus();
     }
+
+    private void triggerAutoFilter() {
+        if (spinnerFilterField.getSelectedItem() == null || spinnerOrder.getSelectedItem() == null) return;
+
+        String selectedLabel = spinnerFilterField.getSelectedItem().toString();
+        String selectedField = fieldMap.get(selectedLabel);
+        boolean ascending = spinnerOrder.getSelectedItem().toString().equals("עולה");
+
+        if (selectedField != null) {
+            viewModel.applyFilter(selectedField, ascending);
+        }
+    }
+
 
     private void searchApartments(String query) {
         viewModel.searchApartments(query);

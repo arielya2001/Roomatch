@@ -5,12 +5,43 @@ import com.google.firebase.Timestamp;
 public class Message {
     private String id;
     private String fromUserId;
+
+    private String senderName; // <== הוסף את זה
+
     private String toUserId;
     private String text;
     private String apartmentId;
     private long timestamp;
     private boolean read;
     private String imageUrl;
+
+    private String addressStreet;
+    private String addressCity;
+    private String addressHouseNumber;
+
+    public String getAddressStreet() {
+        return addressStreet;
+    }
+    public void setAddressStreet(String addressStreet) {
+        this.addressStreet = addressStreet;
+    }
+
+    public String getAddressCity() {
+        return addressCity;
+    }
+    public void setAddressCity(String addressCity) {
+        this.addressCity = addressCity;
+    }
+
+    public String getAddressHouseNumber() {
+        return addressHouseNumber;
+    }
+    public void setAddressHouseNumber(String addressHouseNumber) {
+        this.addressHouseNumber = addressHouseNumber;
+    }
+
+
+
 
     // קונסטרקטור ריק עבור Firebase
     public Message() {}
@@ -26,6 +57,9 @@ public class Message {
     // Getters ו-Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+
+    public String getSenderName() { return senderName; }
+    public void setSenderName(String senderName) { this.senderName = senderName; }
     public String getFromUserId() { return fromUserId; }
     public void setFromUserId(String fromUserId) { this.fromUserId = fromUserId; }
     public String getToUserId() { return toUserId; }

@@ -24,6 +24,7 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class AuthActivity extends AppCompatActivity {
 
@@ -136,12 +137,12 @@ public class AuthActivity extends AppCompatActivity {
                                 UserProfile userProfile = new UserProfile();
                                 userProfile.setFullName(acct.getDisplayName());
                                 userProfile.setUserType("");
-                                userProfile.setUserId(uid);
 
                                 db.collection("users").document(uid)
                                         .set(userProfile)
                                         .addOnSuccessListener(unused -> {
                                             Log.d("AuthActivity", "User profile created successfully");
+                                            saveFcmToken();
                                             db.collection("users").document(uid).get()
                                                     .addOnSuccessListener(createdSnapshot -> {
                                                         if (createdSnapshot.exists()) {
@@ -188,6 +189,7 @@ public class AuthActivity extends AppCompatActivity {
     private void login(String email, String password) {
         auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(result -> {
+                    saveFcmToken();
                     Toast.makeText(this, "התחברת בהצלחה", Toast.LENGTH_SHORT).show();
                     startMain();
                 })
@@ -203,9 +205,10 @@ public class AuthActivity extends AppCompatActivity {
                     UserProfile userProfile = new UserProfile();
                     userProfile.setFullName(username);
                     userProfile.setUserType("");
-                    userProfile.setUserId(uid);
+
                     db.collection("users").document(uid).set(userProfile)
                             .addOnSuccessListener(unused -> {
+                                saveFcmToken();
                                 Toast.makeText(this, "נרשמת בהצלחה", Toast.LENGTH_SHORT).show();
                                 startMain();
                             })
@@ -222,4 +225,25 @@ public class AuthActivity extends AppCompatActivity {
         startActivity(new Intent(this, MainActivity.class));
         finish();
     }
+    private void saveFcmToken() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w("FCM", "Fetching FCM token failed", task.getException());
+                        return;
+                    }
+
+                    String token = task.getResult();
+                    String uid = FirebaseAuth.getInstance().getUid();
+                    if (uid != null) {
+                        FirebaseFirestore.getInstance()
+                                .collection("users")
+                                .document(uid)
+                                .update("fcmToken", token)
+                                .addOnSuccessListener(unused -> Log.d("FCM", "Token saved successfully"))
+                                .addOnFailureListener(e -> Log.e("FCM", "Failed to save FCM token", e));
+                    }
+                });
+    }
+
 }

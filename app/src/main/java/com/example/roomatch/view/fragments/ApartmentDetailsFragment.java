@@ -121,23 +121,35 @@ public class ApartmentDetailsFragment extends Fragment {
 
         viewModel.getNavigateToChatWith().observe(getViewLifecycleOwner(), chatKey -> {
             if (chatKey != null) {
-                String[] parts = chatKey.split("::");
-                if (parts.length == 2) {
-                    String ownerId = parts[0];
-                    String apartmentId = parts[1];
-                    ChatFragment chatFragment = new ChatFragment(ownerId, apartmentId);
+                if (chatKey.contains("::")) {
+                    // צ'אט פרטי
+                    String[] parts = chatKey.split("::");
+                    if (parts.length == 2) {
+                        String ownerId = parts[0];
+                        String apartmentId = parts[1];
+                        ChatFragment chatFragment = new ChatFragment(ownerId, apartmentId);
+                        requireActivity().getSupportFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragmentContainer, chatFragment)
+                                .addToBackStack(null)
+                                .commit();
+                    } else {
+                        Toast.makeText(getContext(), "שגיאה בנתוני הצ'אט", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    // צ'אט קבוצתי
+                    GroupChatFragment groupChatFragment = GroupChatFragment.newInstance(chatKey);
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
-                            .replace(R.id.fragmentContainer, chatFragment)
+                            .replace(R.id.fragmentContainer, groupChatFragment)
                             .addToBackStack(null)
                             .commit();
-
-                    viewModel.clearNavigation();
-                } else {
-                    Toast.makeText(getContext(), "שגיאה בנתוני הצ'אט", Toast.LENGTH_SHORT).show();
                 }
+
+                viewModel.clearNavigation();
             }
         });
+
 
         sendGroupMessageBtn.setOnClickListener(v -> {
             Apartment apartment = viewModel.getApartmentDetails().getValue();

@@ -36,9 +36,17 @@ public class ProfileViewModel extends ViewModel {
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         UserProfile userProfile = doc.toObject(UserProfile.class);
-                        Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
-                        userProfile.setLat(loc.get("latitude"));
-                        userProfile.setLat(loc.get("longitude"));
+                        try {
+                            Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
+                            userProfile.setLat(loc.get("latitude"));
+                            userProfile.setLat(loc.get("longitude"));
+                        }
+                        catch (Exception ex)
+                        {
+                            userProfile.setLat(0);
+                            userProfile.setLat(0);
+                        }
+
                         profile.setValue(userProfile);
                     } else {
                         toastMessage.setValue("פרופיל לא נמצא");
