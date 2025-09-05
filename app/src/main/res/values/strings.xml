@@ -3,14 +3,32 @@
     <string name="delete_apartment">מחיקת דירה</string>
     <string name="navigation_drawer_open">פתח תפריט</string>
     <string name="navigation_drawer_close">סגור תפריט</string>
+
     <string-array name="genders">
         <item>הכל</item>
         <item>זכר</item>
         <item>נקבה</item>
         <item>אחר</item>
     </string-array>
+
+    <string-array name="report_reasons_array">
+        <item>תוכן פוגעני</item>
+        <item>פרסום כוזב</item>
+        <item>מידע שגוי</item>
+        <item>תמונה לא הולמת</item>
+        <item>כפילות</item>
+        <item>אחר</item>
+    </string-array>
+
     <string name="default_web_client_id">730704673974-780s2lhe0nq00euabaekqe90kvn9s6og.apps.googleusercontent.com</string>
     <string name="google_maps_key">AIzaSyBHvJSGRqykrqDtYB-TN8C4C70OYPi_IMI</string>
     <string name="reject">Reject</string>
     <string name="approve">Approve</string>
+<<<<<<< Updated upstream
 </resources>
+=======
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
+>>>>>>> Stashed changes

@@ -1,16 +1,19 @@
 package com.example.roomatch.view.fragments;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -73,7 +76,12 @@ public class ApartmentSearchFragment extends Fragment {
 
         // RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ApartmentAdapter(apartments, getContext(), this::openApartmentDetails);
+        adapter = new ApartmentAdapter(
+                List.of(),
+                getContext(),
+                this::openApartmentDetails,
+                this::showReportDialog
+        );
         recyclerView.setAdapter(adapter);
 
         // ViewModel
@@ -81,12 +89,18 @@ public class ApartmentSearchFragment extends Fragment {
         viewModel = new ApartmentSearchViewModel(repository);
 
         viewModel.getApartments().observe(getViewLifecycleOwner(), list -> {
+            Log.d("DEBUG_FLOW", "getApartments() emitted: " + list.size() + " apartments");
+            for (Apartment apt : list) {
+                Log.d("DEBUG_APT", "Loaded: " + apt.getCity() + " " + apt.getStreet());
+            }
+
             apartments.clear();
             apartments.addAll(list);
             originalApartments.clear();
             originalApartments.addAll(list);
-            adapter.notifyDataSetChanged();
+            adapter.updateApartments(list);
         });
+
 
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), msg ->
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show()
@@ -121,6 +135,7 @@ public class ApartmentSearchFragment extends Fragment {
         });
 
         // טען את כל הדירות
+        Log.d("DEBUG_FLOW", "Calling viewModel.loadApartments()");
         viewModel.loadApartments();
 
         // מעבר לחיפוש המתקדם
@@ -165,4 +180,39 @@ public class ApartmentSearchFragment extends Fragment {
                 .addToBackStack(null)
                 .commit();
     }
+
+    private void showReportDialog(Apartment apartment) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_report_apartment, null);
+
+        Spinner spinner = view.findViewById(R.id.spinnerReportReason);
+        EditText editText = view.findViewById(R.id.editTextAdditionalDetails);
+        Button buttonSend = view.findViewById(R.id.buttonSendReport);
+        Button buttonCancel = view.findViewById(R.id.buttonCancelReport);
+
+        // סט אפינ Adapter ל-spinner
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                getContext(),
+                R.array.report_reasons_array,
+                android.R.layout.simple_spinner_item
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+
+        builder.setView(view);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        buttonCancel.setOnClickListener(v -> dialog.dismiss());
+
+        buttonSend.setOnClickListener(v -> {
+            String reason = spinner.getSelectedItem().toString();
+            String details = editText.getText().toString();
+
+            viewModel.reportApartment(apartment, reason, details);
+            Toast.makeText(getContext(), "הדיווח נשלח", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+        });
+    }
+
 }

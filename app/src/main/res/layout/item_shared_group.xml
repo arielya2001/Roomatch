@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -55,3 +56,93 @@
     </LinearLayout>
 
 </LinearLayout>
+=======
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="12dp"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    android:layout_marginVertical="4dp"
+    android:elevation="2dp">
+
+    <!-- שורת שם הקבוצה עם כפתור עריכה -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- שם הקבוצה -->
+        <TextView
+            android:id="@+id/groupNameTextView"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="שם קבוצה"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:paddingBottom="4dp" />
+
+        <!-- כפתור עריכה (אייקון עיפרון) -->
+        <ImageView
+            android:id="@+id/editGroupNameButton"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_edit"
+            android:contentDescription="ערוך שם קבוצה"
+            android:padding="4dp"
+            android:clickable="true"
+            android:focusable="true" />
+        <!-- כפתור מחיקה (אייקון פח) -->
+        <ImageView
+            android:id="@+id/deleteGroupButton"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_delete"
+            android:contentDescription="מחק קבוצה"
+            android:padding="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <!-- טקסט חברים -->
+    <TextView
+        android:id="@+id/membersTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="חברים: יוסי, דני, רותם"
+        android:textSize="14sp"
+        android:textColor="#444444"
+        android:paddingBottom="4dp" />
+
+    <!-- שורת המנהל -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/managerCrown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="👑"
+            android:textSize="16sp"
+            android:paddingEnd="4dp"
+            android:visibility="visible" />
+
+        <TextView
+            android:id="@+id/managerNameTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="מנהל: רותם"
+            android:textSize="14sp"
+            android:textColor="#FF8800" />
+    </LinearLayout>
+
+</LinearLayout>
+>>>>>>> Stashed changes

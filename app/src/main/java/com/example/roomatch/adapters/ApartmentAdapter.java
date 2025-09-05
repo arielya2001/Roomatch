@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 package com.example.roomatch.adapters;
 
 import android.content.Context;
@@ -107,3 +108,135 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
         }
     }
 }
+=======
+package com.example.roomatch.adapters;
+
+import android.content.Context;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.example.roomatch.R;
+import com.example.roomatch.model.Apartment;
+
+import java.util.List;
+
+public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.ApartmentViewHolder> {
+
+    public interface OnApartmentClickListener {
+        void onApartmentClick(Apartment apartment);
+    }
+
+    public interface OnReportClickListener {
+        void onReportClick(Apartment apartment);
+    }
+
+    private List<Apartment> apartmentList;
+    private Context context;
+    private OnApartmentClickListener listener;
+    private OnReportClickListener reportListener;
+
+    public ApartmentAdapter(List<Apartment> apartmentList, Context context,
+                            OnApartmentClickListener listener,
+                            OnReportClickListener reportListener) {
+        this.apartmentList = apartmentList;
+        this.context = context;
+        this.listener = listener;
+        this.reportListener = reportListener;
+    }
+
+    @NonNull
+    @Override
+    public ApartmentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.item_apartment, parent, false);
+        return new ApartmentViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ApartmentViewHolder holder, int position) {
+        Apartment apt = apartmentList.get(position);
+
+        Log.d("DEBUG_FLOW", "Binding apartment at position " + position + ": " + apt.getCity());
+
+        // Log הקואורדינטות של הדירה ושל המיקום שנבחר
+        Log.d("DistanceDebug", "Apt LatLng: " + apt.getLatitude() + ", " + apt.getLongitude());
+
+        holder.cityTextView.setText(apt.getCity());
+        holder.streetTextView.setText(apt.getStreet());
+        holder.houseNumberTextView.setText(String.valueOf(apt.getHouseNumber()));
+        holder.priceTextView.setText(" חודש/ " + "₪" + apt.getPrice());
+
+        // הצגת המרחק אם קיים
+        double distance = apt.getDistance(); // במטרים
+        if (distance > 0) {
+            double distanceKm = distance / 1000.0;
+            holder.distanceTextView.setText(String.format("מרחק: %.1f ק\"מ", distanceKm));
+            holder.distanceTextView.setVisibility(View.VISIBLE);
+        } else {
+            holder.distanceTextView.setVisibility(View.GONE);
+        }
+
+        // תמונה
+        if (apt.getImageUrl() == null || apt.getImageUrl().isEmpty()) {
+            Glide.with(context).clear(holder.apartmentImageView);
+            holder.apartmentImageView.setImageResource(R.drawable.placeholder_image);
+        } else {
+            Glide.with(context)
+                    .load(apt.getImageUrl())
+                    .placeholder(R.drawable.placeholder_image)
+                    .into(holder.apartmentImageView);
+        }
+
+        // לחיצה על כל הפריט – פתיחת פרטים
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onApartmentClick(apt);
+            }
+        });
+
+        // לחיצה על כפתור הדיווח
+        holder.reportButton.setOnClickListener(v -> {
+            if (reportListener != null) {
+                reportListener.onReportClick(apt);
+            }
+        });
+    }
+
+    @Override
+    public int getItemCount() {
+        return apartmentList != null ? apartmentList.size() : 0;
+    }
+
+    public void updateApartments(List<Apartment> newApartments) {
+        Log.d("DEBUG_FLOW", "Adapter updating with " + newApartments.size() + " apartments");
+        this.apartmentList = newApartments;
+        notifyDataSetChanged();
+    }
+
+    static class ApartmentViewHolder extends RecyclerView.ViewHolder {
+        ImageView apartmentImageView;
+        TextView cityTextView, streetTextView, houseNumberTextView, priceTextView;
+        TextView distanceTextView;
+        ImageButton reportButton;
+
+        public ApartmentViewHolder(@NonNull View itemView) {
+            super(itemView);
+            apartmentImageView = itemView.findViewById(R.id.apartmentImageView);
+            cityTextView = itemView.findViewById(R.id.cityTextView);
+            streetTextView = itemView.findViewById(R.id.streetTextView);
+            houseNumberTextView = itemView.findViewById(R.id.houseNumberTextView);
+            priceTextView = itemView.findViewById(R.id.priceTextView);
+            distanceTextView = itemView.findViewById(R.id.textViewApartmentDistance);
+            reportButton = itemView.findViewById(R.id.buttonReport);
+        }
+    }
+}
+>>>>>>> Stashed changes

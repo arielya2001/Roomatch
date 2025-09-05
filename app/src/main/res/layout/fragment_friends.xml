@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrollViewFriends"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- תת פרגמנט של בקשות לקשר -->
+        <FrameLayout
+            android:id="@+id/matchRequestsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="300dp" />
+
+
+        <!-- כותרת לחברים -->
+        <TextView
+            android:id="@+id/textFriendsTitle"
+            android:text="החברים שלי"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- הודעה כשאין חברים -->
+        <TextView
+            android:id="@+id/textNoFriends"
+            android:text="אין חברים להצגה כרגע"
+            android:textSize="16sp"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <!-- רשימת החברים -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewFriends"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+</ScrollView>
