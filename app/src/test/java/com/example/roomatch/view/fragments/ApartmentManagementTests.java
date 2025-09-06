@@ -94,108 +94,71 @@ public class ApartmentManagementTests {
     // Annotate the setup method to run before each test case
     @Before
     public void setUp() {
-        // Initialize the OwnerApartmentsViewModel with the mocked repository
         viewModel = new OwnerApartmentsViewModel(mockRepository);
-        // Configure the mock repository to return a fixed user ID for tests
         when(mockRepository.getCurrentUserId()).thenReturn("testUserId");
-        // Configure the mock repository to return an empty list of apartments by default
         when(mockRepository.getApartmentsByOwnerId(anyString()))
                 .thenReturn(Tasks.forResult(Collections.emptyList()));
     }
 
-    // Annotate the test method to test the publishApartment method under various conditions
     @Test
     public void testPublishApartment_VariousCases() {
-        // Case 1: Valid input
-        // Define valid input parameters for publishing an apartment
-        String city1 = "ariel";
-        String street1 = "neve shaanan";
-        String houseNumStr1 = "12";
-        String priceStr1 = "2500";
-        String roommatesStr1 = "4";
-        String description1 = "very pretty apartment";
-        Uri imageUri1 = null;
+        // הגדרות בסיסיות
+        String city = "תל אביב";
+        String street = "דיזנגוף";
+        String houseNumStr = "10";
+        String priceStr = "3000";
+        String roommatesStr = "2";
+        String description = "דירה מהממת";
+        Uri imageUri = null;
+        LatLng location = new LatLng(32.0853, 34.7818);
 
-        // Create a mock DocumentReference to simulate a successful Firestore operation
-        DocumentReference mockDocRef = mock(DocumentReference.class);
-        // Create a Task that simulates a successful publish operation
-        Task<DocumentReference> successTask = Tasks.forResult(mockDocRef);
-        // Configure the mock repository to return the successTask when publishApartment is called
+        // Case 1: פרסום תקין
         when(mockRepository.publishApartment(any(Apartment.class), any(Uri.class)))
-                .thenReturn(successTask);
+                .thenReturn(Tasks.forResult(mock(DocumentReference.class)));
 
-        // Set the address in the ViewModel to simulate user selection
-        viewModel.setSelectedAddress(city1, street1, new LatLng(32.1046, 35.1847));
-        // Call the publishApartment method with valid input
-        viewModel.publishApartment(houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1);
-        // Process any pending asynchronous operations to update LiveData
+        viewModel.publishApartment(city, street, houseNumStr, priceStr, roommatesStr, description, imageUri, location);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
-        // Verify that the publishSuccess LiveData is set to true
+
         assertTrue(viewModel.getPublishSuccess().getValue());
-        // Verify that the toastMessage LiveData contains the success message in Hebrew
         assertEquals("הדירה פורסמה", viewModel.getToastMessage().getValue());
-        // Verify that the publishApartment method was called exactly once on the repository
         verify(mockRepository, times(1)).publishApartment(any(Apartment.class), any(Uri.class));
 
-        // Case 2: Empty field (invalid input)
-        // Define input parameters with an empty city field to test validation failure
-        String city2 = "";
-        String street2 = "neve shaanan";
-        String houseNumStr2 = "12";
-        String priceStr2 = "2500";
-        String roommatesStr2 = "4";
-        String description2 = "very pretty apartment";
-        Uri imageUri2 = null;
-
-        // Set the address with an empty city to trigger validation error
-        viewModel.setSelectedAddress(city2, street2, new LatLng(32.1046, 35.1847));
-        // Call the publishApartment method with invalid input
-        viewModel.publishApartment(houseNumStr2, priceStr2, roommatesStr2, description2, imageUri2);
-        // Process any pending asynchronous operations to update LiveData
+        // Case 2: שדה ריק
+        viewModel.publishApartment("", street, houseNumStr, priceStr, roommatesStr, description, imageUri, location);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
-        // Verify that the publishSuccess LiveData is set to false due to validation failure
+
         assertFalse(viewModel.getPublishSuccess().getValue());
-        // Verify that the toastMessage LiveData contains the validation error message in Hebrew
         assertEquals("כל השדות חייבים להיות מלאים", viewModel.getToastMessage().getValue());
-        // Verify that no additional calls were made to publishApartment due to validation failure
-        verify(mockRepository, times(1)).publishApartment(any(Apartment.class), any(Uri.class));
+        verify(mockRepository, times(1)).publishApartment(any(Apartment.class), any(Uri.class)); // לא מתווסף
 
-        // Case 3: Network failure
-        // Create a Task that simulates a network failure with an exception
-        Task<DocumentReference> failTask = Tasks.forException(new Exception("Network error"));
-        // Configure the mock repository to return the failTask when publishApartment is called
-        when(mockRepository.publishApartment(any(Apartment.class), any(Uri.class)))
-                .thenReturn(failTask);
-
-        // Set the address with valid values for the network failure test
-        viewModel.setSelectedAddress(city1, street1, new LatLng(32.1046, 35.1847));
-        // Call the publishApartment method with valid input to test network failure
-        viewModel.publishApartment(houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1);
-        // Process any pending asynchronous operations to update LiveData
+        // Case 3: ערך מספרי שלילי
+        viewModel.publishApartment(city, street, "-5", priceStr, roommatesStr, description, imageUri, location);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
-        // Verify that the publishSuccess LiveData is set to false due to network failure
-        assertFalse(viewModel.getPublishSuccess().getValue());
-        // Verify that the toastMessage LiveData contains the network error message in Hebrew
-        assertEquals("שגיאה בפרסום: Network error", viewModel.getToastMessage().getValue());
-        // Verify that publishApartment was called twice (once in Case 1, once here)
-        verify(mockRepository, times(2)).publishApartment(any(Apartment.class), any(Uri.class));
 
-        // Case 4: Negative number (invalid input)
-        // Define input with a negative house number to test validation failure
-        String houseNumStr4 = "-12";
-        // Set the address with valid values for the negative number test
-        viewModel.setSelectedAddress(city1, street1, new LatLng(32.1046, 35.1847));
-        // Call the publishApartment method with invalid input (negative number)
-        viewModel.publishApartment(houseNumStr4, priceStr1, roommatesStr1, description1, imageUri1);
-        // Process any pending asynchronous operations to update LiveData
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
-        // Verify that the publishSuccess LiveData is set to false due to validation failure
         assertFalse(viewModel.getPublishSuccess().getValue());
-        // Verify that the toastMessage LiveData contains the validation error message for negative numbers
         assertEquals("שדות מספריים חייבים להיות חיוביים", viewModel.getToastMessage().getValue());
-        // Verify that no additional calls were made to publishApartment due to validation failure
-        verify(mockRepository, times(2)).publishApartment(any(Apartment.class), any(Uri.class));
+        verify(mockRepository, times(1)).publishApartment(any(Apartment.class), any(Uri.class)); // עדיין לא מתווסף
+
+        // Case 4: ערך מספרי לא חוקי
+        viewModel.publishApartment(city, street, "abc", priceStr, roommatesStr, description, imageUri, location);
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+
+        assertFalse(viewModel.getPublishSuccess().getValue());
+        assertEquals("שדות מספריים חייבים להיות מספרים תקינים", viewModel.getToastMessage().getValue());
+        verify(mockRepository, times(1)).publishApartment(any(Apartment.class), any(Uri.class)); // עדיין רק 1
+
+        // Case 5: שגיאה מה־Repository (כשל ברשת למשל)
+        when(mockRepository.publishApartment(any(Apartment.class), any(Uri.class)))
+                .thenReturn(Tasks.forException(new Exception("Network error")));
+
+        viewModel.publishApartment(city, street, houseNumStr, priceStr, roommatesStr, description, imageUri, location);
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+
+        assertFalse(viewModel.getPublishSuccess().getValue());
+        assertEquals("שגיאה בפרסום: Network error", viewModel.getToastMessage().getValue());
+        verify(mockRepository, times(2)).publishApartment(any(Apartment.class), any(Uri.class)); // מתווסף רק כאן
     }
+
 
     // Annotate the test method to test the updateApartment method under various conditions
     @Test

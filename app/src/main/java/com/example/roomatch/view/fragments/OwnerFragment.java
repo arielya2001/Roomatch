@@ -56,7 +56,7 @@ public class OwnerFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        viewModel = new ViewModelProvider(this, ViewModelFactoryProvider.createFactory())
+        viewModel = new ViewModelProvider(this, ViewModelFactoryProvider.factory)
                 .get(OwnerApartmentsViewModel.class);
 
         priceEditText = view.findViewById(R.id.editTextPrice);

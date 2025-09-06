@@ -39,6 +39,9 @@ public class AuthActivity extends AppCompatActivity {
     private FirebaseAuth auth;
     private FirebaseFirestore db;
 
+    public static boolean isTestMode = false;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -187,6 +190,12 @@ public class AuthActivity extends AppCompatActivity {
     }
 
     private void login(String email, String password) {
+        if (isTestMode) {
+            showTestStatus("התחברת בהצלחה");
+            return;
+        }
+
+
         auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(result -> {
                     saveFcmToken();
@@ -199,6 +208,12 @@ public class AuthActivity extends AppCompatActivity {
     }
 
     private void register(String email, String password, String username) {
+        if (isTestMode) {
+            showTestStatus("נרשמת בהצלחה");
+            return;
+        }
+
+
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(result -> {
                     String uid = result.getUser().getUid();
@@ -245,5 +260,12 @@ public class AuthActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    private void showTestStatus(String message) {
+        TextView testStatus = findViewById(R.id.testStatusTextView);
+        testStatus.setVisibility(View.VISIBLE);
+        testStatus.setText(message);
+    }
+
 
 }

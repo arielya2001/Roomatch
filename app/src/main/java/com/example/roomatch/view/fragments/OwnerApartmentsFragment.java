@@ -63,7 +63,7 @@ public class OwnerApartmentsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // שימוש ב-AppViewModelFactory ממקום מרכזי
-        AppViewModelFactory factory = ViewModelFactoryProvider.createFactory();
+        ViewModelProvider.Factory factory = ViewModelFactoryProvider.factory;
         viewModel = new ViewModelProvider(this, factory).get(OwnerApartmentsViewModel.class);
 
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {

@@ -69,7 +69,6 @@
             android:padding="12dp"
             android:text="התחבר" />
 
-
         <TextView
             android:id="@+id/textView"
             style="@style/Theme.Roomatch"
@@ -88,9 +87,7 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="271dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1">
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                android:layout_weight="1" />
 
             <ImageButton
                 android:id="@+id/customGoogleButton"
@@ -112,6 +109,17 @@
             android:text="אין לך חשבון? הירשם"
             android:textColor="#1E5C9A"
             android:textStyle="bold" />
+
+        <!-- ✅ תוספת חשובה לטסטים -->
+        <TextView
+            android:id="@+id/testStatusTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:text="סטטוס טסט"
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:gravity="center" />
 
     </LinearLayout>
 </ScrollView>

@@ -107,7 +107,7 @@ public class AdvancedSearchFragment extends Fragment implements OnMapReadyCallba
         });
 
         // ViewModel
-        AppViewModelFactory factory = ViewModelFactoryProvider.createFactory();
+        ViewModelProvider.Factory factory = ViewModelFactoryProvider.factory;
         viewModel = new ViewModelProvider(this, factory).get(AdvancedSearchViewModel.class);
 
         // Address autocomplete

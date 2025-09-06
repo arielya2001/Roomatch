@@ -52,7 +52,7 @@ public class ApartmentDetailsFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        AppViewModelFactory factory = ViewModelFactoryProvider.createFactory();
+        ViewModelProvider.Factory factory = ViewModelFactoryProvider.factory;
         viewModel = new ViewModelProvider(this, factory).get(ApartmentDetailsViewModel.class);
 
         if (viewModel.getApartmentDetails().getValue() == null && getArguments() != null) {
