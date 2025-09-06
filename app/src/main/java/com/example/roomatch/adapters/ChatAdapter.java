@@ -13,8 +13,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.roomatch.R;
 import com.example.roomatch.model.Message;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder> {
 
@@ -42,8 +45,18 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
         String text = message.getText() != null ? message.getText() : "הודעה ריקה";
         String fromUserId = message.getFromUserId() != null ? message.getFromUserId() : "";
-
-        holder.messageText.setText(text);
+        long timestamp = message.getTimestamp();
+        String time= formatTime(timestamp);
+        String date= formatDate(timestamp);
+        long nowMs = System.currentTimeMillis();
+        String currentDate=formatDate(nowMs);
+        if(currentDate.equals(date))
+        {
+            holder.messageText.setText(text+"\n"+time);
+        }
+        else {
+            holder.messageText.setText(text+"\n"+time+" "+ date);
+        }
 
         // יישור לפי השולח
         if (fromUserId.equals(currentUserId)) {
@@ -77,6 +90,25 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             super(itemView);
             messageText = itemView.findViewById(R.id.textMessage);
             container = itemView.findViewById(R.id.messageContainer);
+        }
+    }
+
+    private String formatTime(long timestamp) {
+        try {
+            Date date = new Date(timestamp);
+            return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date);
+        } catch (Exception e) {
+            return "לא זמין";
+        }
+    }
+
+    private String formatDate(long timestamp)
+    {
+        try {
+            Date date = new Date(timestamp);
+            return new SimpleDateFormat("dd.MM.yy", Locale.getDefault()).format(date);
+        } catch (Exception e) {
+            return "לא זמין";
         }
     }
 }
