@@ -25,7 +25,6 @@ import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,6 +42,8 @@ public class OwnerApartmentsFragment extends Fragment {
     private Spinner spinnerFilterField, spinnerOrder;
     private SearchView searchView;
     private Button buttonFilter, buttonClear;
+
+    private ImageButton addApartmentButton;
 
     private final Map<String, String> fieldMap = new HashMap<>() {{
         put("מחיר", "price");
@@ -80,6 +81,17 @@ public class OwnerApartmentsFragment extends Fragment {
 //        buttonFilter = view.findViewById(R.id.buttonOwnerFilter);
 //        buttonClear = view.findViewById(R.id.buttonOwnerClear);
         searchView = view.findViewById(R.id.searchViewOwner);
+        addApartmentButton = view.findViewById(R.id.buttonAddApartments);
+        addApartmentButton.setOnClickListener(v->
+                {
+                    OwnerFragment ownerFragment = new OwnerFragment();
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragmentContainer, ownerFragment)
+                            .addToBackStack(null)
+                            .commit();
+                }
+                );
 
         ArrayAdapter<String> fieldAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item,
                 new String[]{"מחיר", "מספר שותפים"});
@@ -132,18 +144,18 @@ public class OwnerApartmentsFragment extends Fragment {
         });
         //לחצן פרסום דירה
         Toolbar toolbar = view.findViewById(R.id.toolbar);
-        if (toolbar != null) {
-            ImageButton publishButton = toolbar.findViewById(R.id.buttonChats);
-            publishButton.setImageResource(android.R.drawable.ic_menu_add);
-            publishButton.setOnClickListener(v -> {
-                OwnerFragment ownerFragment = new OwnerFragment();
-                requireActivity().getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.fragmentContainer, ownerFragment)
-                        .addToBackStack(null)
-                        .commit();
-            });
-        }
+//        if (toolbar != null) {
+//            ImageButton publishButton = toolbar.findViewById(R.id.buttonAddApartments);
+//            publishButton.setImageResource(android.R.drawable.ic_menu_add);
+//            publishButton.setOnClickListener(v -> {
+//                OwnerFragment ownerFragment = new OwnerFragment();
+//                requireActivity().getSupportFragmentManager()
+//                        .beginTransaction()
+//                        .replace(R.id.fragmentContainer, ownerFragment)
+//                        .addToBackStack(null)
+//                        .commit();
+//            });
+//        }
         //תקרא לפונקציה שמחזירה לך את הדירות המעודכנות לפי סינון ואז תקרא לupdate כלומר תנקה את הרשימה הישנה תוסיף חדשה ותעדכן את UI
         viewModel.getFilteredApartments().observe(getViewLifecycleOwner(), apartments -> {
             adapter.updateApartments(apartments);

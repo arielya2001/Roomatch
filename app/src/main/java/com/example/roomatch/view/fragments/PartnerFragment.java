@@ -43,15 +43,16 @@ public class PartnerFragment extends Fragment {
     private PartnerAdapter adapter;
     private SearchView searchViewName;
 
-    private ImageButton toggleFilterMenuButton;
+    private Button toggleFilterMenuButton;
     private LinearLayout filterContainer;
-    private Button resetFiltersButton;
+    //private Button resetFiltersButton;
 
     private Button toggleLifestyleButton;
     //private LinearLayout lifestyleCheckboxContainer;
 
     private Button toggleInterestsButton;
     //private LinearLayout interestsCheckboxContainer;
+    private Button clearFiltersButton;
 
     private FragmentContainerView autoComplete, lifeStyles, interests;
 
@@ -99,7 +100,7 @@ public class PartnerFragment extends Fragment {
         searchViewName = view.findViewById(R.id.searchViewPartner);
         toggleFilterMenuButton = view.findViewById(R.id.buttonToggleFilters);
         filterContainer = view.findViewById(R.id.filterCheckboxContainer);
-        resetFiltersButton = view.findViewById(R.id.buttonResetFilters);
+        //resetFiltersButton = view.findViewById(R.id.buttonResetFilters);
         toggleLifestyleButton = view.findViewById(R.id.buttonToggleLifestyle);
         //lifestyleCheckboxContainer = view.findViewById(R.id.lifestyleCheckboxContainer);
         toggleInterestsButton = view.findViewById(R.id.buttonToggleInterests);
@@ -107,6 +108,11 @@ public class PartnerFragment extends Fragment {
         toggleLocationButton = view.findViewById(R.id.buttonToggleLocation);
         radiusSpinner = view.findViewById(R.id.radiusSpinner);
         setRadiusSpinner();
+        clearFiltersButton=view.findViewById(R.id.buttonResetFilters);
+        clearFiltersButton.setOnClickListener(v->
+        {
+            resetAllFilters();
+        });
 
         //locationCheckboxContainer = view.findViewById(R.id.locationCheckboxContainer);
         lifeStyles=view.findViewById(R.id.seekerLifeStyles);
@@ -172,13 +178,13 @@ public class PartnerFragment extends Fragment {
             radiusSpinner.setVisibility(locationVisible ? View.VISIBLE : View.GONE);
         });
 
-        // Reset all filters - Amélioration de l'UX
-        resetFiltersButton.setOnClickListener(v -> resetAllFilters());
-        // Rendre toute la zone cliquable pour une meilleure UX
-        View resetContainer = view.findViewById(R.id.resetFilterContainer);
-        if (resetContainer != null) {
-            resetContainer.setOnClickListener(v -> resetAllFilters());
-        }
+//        // Reset all filters - Amélioration de l'UX
+//        resetFiltersButton.setOnClickListener(v -> resetAllFilters());
+//        // Rendre toute la zone cliquable pour une meilleure UX
+//        View resetContainer = view.findViewById(R.id.resetFilterContainer);
+//        if (resetContainer != null) {
+//            resetContainer.setOnClickListener(v -> resetAllFilters());
+//        }
 
         // Build checkboxes dynamically
         setupFilterCheckboxes();
@@ -324,7 +330,7 @@ public class PartnerFragment extends Fragment {
     }
     
     private void showProfileDialog(UserProfile profile) {
-        viewModel.showProfileDialog(profile);
+        //viewModel.showProfileDialog(profile);
         showShowProfileDialog(profile);
     }
     

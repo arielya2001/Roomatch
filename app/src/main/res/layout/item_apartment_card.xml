@@ -3,6 +3,7 @@
     style="@style/Theme.Roomatch.secondary"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_margin="2dp"
     android:orientation="vertical"
     android:padding="12dp">
 
@@ -19,8 +20,10 @@
         android:visibility="gone" />
 
     <LinearLayout
+        style="@style/Theme.Roomatch"
         android:layout_width="match_parent"
         android:layout_height="247dp"
+        android:layout_margin="2dp"
         android:layout_weight="1"
         android:orientation="vertical">
 
@@ -168,14 +171,14 @@
         </LinearLayout>
     </LinearLayout>
 
-<!--    <Button-->
-<!--        android:id="@+id/buttonViewApartment"-->
-<!--        style="@style/button_style"-->
-<!--        android:layout_width="387dp"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_margin="5dp"-->
-<!--        android:layout_marginTop="8dp"-->
-<!--        android:layout_weight="1"-->
-<!--        android:text="צפייה בדירה" />-->
+    <!--    <Button-->
+    <!--        android:id="@+id/buttonViewApartment"-->
+    <!--        style="@style/button_style"-->
+    <!--        android:layout_width="387dp"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_margin="5dp"-->
+    <!--        android:layout_marginTop="8dp"-->
+    <!--        android:layout_weight="1"-->
+    <!--        android:text="צפייה בדירה" />-->
 
 </LinearLayout>

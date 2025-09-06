@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
@@ -93,24 +94,26 @@ public class PartnerAdapter extends
         notifyDataSetChanged();
     }
     class PartnerViewHolder extends RecyclerView.ViewHolder {
-        private final TextView nameText;
-        private final TextView lifestyleText;
+        private final TextView nameText, ageText;
+        //private final TextView lifestyleText;
         private final TextView distance;
-        private final Button btnView;
+        //private final Button btnView;
         private final Button btnMatch;
-        private final Button btnReport;
+        private final ImageButton btnReport;
         public PartnerViewHolder(@NonNull View itemView) {super(itemView);
             nameText = itemView.findViewById(R.id.partnerNameTextView);
-            lifestyleText = itemView.findViewById(R.id.partnerLifestyleTextView);
+            ageText=itemView.findViewById(R.id.textAge);
+            //lifestyleText = itemView.findViewById(R.id.partnerLifestyleTextView);
 
             distance = itemView.findViewById(R.id.distanceTextView);
-            btnView = itemView.findViewById(R.id.buttonViewProfile);
+            //btnView = itemView.findViewById(R.id.buttonViewProfile);
             btnMatch = itemView.findViewById(R.id.buttonRequestMatch);
             btnReport = itemView.findViewById(R.id.buttonReport);
         }
         public void bind(UserProfile profile) {
             nameText.setText(profile.getFullName());
-            lifestyleText.setText(profile.getLifestyle());
+            ageText.setText(profile.getAge()+"");
+            //lifestyleText.setText(profile.getLifestyle());
             double dist;
             if(getProfile().getValue()!=null)
             {
@@ -127,13 +130,13 @@ public class PartnerAdapter extends
                 dist=Double.MAX_VALUE;
             }
             if(dist!=Double.MAX_VALUE)
-                distance.setText(String.format(java.util.Locale.US, "%.2f", dist)+"KM");
+                distance.setText(String.format(java.util.Locale.US, "%.2f", dist)+" KM");
             else
                 distance.setText("unavailable");
             itemView.setOnClickListener(v -> profileClickListener.onProfileClick(profile));
             btnMatch.setOnClickListener(v -> matchClickListener.onMatchRequest(profile));
             btnReport.setOnClickListener(v -> reportClickListener.onReport(profile));
-            btnView.setOnClickListener(c->profileClickListener.onProfileClick(profile));
+            //btnView.setOnClickListener(c->profileClickListener.onProfileClick(profile));
         }
     }
 }

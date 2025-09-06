@@ -19,12 +19,13 @@
         <!-- כותרת לחברים -->
         <TextView
             android:id="@+id/textFriendsTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_marginTop="16dp"
             android:text="החברים שלי"
             android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginTop="16dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:textStyle="bold" />
 
         <!-- הודעה כשאין חברים -->
         <TextView
