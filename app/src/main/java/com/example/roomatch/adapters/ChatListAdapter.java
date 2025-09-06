@@ -1,9 +1,11 @@
 package com.example.roomatch.adapters;
 
+import android.media.Image;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -53,10 +55,30 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
                 + " | participants=" + item.getParticipantsString());
 
         String time = formatTime(item.getTimestamp());
-        holder.textViewTime.setText(time);
+        String date = formatDate(item.getTimestamp());
+        long nowMs = System.currentTimeMillis();
+        String currentDate=formatDate(nowMs);
+        if(currentDate.equals(date))
+        {
+            holder.textViewTime.setText(time);
+        }
+        else
+        {
+            holder.textViewTime.setText(date);
+        }
+
         holder.textViewSender.setText("הודעה אחרונה מאת: " + item.getLastMessageSenderName());
         holder.textViewApartment.setText("כתובת: " + item.getSubText());
         holder.textViewMessage.setText("הודעה אחרונה: " + item.getLastMessage());
+        if(item.isGroup())
+        {
+            holder.imageMessageType.setImageResource(R.mipmap.ic_group_foreground);
+        }
+        else
+        {
+            holder.imageMessageType.setImageResource(R.mipmap.ic_person_foreground);
+        }
+
 
         String participants = item.getParticipantsString();
         if (participants != null && !participants.isEmpty()) {
@@ -117,9 +139,19 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         }
     }
 
+    private String formatDate(long timestamp)
+    {
+        try {
+            Date date = new Date(timestamp);
+            return new SimpleDateFormat("dd.MM.yy", Locale.getDefault()).format(date);
+        } catch (Exception e) {
+            return "לא זמין";
+        }
+    }
+
     static class ChatViewHolder extends RecyclerView.ViewHolder {
         TextView textViewSender, textViewApartment, textViewMessage, textViewTime, textViewUnreadBadge, textViewParticipants;
-
+        ImageView imageMessageType;
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewSender = itemView.findViewById(R.id.textViewSender);
@@ -128,6 +160,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
             textViewTime = itemView.findViewById(R.id.textViewTime);
             textViewUnreadBadge = itemView.findViewById(R.id.textViewUnreadBadge);
             textViewParticipants = itemView.findViewById(R.id.textViewParticipants); // 🆕
+            imageMessageType=itemView.findViewById(R.id.imageMessageType);
         }
     }
 }
