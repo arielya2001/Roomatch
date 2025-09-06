@@ -196,4 +196,75 @@ public class UserRepository {
                     return Tasks.forResult(null); // אישור הצלחה
                 });
     }
+
+    public void loadFriends(FirestoreCallback<List<UserProfile>> callback) {
+        String myUid = getCurrentUserId();
+        if (myUid == null) {
+            Log.e(TAG, "loadFriends: User not logged in");
+            callback.onCallback(new ArrayList<>());
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("match_requests")
+                .whereEqualTo("status", "accepted")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<String> friendIds = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        String from = doc.getString("fromUserId");
+                        String to = doc.getString("toUserId");
+
+                        if (from == null || to == null) continue;
+
+                        if (from.equals(myUid)) {
+                            friendIds.add(to);
+                        } else if (to.equals(myUid)) {
+                            friendIds.add(from);
+                        }
+                    }
+
+                    if (friendIds.isEmpty()) {
+                        callback.onCallback(new ArrayList<>());
+                        return;
+                    }
+
+                    List<Task<DocumentSnapshot>> profileTasks = new ArrayList<>();
+                    for (String id : friendIds) {
+                        profileTasks.add(db.collection("users").document(id).get());
+                    }
+
+                    Tasks.whenAllSuccess(profileTasks)
+                            .addOnSuccessListener(results -> {
+                                List<UserProfile> friends = new ArrayList<>();
+                                for (Object result : results) {
+                                    if (result instanceof DocumentSnapshot doc && doc.exists()) {
+                                        UserProfile profile = doc.toObject(UserProfile.class);
+                                        if (profile != null) {
+                                            profile.setUserId(doc.getId()); // לא לשכוח!
+                                            friends.add(profile);
+                                        }
+                                    }
+                                }
+                                callback.onCallback(friends);
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "loadFriends: Failed loading user profiles", e);
+                                callback.onCallback(new ArrayList<>());
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "loadFriends: Failed loading match requests", e);
+                    callback.onCallback(new ArrayList<>());
+                });
+    }
+
+
+
+    public interface FirestoreCallback<T> {
+        void onCallback(T data);
+    }
+
+
 }

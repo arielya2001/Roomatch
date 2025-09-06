@@ -67,7 +67,22 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         }
 
 
-        holder.textViewUnreadBadge.setVisibility(View.GONE);
+        boolean hasUnread = false;
+
+        if (!item.isGroup()) {
+            hasUnread = ((Chat) item).isHasUnread();
+        } else {
+            hasUnread = ((GroupChatListItem) item).isHasUnread();
+        }
+
+        if (hasUnread) {
+            holder.textViewUnreadBadge.setText("📨");
+            holder.textViewUnreadBadge.setVisibility(View.VISIBLE);
+        } else {
+            holder.textViewUnreadBadge.setVisibility(View.GONE);
+        }
+
+
 
         holder.itemView.setOnClickListener(v -> {
             if (item.isGroup()) {

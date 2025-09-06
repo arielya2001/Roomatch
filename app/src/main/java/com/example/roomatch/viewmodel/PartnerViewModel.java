@@ -78,7 +78,7 @@ public class PartnerViewModel extends ViewModel {
                         {
                             Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
                             userProfile.setLat(loc.get("latitude"));
-                            userProfile.setLat(loc.get("longitude"));
+                            userProfile.setLng(loc.get("longitude"));
                         }
                         catch (Exception ex)
                         {
@@ -162,59 +162,70 @@ public class PartnerViewModel extends ViewModel {
     public void clearPartnerFilter() {
         partners.setValue(new ArrayList<>(allPartners));
     }
-    
-    public void applyCompleteFilter(List<String> lifestyles, List<String> interests, 
-                                   int radius, String nameQuery) {
+
+    public void applyCompleteFilter(List<String> lifestyles, List<String> interests,
+                                    int radius, String queryText) {
         List<UserProfile> result = new ArrayList<>();
-        
-        for (UserProfile profile : allPartners) {
-            boolean matchName = nameQuery.isEmpty() || 
-                (profile.getFullName() != null && 
-                 profile.getFullName().toLowerCase().contains(nameQuery.toLowerCase()));
-            
+
+        UserProfile current = getProfile().getValue();
+        if (current == null) {
+            toastMessage.setValue("לא ניתן לסנן - פרופיל המשתמש לא נטען");
+            return;
+        }
+
+        LatLng mySearchLocation = current.getSelectedLocation();
+
+        for (UserProfile other : allPartners) {
+            // לא מציג את המשתמש עצמו
+            if (other.getUserId() != null && other.getUserId().equals(current.getUserId()))
+                continue;
+
+            // חישוב מרחק
+            LatLng otherSearchLocation = other.getSelectedLocation();
+            float[] results = new float[1];
+            Location.distanceBetween(
+                    mySearchLocation.latitude, mySearchLocation.longitude,
+                    otherSearchLocation.latitude, otherSearchLocation.longitude,
+                    results
+            );
+            double distanceKm = results[0] / 1000.0;
+            boolean matchDistance = distanceKm <= radius;
+
+            // סינון לפי סגנון חיים ותחומי עניין
             boolean matchLifestyle = lifestyles.isEmpty() ||
-                lifestyles.stream().allMatch(l ->
-                    profile.getLifestyle() != null && profile.getLifestyle().contains(l));
+                    lifestyles.stream().allMatch(l ->
+                            other.getLifeStyleslist() != null && other.getLifeStyleslist().contains(l));
 
             boolean matchInterest = interests.isEmpty() ||
-                interests.stream().allMatch(i ->
-                    profile.getInterests() != null && profile.getInterests().contains(i));
-            
-            // Pour la localisation, on vérifie si l'utilisateur cherche dans les mêmes villes
-            boolean matchLocation=false;
-            UserProfile current = getProfile().getValue();
-            LatLng loc = current.getSelectedLocation();
-            LatLng otherLoc = profile.getSelectedLocation();
-            //מחשב מרחק בין שני מיקומים
-            float[] results = new float[1]; // meters
-            Location.distanceBetween(loc.latitude, loc.longitude, otherLoc.latitude, otherLoc.longitude, results);
-            double dist =  results[0] / 1000.0; // km
-            //בודק האם המרחק קטן מרדיוס
-            if(dist<=radius)
-            {
-                matchLocation=true;
-            }
-//            if (!locations.isEmpty() && profile.getUserId() != null) {
-//                // On pourrait récupérer la préférence de localisation depuis Firestore
-//                // Pour l'instant, on fait un match basique
-//                matchLocation = true; // Simplifié pour l'exemple
-//            }
+                    interests.stream().allMatch(i ->
+                            other.getInterestsList() != null && other.getInterestsList().contains(i));
 
-            if (matchName && matchLifestyle && matchInterest && matchLocation) {
-                result.add(profile);
+            // סינון לפי חיפוש טקסט חופשי
+            boolean matchText = queryText == null || queryText.trim().isEmpty() || containsText(other, queryText);
+
+            // תנאי סינון סופי
+            if (matchDistance && matchLifestyle && matchInterest && matchText) {
+                result.add(other);
             }
         }
-        
-        // Trier par distance si des localisations sont spécifiées
-//        if (!locations.isEmpty()) {
-//            result.sort((p1, p2) -> {
-//                return 0;
-//            });
-//        }
-        
+
         partners.setValue(result);
     }
-    
+
+    private boolean containsText(UserProfile profile, String query) {
+        query = query.toLowerCase();
+
+        return (profile.getFullName() != null && profile.getFullName().toLowerCase().contains(query)) ||
+                (profile.getSelectedCity() != null && profile.getSelectedCity().toLowerCase().contains(query)) ||
+                (profile.getSelectedStreet() != null && profile.getSelectedStreet().toLowerCase().contains(query)) ||
+                (profile.getDescription() != null && profile.getDescription().toLowerCase().contains(query)) ||
+                (profile.getInterests() != null && profile.getInterests().toLowerCase().contains(query)) ||
+                (profile.getLifestyle() != null && profile.getLifestyle().toLowerCase().contains(query)) ||
+                (String.valueOf(profile.getAge()) != null && String.valueOf(profile.getAge()).contains(query));
+    }
+
+
+
     public void reportUser(UserProfile profile, String reason) {
         Map<String, Object> report = new HashMap<>();
         report.put("reportedUserId", profile.getUserId());

@@ -2,6 +2,8 @@ package com.example.roomatch.model;
 
 import com.google.firebase.Timestamp;
 
+import java.util.List;
+
 public class Message {
     private String id;
     private String fromUserId;
@@ -18,6 +20,9 @@ public class Message {
     private String addressStreet;
     private String addressCity;
     private String addressHouseNumber;
+
+    private List<String> readBy;
+
 
     public String getAddressStreet() {
         return addressStreet;
@@ -38,6 +43,14 @@ public class Message {
     }
     public void setAddressHouseNumber(String addressHouseNumber) {
         this.addressHouseNumber = addressHouseNumber;
+    }
+
+    public List<String> getReadBy() {
+        return readBy;
+    }
+
+    public void setReadBy(List<String> readBy) {
+        this.readBy = readBy;
     }
 
 

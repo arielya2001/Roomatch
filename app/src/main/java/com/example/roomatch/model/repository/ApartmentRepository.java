@@ -633,6 +633,31 @@ public class ApartmentRepository {
         });
     }
 
+    public Task<Void> markGroupMessagesAsRead(String groupChatId, String userId) {
+        return db.collection("group_messages")
+                .document(groupChatId)
+                .collection("chat")
+                .get()
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        throw task.getException();
+                    }
+
+                    List<Task<Void>> updates = new ArrayList<>();
+                    for (DocumentSnapshot doc : task.getResult()) {
+                        List<String> readBy = (List<String>) doc.get("readBy");
+                        if (readBy == null || !readBy.contains(userId)) {
+                            updates.add(doc.getReference().update("readBy", FieldValue.arrayUnion(userId)));
+                        }
+                    }
+
+                    return Tasks.whenAll(updates);
+                });
+    }
+
+
+
+
 
     public Task<Void> reportApartment(String apartmentId, String ownerId, String reason, String details) {
         Map<String, Object> report = new HashMap<>();

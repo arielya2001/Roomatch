@@ -31,6 +31,7 @@ public class ViewModelFactoryProvider {
 
         creators.put(AdvancedSearchViewModel.class, () -> new AdvancedSearchViewModel(apartmentRepository));
 
+
         return new AppViewModelFactory(creators);
     }
 }

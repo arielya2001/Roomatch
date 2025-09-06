@@ -37,6 +37,19 @@
             android:padding="4dp"
             android:clickable="true"
             android:focusable="true" />
+
+        <!-- כפתור מחיקה (אייקון פח) -->
+        <ImageView
+            android:id="@+id/deleteGroupButton"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_delete"
+            android:contentDescription="מחק קבוצה"
+            android:padding="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginStart="8dp" />
+
     </LinearLayout>
 
     <!-- טקסט חברים -->

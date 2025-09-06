@@ -139,6 +139,8 @@ public class Chat implements ChatListItem {
         return lastMessage != null ? lastMessage.getText() : "אין הודעות";
     }
 
+
+
     @Override
     public boolean isGroup() {
         return false;

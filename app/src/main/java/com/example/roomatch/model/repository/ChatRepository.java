@@ -14,6 +14,7 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -88,6 +89,31 @@ public class ChatRepository {
                     return combined;
                 });
     }
+
+    public Task<Void> markGroupMessagesAsRead(String groupChatId, String userId) {
+        return db.collection("group_messages")
+                .document(groupChatId)
+                .collection("chat")
+                .whereArrayContains("readBy", userId)
+                .get()
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        throw task.getException();
+                    }
+
+                    List<Task<Void>> updates = new ArrayList<>();
+                    for (DocumentSnapshot doc : task.getResult()) {
+                        List<String> readBy = (List<String>) doc.get("readBy");
+                        if (readBy == null || !readBy.contains(userId)) {
+                            updates.add(doc.getReference().update("readBy", FieldValue.arrayUnion(userId)));
+                        }
+                    }
+
+                    return Tasks.whenAll(updates);
+                });
+    }
+
+
 
 
 

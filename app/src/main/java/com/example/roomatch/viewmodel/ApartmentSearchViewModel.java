@@ -53,16 +53,33 @@ public class ApartmentSearchViewModel extends ViewModel {
             return;
         }
 
+        String lowerQuery = query.toLowerCase();
         List<Apartment> filtered = new ArrayList<>();
+
         for (Apartment apt : allApartments) {
-            if ((apt.getCity() != null && apt.getCity().toLowerCase().contains(query.toLowerCase())) ||
-                    (apt.getStreet() != null && apt.getStreet().toLowerCase().contains(query.toLowerCase())) ||
-                    (apt.getDescription() != null && apt.getDescription().toLowerCase().contains(query.toLowerCase()))) {
+            String searchable = (
+                    (apt.getCity() != null ? apt.getCity() : "") + " " +
+                            (apt.getStreet() != null ? apt.getStreet() : "") + " " +
+                            (apt.getDescription() != null ? apt.getDescription() : "") + " " +
+                            apt.getPrice() + " " +
+                            apt.getRoommatesNeeded()
+            ).toLowerCase();
+
+            if (searchable.contains(lowerQuery)) {
                 filtered.add(apt);
             }
         }
+
         apartments.setValue(filtered);
     }
+
+
+    public void reportApartment(Apartment apartment, String reason, String details) {
+        repository.reportApartment(apartment.getId(), apartment.getOwnerId(), reason, details)
+                .addOnSuccessListener(unused -> toastMessage.setValue("הדיווח נשלח בהצלחה"))
+                .addOnFailureListener(e -> toastMessage.setValue("שגיאה בשליחת הדיווח"));
+    }
+
 
 
     public void resetFilter() {
@@ -70,3 +87,4 @@ public class ApartmentSearchViewModel extends ViewModel {
     }
 
 }
+

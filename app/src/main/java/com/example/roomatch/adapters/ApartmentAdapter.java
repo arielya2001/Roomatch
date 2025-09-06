@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -23,14 +24,22 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
         void onApartmentClick(Apartment apartment);
     }
 
+    public interface OnReportClickListener {
+        void onReportClick(Apartment apartment);
+    }
+
     private List<Apartment> apartmentList;
     private Context context;
     private OnApartmentClickListener listener;
+    private OnReportClickListener reportListener;
 
-    public ApartmentAdapter(List<Apartment> apartmentList, Context context, OnApartmentClickListener listener) {
+    public ApartmentAdapter(List<Apartment> apartmentList, Context context,
+                            OnApartmentClickListener listener,
+                            OnReportClickListener reportListener) {
         this.apartmentList = apartmentList;
         this.context = context;
         this.listener = listener;
+        this.reportListener = reportListener;
     }
 
     @NonNull
@@ -47,7 +56,6 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
         // Log הקואורדינטות של הדירה ושל המיקום שנבחר
         Log.d("DistanceDebug", "Apt LatLng: " + apt.getLatitude() + ", " + apt.getLongitude());
 
-
         holder.cityTextView.setText(apt.getCity());
         holder.streetTextView.setText(apt.getStreet());
         holder.houseNumberTextView.setText(String.valueOf(apt.getHouseNumber()));
@@ -55,15 +63,15 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
 
         // הצגת המרחק אם קיים
         double distance = apt.getDistance(); // במטרים
-        if (distance > 0) {
+        if (distance > 0 && distance < Integer.MAX_VALUE) {
             double distanceKm = distance / 1000.0;
             holder.distanceTextView.setText(String.format("מרחק: %.1f ק\"מ", distanceKm));
             holder.distanceTextView.setVisibility(View.VISIBLE);
         } else {
-            holder.distanceTextView.setVisibility(View.GONE); // הסתרה אם אין מרחק
+            holder.distanceTextView.setVisibility(View.GONE);
         }
 
-        // ניקוי תמונה קודמת אם אין תמונה חדשה
+        // תמונה
         if (apt.getImageUrl() == null || apt.getImageUrl().isEmpty()) {
             Glide.with(context).clear(holder.apartmentImageView);
             holder.apartmentImageView.setImageResource(R.drawable.placeholder_image);
@@ -74,9 +82,17 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
                     .into(holder.apartmentImageView);
         }
 
+        // לחיצה על כל הפריט – פתיחת פרטים
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onApartmentClick(apt);
+            }
+        });
+
+        // לחיצה על כפתור הדיווח
+        holder.reportButton.setOnClickListener(v -> {
+            if (reportListener != null) {
+                reportListener.onReportClick(apt);
             }
         });
     }
@@ -95,6 +111,7 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
         ImageView apartmentImageView;
         TextView cityTextView, streetTextView, houseNumberTextView, priceTextView;
         TextView distanceTextView;
+        ImageButton reportButton;
 
         public ApartmentViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -104,6 +121,7 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
             houseNumberTextView = itemView.findViewById(R.id.houseNumberTextView);
             priceTextView = itemView.findViewById(R.id.priceTextView);
             distanceTextView = itemView.findViewById(R.id.textViewApartmentDistance);
+            reportButton = itemView.findViewById(R.id.buttonReport);
         }
     }
 }

@@ -17,42 +17,47 @@
             android:layout_height="wrap_content"
             android:textSize="20sp" />
 
+        <!-- סינון לפי שדה -->
         <Spinner
             android:id="@+id/spinnerFilterField"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
+        <!-- סדר עולה/יורד -->
         <Spinner
             android:id="@+id/spinnerOrder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
+        <!-- סינון לפי מרחק -->
+        <Spinner
+            android:id="@+id/spinnerRadius"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="4dp"
+            android:spinnerMode="dropdown" />
+
+        <!-- כפתור ניקוי סינון בלבד -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="2dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/buttonFilter"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_margin="2dp"
-                android:background="@mipmap/ic_filter_foreground"
-                android:text="Button" />
+            android:orientation="horizontal"
+            android:gravity="end">
 
             <Button
                 android:id="@+id/buttonClearFilter"
-                style="@style/Theme.Roomatch"
                 android:layout_width="35dp"
                 android:layout_height="35dp"
                 android:layout_margin="2dp"
                 android:background="@android:drawable/ic_menu_close_clear_cancel"
-                android:text="נקה סינון" />
+                android:contentDescription="נקה סינון" />
         </LinearLayout>
 
+        <!-- חיפוש -->
         <androidx.appcompat.widget.SearchView
             android:id="@+id/searchView"
             android:layout_width="match_parent"
@@ -61,6 +66,7 @@
             android:iconifiedByDefault="false"
             android:layout_marginTop="8dp" />
 
+        <!-- תצוגת דירות -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/apartmentRecyclerView"
             android:layout_width="match_parent"
@@ -69,6 +75,7 @@
             android:layout_marginTop="8dp" />
     </LinearLayout>
 
+    <!-- כפתור מיותר שניתן להסיר בהמשך -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/buttonAdvancedSearch"
         android:layout_width="wrap_content"
@@ -78,5 +85,6 @@
         android:layout_margin="12dp"
         android:contentDescription="חיפוש מתקדם"
         android:src="@android:drawable/ic_menu_mapmode"
-        app:backgroundTint="@color/purple_500" />
+        app:backgroundTint="@color/purple_500"
+        android:visibility="gone" />
 </RelativeLayout>

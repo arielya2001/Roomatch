@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -63,6 +64,16 @@ public class SharedGroupsFragment extends Fragment {
 
         Log.d("SharedGroups", "Calling viewModel.loadSharedGroups()");
         viewModel.loadSharedGroups();
+
+        ImageButton addGroupButton = view.findViewById(R.id.buttonAddGroup);
+        addGroupButton.setOnClickListener(v -> {
+            requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragmentContainer, new ContactsFragment()) // ודא שזה ה-ID של ה-container
+                    .addToBackStack(null)
+                    .commit();
+        });
     }
 
 }

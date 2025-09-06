@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
-
+import com.example.roomatch.view.activities.AuthActivity;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,6 +23,7 @@ import com.example.roomatch.view.fragments.ApartmentSearchFragment;
 import com.example.roomatch.view.fragments.ChatsFragment;
 import com.example.roomatch.view.fragments.ContactsFragment;
 import com.example.roomatch.view.fragments.CreateProfileFragment;
+import com.example.roomatch.view.fragments.FriendsFragment;
 import com.example.roomatch.view.fragments.GroupChatFragment;
 import com.example.roomatch.view.fragments.GroupChatsListFragment;
 import com.example.roomatch.view.fragments.MatchRequestsFragment;
@@ -200,9 +201,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.nav_chats) {
             replaceFragment(new ChatsFragment());
             return true;
-        } else if (id == R.id.nav_group_chats) {
-            replaceFragment(new GroupChatsListFragment()); // שינוי לרשימת צ'אטים
-            return true;
         } else if (id == R.id.nav_logout) {
             auth.signOut();
             startActivity(new Intent(this, AuthActivity.class));
@@ -214,30 +212,38 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.menu_partners) {
             replaceFragment(new PartnerFragment());
             return true;
+        } else if (id == R.id.nav_friends) {
+            replaceFragment(new FriendsFragment()); // כאן נטעין את הפרגמנט המאוחד של חברים+בקשות
+            return true;
+        } else if (id == R.id.nav_shared_groups) {
+            replaceFragment(new SharedGroupsFragment());
+            return true;
         }
         return false;
     }
 
+
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.nav_contacts) {
-            replaceFragment(new ContactsFragment());
-        } else if (id == R.id.nav_shared_groups) {
+
+        if (id == R.id.nav_profile) {
+            replaceFragment(new ProfileFragment());
+        }
+        else if (id == R.id.nav_shared_groups) {
             replaceFragment(new SharedGroupsFragment());
-        } else if (id == R.id.nav_match_requests) {
-            replaceFragment(new MatchRequestsFragment());
-        } else if (id == R.id.nav_group_chats) {
-            replaceFragment(new GroupChatsListFragment()); // שינוי גם כאן
-        } else if (id == R.id.nav_logout) {
+        }
+        else if (id == R.id.nav_logout) {
             auth.signOut();
             startActivity(new Intent(this, AuthActivity.class));
             finish();
             return true;
         }
+
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
+
 
     private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -256,3 +262,4 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
 }
+

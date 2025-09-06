@@ -8,6 +8,8 @@ public class GroupChatListItem implements ChatListItem {
     private String addressHouseNumber;
     private String addressCity;
 
+    private boolean hasUnread = false;
+
     public String getAddressStreet() { return addressStreet; }
     public void setAddressStreet(String addressStreet) { this.addressStreet = addressStreet; }
 
@@ -78,6 +80,14 @@ public class GroupChatListItem implements ChatListItem {
     @Override
     public void setParticipantsString(String names) {
         this.participantsString = names;
+    }
+
+    public boolean isHasUnread() {
+        return hasUnread;
+    }
+
+    public void setHasUnread(boolean hasUnread) {
+        this.hasUnread = hasUnread;
     }
 
 }

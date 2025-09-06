@@ -137,15 +137,16 @@ public class PartnerFragment extends Fragment {
         // Handle search by name
         searchViewName.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override public boolean onQueryTextSubmit(String query) {
-                viewModel.applyPartnerSearchByName(query);
+                applyAllFilters(); // משתמש בפילטר הכללי
                 return true;
             }
 
             @Override public boolean onQueryTextChange(String newText) {
-                viewModel.applyPartnerSearchByName(newText);
+                applyAllFilters(); // כל שינוי בטקסט מפעיל מחדש את כל הפילטרים
                 return true;
             }
         });
+
 
         // Toggle full filter menu
         toggleFilterMenuButton.setOnClickListener(v -> {

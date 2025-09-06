@@ -50,7 +50,10 @@ public class GroupChatFragment extends Fragment {
         messageInput = view.findViewById(R.id.editTextGroupMessage);
         sendButton = view.findViewById(R.id.buttonSendGroupMessage);
 
-        viewModel = new ViewModelProvider(this).get(GroupChatViewModel.class);
+        viewModel = new ViewModelProvider(
+                this,
+                new GroupChatViewModel.Factory(requireContext())
+        ).get(GroupChatViewModel.class);
         String currentUserId = viewModel.getCurrentUserId();
 
         adapter = new GroupChatAdapter(currentUserId);
@@ -64,6 +67,9 @@ public class GroupChatFragment extends Fragment {
                 Toast.makeText(getContext(), "שגיאה: groupChatId חסר", Toast.LENGTH_SHORT).show();
                 return;
             }
+
+            // ✅ ✅ ✅ הוסף שורה זו בדיוק כאן:
+            viewModel.markGroupMessagesAsRead(groupChatId);
 
             // ✅ טעינת הודעות מה־Firestore לפי groupChatId
             viewModel.loadMessages(groupChatId).observe(getViewLifecycleOwner(), messages -> {
@@ -80,5 +86,6 @@ public class GroupChatFragment extends Fragment {
                 }
             });
         }
+
     }
 }

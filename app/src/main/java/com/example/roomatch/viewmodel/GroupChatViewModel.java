@@ -1,14 +1,18 @@
 package com.example.roomatch.viewmodel;
 
+import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.roomatch.model.GroupChatMessage;
 import com.example.roomatch.model.Message;
 import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.model.repository.ChatRepository;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -19,9 +23,16 @@ import java.util.Map;
 
 public class GroupChatViewModel extends ViewModel {
     private final ApartmentRepository repository = new ApartmentRepository();
+
+    private final ChatRepository chatRepository;
+
     private final MutableLiveData<List<GroupChatMessage>> messages = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
     private final MutableLiveData<String> groupChatId = new MutableLiveData<>();
+
+    public GroupChatViewModel(Context context) {
+        this.chatRepository = new ChatRepository(context);
+    }
 
     public LiveData<List<GroupChatMessage>> loadMessages(String groupChatId) {
         repository.getGroupChatMessages(groupChatId)
@@ -108,4 +119,34 @@ public class GroupChatViewModel extends ViewModel {
     public String getCurrentUserId() {
         return repository.getCurrentUserId();
     }
+
+    public static class Factory implements ViewModelProvider.Factory {
+        private final Context context;
+
+        public Factory(Context context) {
+            this.context = context.getApplicationContext();
+        }
+
+        @NonNull
+        @Override
+        public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+            if (modelClass.isAssignableFrom(GroupChatViewModel.class)) {
+                return (T) new GroupChatViewModel(context);
+            }
+            throw new IllegalArgumentException("Unknown ViewModel class");
+        }
+    }
+
+    public void markGroupMessagesAsRead(String groupChatId) {
+        String userId = getCurrentUserId();
+        if (userId != null) {
+            repository.markGroupMessagesAsRead(groupChatId, userId)
+                    .addOnSuccessListener(aVoid -> Log.d("GroupChatVM", "הודעות סומנו כנקראו"))
+                    .addOnFailureListener(e -> Log.e("GroupChatVM", "שגיאה בסימון הודעות כנקראו", e));
+        }
+    }
+
+
+
+
 }

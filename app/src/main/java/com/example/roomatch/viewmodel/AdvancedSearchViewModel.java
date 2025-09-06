@@ -84,4 +84,10 @@ public class AdvancedSearchViewModel extends ViewModel {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     }
+
+    public void reportApartment(Apartment apartment, String reason, String details) {
+        repository.reportApartment(apartment.getId(), apartment.getOwnerId(), reason, details)
+                .addOnSuccessListener(unused -> toastMessage.setValue("הדיווח נשלח בהצלחה"))
+                .addOnFailureListener(e -> toastMessage.setValue("שגיאה בשליחת הדיווח"));
+    }
 }

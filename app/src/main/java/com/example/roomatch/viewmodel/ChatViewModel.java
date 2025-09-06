@@ -239,7 +239,9 @@ public class ChatViewModel extends ViewModel {
                                                         Log.d("ChatVM", "הודעה אחרונה לקבוצה " + groupId + ": " + last.getText());
                                                         chat.setLastMessage(last);
                                                         chat.setTimestamp(new com.google.firebase.Timestamp(new java.util.Date(last.getTimestamp())));
-                                                        chat.setHasUnread(!last.isRead() && !last.getFromUserId().equals(me));
+                                                        List<String> readBy = last.getReadBy();
+                                                        boolean read = readBy != null && readBy.contains(me);
+                                                        chat.setHasUnread(!read && !last.getFromUserId().equals(me));
                                                     }
                                                 } else {
                                                     Log.w("ChatVM", "אין הודעה אחרונה לקבוצה " + groupId);
@@ -277,6 +279,13 @@ public class ChatViewModel extends ViewModel {
         List<Task<Void>> pendingNameTasks = new ArrayList<>();
         String currentUserId = userRepo.getCurrentUserId();
 
+        Task<Void> myNameTask = userRepo.getUserNameById(currentUserId)
+                .addOnSuccessListener(name -> {
+                    userNameCache.put(currentUserId, name);
+                }).continueWith(task -> null);
+        pendingNameTasks.add(myNameTask);
+
+
         for (Chat chat : chatMap.values()) {
             String type = chat.getType();
             Log.d("ChatVM", "🔄 סוג: " + type + " | מזהה: " + chat.getId() + " | דירה: " + chat.getApartmentId());
@@ -299,9 +308,44 @@ public class ChatViewModel extends ViewModel {
                                 groupItem.setAddressHouseNumber(String.valueOf(apartment.getHouseNumber()));
                                 groupItem.setAddressCity(apartment.getCity());
 
-                                chats.setValue(new ArrayList<>(allChats)); // נעדכן אחרי שהכתובת נטענה
+                                // נוסיף גם את בעל הדירה לשמות המשתתפים
+                                String ownerId = apartment.getOwnerId();
+
+                                chatRepo.getGroupChatById(chat.getId())
+                                        .addOnSuccessListener(doc -> {
+                                            List<String> memberIds = (List<String>) doc.get("memberIds");
+                                            if (memberIds == null) memberIds = new ArrayList<>();
+
+                                            if (ownerId != null && !memberIds.contains(ownerId)) {
+                                                memberIds.add(ownerId);
+                                            }
+                                            if (!memberIds.contains(currentUserId)) {
+                                                memberIds.add(currentUserId);
+                                            }
+
+                                            List<String> participantNames = new ArrayList<>();
+                                            List<Task<Void>> nameTasks = new ArrayList<>();
+                                            for (String memberId : memberIds) {
+                                                if (userNameCache.containsKey(memberId)) {
+                                                    participantNames.add(userNameCache.get(memberId));
+                                                } else {
+                                                    Task<Void> t = userRepo.getUserNameById(memberId)
+                                                            .addOnSuccessListener(name -> {
+                                                                userNameCache.put(memberId, name);
+                                                                participantNames.add(name);
+                                                            }).continueWith(task -> null);
+                                                    nameTasks.add(t);
+                                                }
+                                            }
+
+                                            Tasks.whenAllComplete(nameTasks).addOnSuccessListener(v -> {
+                                                groupItem.setParticipantsString(String.join(", ", participantNames));
+                                                chats.setValue(new ArrayList<>(allChats));
+                                            });
+                                        });
                             }
                         });
+
 
 
                 groupItem.setAddressStreet(chat.getAddressStreet());
@@ -333,35 +377,8 @@ public class ChatViewModel extends ViewModel {
                             pendingNameTasks.add(t);
                         }
                     }
+                    groupItem.setHasUnread(chat.isHasUnread());
                 }
-
-                // טעינת שמות המשתתפים (למעט המשתמש הנוכחי)
-                chatRepo.getGroupChatById(chat.getId())
-                        .addOnSuccessListener(doc -> {
-                            List<String> memberIds = (List<String>) doc.get("memberIds");
-                            if (memberIds != null) {
-                                List<String> participantNames = new ArrayList<>();
-                                List<Task<Void>> nameTasks = new ArrayList<>();
-                                for (String memberId : memberIds) {
-                                    if (!memberId.equals(currentUserId)) {
-                                        if (userNameCache.containsKey(memberId)) {
-                                            participantNames.add(userNameCache.get(memberId));
-                                        } else {
-                                            Task<Void> t = userRepo.getUserNameById(memberId)
-                                                    .addOnSuccessListener(name -> {
-                                                        userNameCache.put(memberId, name);
-                                                        participantNames.add(name);
-                                                    }).continueWith(task -> null);
-                                            nameTasks.add(t);
-                                        }
-                                    }
-                                }
-                                Tasks.whenAllComplete(nameTasks).addOnSuccessListener(v -> {
-                                    groupItem.setParticipantsString(String.join(", ", participantNames));
-                                    chats.setValue(new ArrayList<>(allChats));
-                                });
-                            }
-                        });
 
                 Log.d("ChatVM", "✅ נוסף: GroupChatListItem | מאת: " + groupItem.getLastMessageSenderName()
                         + " | תוכן: " + groupChat.getLastMessage());
@@ -396,16 +413,29 @@ public class ChatViewModel extends ViewModel {
 
                 String otherId = currentUserId.equals(from) ? to : from;
                 if (userNameCache.containsKey(otherId)) {
-                    chat.setParticipantsString(userNameCache.get(otherId));
+                    String myName = userNameCache.getOrDefault(currentUserId, "אני");
+                    String otherName = userNameCache.getOrDefault(otherId, "אנונימי");
+
+                    chat.setParticipantsString(myName + ", " + otherName);
+
                 } else {
-                    chat.setParticipantsString("אנונימי");
-                    Task<Void> t = userRepo.getUserNameById(otherId)
+                    Task<Void> t1 = null;
+                    if (!userNameCache.containsKey(currentUserId)) {
+                        t1 = userRepo.getUserNameById(currentUserId)
+                                .addOnSuccessListener(name -> userNameCache.put(currentUserId, name))
+                                .continueWith(task -> null);
+                        pendingNameTasks.add(t1);
+                    }
+
+                    Task<Void> t2 = userRepo.getUserNameById(otherId)
                             .addOnSuccessListener(name -> {
                                 userNameCache.put(otherId, name);
-                                chat.setParticipantsString(name);
+                                String myNameFinal = userNameCache.getOrDefault(currentUserId, "אני");
+                                chat.setParticipantsString(myNameFinal + ", " + name);
                                 chats.setValue(new ArrayList<>(allChats));
                             }).continueWith(task -> null);
-                    pendingNameTasks.add(t);
+                    pendingNameTasks.add(t2);
+
                 }
 
                 Log.d("ChatVM", "✅ נוסף: Chat רגיל | מאת: " + chat.getFromUserName()

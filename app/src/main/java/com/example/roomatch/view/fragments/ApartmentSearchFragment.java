@@ -4,13 +4,16 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -19,11 +22,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.ApartmentAdapter;
 import com.example.roomatch.model.Apartment;
+import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.model.repository.ApartmentRepository;
+import com.example.roomatch.model.repository.UserRepository;
 import com.example.roomatch.viewmodel.ApartmentSearchViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,10 +46,16 @@ public class ApartmentSearchFragment extends Fragment {
 
     private ApartmentSearchViewModel viewModel;
 
+    private Spinner spinnerRadius;
+    private int selectedRadiusInMeters = Integer.MAX_VALUE;
+
+    // מיקום חיפוש קבוע זמנית (ת״א) – נשפר בהמשך
+
+    private UserRepository userRepo = new UserRepository(); // למעלה
+
+
+
     private final Map<String, String> fieldMap = new HashMap<String, String>() {{
-        put("עיר", "city");
-        put("רחוב", "street");
-        put("מספר בית", "houseNumber");
         put("מחיר", "price");
         put("מספר שותפים", "roommatesNeeded");
     }};
@@ -64,7 +76,6 @@ public class ApartmentSearchFragment extends Fragment {
         recyclerView = view.findViewById(R.id.apartmentRecyclerView);
         spinnerFilterField = view.findViewById(R.id.spinnerFilterField);
         spinnerOrder = view.findViewById(R.id.spinnerOrder);
-        buttonFilter = view.findViewById(R.id.buttonFilter);
         buttonClearFilter = view.findViewById(R.id.buttonClearFilter);
         searchView = view.findViewById(R.id.searchView);
 
@@ -73,7 +84,12 @@ public class ApartmentSearchFragment extends Fragment {
 
         // RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ApartmentAdapter(apartments, getContext(), this::openApartmentDetails);
+        adapter = new ApartmentAdapter(
+                List.of(),
+                getContext(),
+                this::openApartmentDetails,
+                this::showReportDialog // נכניס גם callback לדיווח
+        );
         recyclerView.setAdapter(adapter);
 
         // ViewModel
@@ -85,7 +101,7 @@ public class ApartmentSearchFragment extends Fragment {
             apartments.addAll(list);
             originalApartments.clear();
             originalApartments.addAll(list);
-            adapter.notifyDataSetChanged();
+            adapter.updateApartments(list);
         });
 
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), msg ->
@@ -93,8 +109,13 @@ public class ApartmentSearchFragment extends Fragment {
         );
 
         // Spinners
-        ArrayAdapter<String> fieldAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item,
-                new String[]{"עיר", "רחוב", "מספר בית", "מחיר", "מספר שותפים"});
+        ArrayAdapter<String> fieldAdapter = new ArrayAdapter<>(
+                getContext(),
+                android.R.layout.simple_spinner_item,
+                new ArrayList<>(fieldMap.keySet())
+        );
+        fieldAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerFilterField.setAdapter(fieldAdapter);
         fieldAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerFilterField.setAdapter(fieldAdapter);
 
@@ -103,8 +124,28 @@ public class ApartmentSearchFragment extends Fragment {
         orderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerOrder.setAdapter(orderAdapter);
 
+        spinnerFilterField.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                applyFilter(); // כל פעם שבוחרים שדה לסינון
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        spinnerOrder.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                applyFilter(); // כל פעם שמשנים סדר
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+
         // כפתורי סינון
-        buttonFilter.setOnClickListener(v -> applyFilter());
         buttonClearFilter.setOnClickListener(v -> resetFilter());
 
         // חיפוש חופשי
@@ -123,6 +164,49 @@ public class ApartmentSearchFragment extends Fragment {
         // טען את כל הדירות
         viewModel.loadApartments();
 
+        userRepo.getMyProfile().addOnSuccessListener(doc -> {
+            UserProfile profile = doc.toObject(UserProfile.class);
+            if (profile != null) {
+                double lat = profile.getLat();
+                double lng = profile.getLng();
+                Apartment.setSearchLocation(lat, lng); // נקודת ההשוואה למרחקים
+
+                // חישוב מחודש של מרחקים מול מיקום זה
+                for (Apartment apt : originalApartments) {
+                    apt.calculateDistanceFromSearchLocation();
+                }
+
+                // ואז תפעיל את הסינון הרגיל
+                applyFilter();
+            }
+        });
+
+
+
+        spinnerRadius = view.findViewById(R.id.spinnerRadius);
+
+        List<String> radiusOptions = Arrays.asList("כולם", "10 ק\"מ", "50 ק\"מ", "100 ק\"מ", "150 ק\"מ");
+        ArrayAdapter<String> radiusAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, radiusOptions);
+        radiusAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerRadius.setAdapter(radiusAdapter);
+
+        spinnerRadius.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
+                switch (position) {
+                    case 1: selectedRadiusInMeters = 10_000; break;
+                    case 2: selectedRadiusInMeters = 50_000; break;
+                    case 3: selectedRadiusInMeters = 100_000; break;
+                    case 4: selectedRadiusInMeters = 150_000; break;
+                    default: selectedRadiusInMeters = Integer.MAX_VALUE;
+                }
+
+                applyFilter(); // נפעיל סינון מחדש
+            }
+
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+
         // מעבר לחיפוש המתקדם
 //        buttonAdvancedSearch.setOnClickListener(v -> {
 //            requireActivity().getSupportFragmentManager()
@@ -136,22 +220,76 @@ public class ApartmentSearchFragment extends Fragment {
 
 
     private void applyFilter() {
-        String selectedLabel = spinnerFilterField.getSelectedItem().toString();
+        String selectedLabel = spinnerFilterField.getSelectedItem() != null ? spinnerFilterField.getSelectedItem().toString() : null;
         String selectedField = fieldMap.get(selectedLabel);
         boolean ascending = spinnerOrder.getSelectedItem().toString().equals("עולה");
 
-        if (selectedField != null) {
-            viewModel.applyFilter(selectedField, ascending);
-        } else {
-            Toast.makeText(getContext(), "שגיאה בסינון", Toast.LENGTH_SHORT).show();
+        List<Apartment> filtered = new ArrayList<>();
+
+        // סינון לפי טווח
+        for (Apartment apt : originalApartments) {
+            if (apt.getLatitude() != 0 && apt.getLongitude() != 0) {
+                apt.calculateDistanceFromSearchLocation();
+                if (apt.getDistance() <= selectedRadiusInMeters) {
+                    filtered.add(apt);
+                }
+            } else if (selectedRadiusInMeters == Integer.MAX_VALUE) {
+                filtered.add(apt);
+            }
         }
+
+        // מיון: לפי השדה הנבחר (מחיר/שותפים) או לפי מרחק כברירת מחדל
+        if (selectedField != null) {
+            filtered.sort((a1, a2) -> {
+                int result = 0;
+                switch (selectedField) {
+                    case "price":
+                        result = Integer.compare(a1.getPrice(), a2.getPrice());
+                        break;
+                    case "roommatesNeeded":
+                        result = Integer.compare(a1.getRoommatesNeeded(), a2.getRoommatesNeeded());
+                        break;
+                }
+                return ascending ? result : -result;
+            });
+        } else {
+            // אם לא נבחר שדה מיון – מיון לפי מרחק
+            filtered.sort((a1, a2) -> {
+                int result = Double.compare(a1.getDistance(), a2.getDistance());
+                return ascending ? result : -result;
+            });
+        }
+
+        adapter.updateApartments(filtered);
     }
 
+
+
+
+
     private void resetFilter() {
-        viewModel.resetFilter();
+        // איפוס חיפוש
         searchView.setQuery("", false);
         searchView.clearFocus();
+        viewModel.resetFilter();
+
+        // איפוס טווח מרחק
+        spinnerRadius.setSelection(0); // "כולם"
+        selectedRadiusInMeters = Integer.MAX_VALUE;
+
+        // איפוס שדה מיון וסדר
+        spinnerFilterField.setSelection(0);
+        spinnerOrder.setSelection(0);
+
+        // חישוב מרחקים מחדש
+        for (Apartment apt : originalApartments) {
+            apt.calculateDistanceFromSearchLocation();
+        }
+
+        // הצגת כל הדירות
+        adapter.updateApartments(originalApartments);
     }
+
 
     private void openApartmentDetails(Apartment apt) {
         Bundle bundle = new Bundle();
@@ -165,4 +303,38 @@ public class ApartmentSearchFragment extends Fragment {
                 .addToBackStack(null)
                 .commit();
     }
+
+    private void showReportDialog(Apartment apt) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_report_apartment, null);
+        builder.setView(dialogView);
+
+        Spinner reasonSpinner = dialogView.findViewById(R.id.spinnerReportReason);
+        EditText additionalDetails = dialogView.findViewById(R.id.editTextAdditionalDetails);
+        Button sendButton = dialogView.findViewById(R.id.buttonSendReport);
+        Button cancelButton = dialogView.findViewById(R.id.buttonCancelReport);
+
+        String[] reasons = {"פרסום כוזב", "תוכן פוגעני", "תמונה לא הולמת", "מידע שגוי", "אחר"};
+        reasonSpinner.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, reasons));
+
+        AlertDialog dialog = builder.create();
+
+        sendButton.setOnClickListener(v -> {
+            String reason = reasonSpinner.getSelectedItem().toString();
+            String details = additionalDetails.getText().toString();
+
+            // נשתמש ב-ApartmentRepository ישירות
+            new ApartmentRepository()
+                    .reportApartment(apt.getId(), apt.getOwnerId(), reason, details)
+                    .addOnSuccessListener(d -> Toast.makeText(requireContext(), "הדיווח נשלח בהצלחה", Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e -> Toast.makeText(requireContext(), "שגיאה בשליחת הדיווח", Toast.LENGTH_SHORT).show());
+
+            dialog.dismiss();
+        });
+
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
 }

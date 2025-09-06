@@ -85,13 +85,43 @@ public class SharedGroupsAdapter extends RecyclerView.Adapter<SharedGroupsAdapte
         // הצגת כפתור עריכה רק אם המשתמש הנוכחי הוא מנהל הקבוצה
         if (adminId != null && adminId.equals(currentUserId)) {
             holder.editGroupNameButton.setVisibility(View.VISIBLE);
+            holder.deleteGroupButton.setVisibility(View.VISIBLE);
+
             holder.editGroupNameButton.setOnClickListener(v -> {
                 showEditGroupNameDialog(v.getContext(), group);
             });
+
+            holder.deleteGroupButton.setOnClickListener(v -> {
+                showDeleteGroupDialog(v.getContext(), group.getId(), position);
+            });
+
         } else {
             holder.editGroupNameButton.setVisibility(View.GONE);
+            holder.deleteGroupButton.setVisibility(View.GONE);
         }
     }
+
+    private void showDeleteGroupDialog(Context context, String groupId, int position) {
+        new AlertDialog.Builder(context)
+                .setTitle("מחיקת קבוצה")
+                .setMessage("האם אתה בטוח שברצונך למחוק את הקבוצה?")
+                .setPositiveButton("מחק", (dialog, which) -> {
+                    FirebaseFirestore.getInstance()
+                            .collection("shared_groups")
+                            .document(groupId)
+                            .delete()
+                            .addOnSuccessListener(aVoid -> {
+                                groups.remove(position);
+                                notifyItemRemoved(position);
+                                Toast.makeText(context, "הקבוצה נמחקה", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(context, "שגיאה במחיקת הקבוצה", Toast.LENGTH_SHORT).show());
+                })
+                .setNegativeButton("ביטול", null)
+                .show();
+    }
+
 
     private void showEditGroupNameDialog(Context context, SharedGroup group) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -143,6 +173,9 @@ public class SharedGroupsAdapter extends RecyclerView.Adapter<SharedGroupsAdapte
         TextView managerCrown;
         ImageView editGroupNameButton;
 
+        ImageView deleteGroupButton;
+
+
         GroupViewHolder(@NonNull View itemView) {
             super(itemView);
             groupNameTextView = itemView.findViewById(R.id.groupNameTextView);
@@ -150,6 +183,7 @@ public class SharedGroupsAdapter extends RecyclerView.Adapter<SharedGroupsAdapte
             managerNameTextView = itemView.findViewById(R.id.managerNameTextView);
             managerCrown = itemView.findViewById(R.id.managerCrown);
             editGroupNameButton = itemView.findViewById(R.id.editGroupNameButton);
+            deleteGroupButton = itemView.findViewById(R.id.deleteGroupButton);
         }
     }
 }
