@@ -33,7 +33,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
     public ChatListAdapter(List<ChatListItem> items, OnChatClickListener listener) {
         this.items = new ArrayList<>(items != null ? items : new ArrayList<>());
         this.listener = listener;
-    } //
+    }
 
     @NonNull
     @Override
