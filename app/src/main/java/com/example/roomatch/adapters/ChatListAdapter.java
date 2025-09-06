@@ -65,7 +65,6 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         } else {
             holder.textViewParticipants.setVisibility(View.GONE);
         }
-        //hello
 
 
         boolean hasUnread = false;
