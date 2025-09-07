@@ -339,7 +339,7 @@ public class OwnerApartmentsFragment extends Fragment {
         houseNumberTextView.setText(apt.getHouseNumber()+"");
         priceTextView.setText("מחיר: " + apt.getPrice() + " ₪");
         roommatesTextView.setText("שותפים דרושים: " + apt.getRoommatesNeeded());
-        descriptionTextView.setText("תיאור: " + (apt.getDescription() != null ? apt.getDescription() : "לא זמין"));
+        descriptionTextView.setText((apt.getDescription() != null ? apt.getDescription() : "לא זמין"));
 
         if (apt.getImageUrl() != null && !apt.getImageUrl().isEmpty()) {
             Glide.with(this).load(apt.getImageUrl()).into(apartmentImageView);
