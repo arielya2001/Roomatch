@@ -1,41 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Theme.Roomatch"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="24dp"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="24dp">
 
     <TextView
         android:id="@+id/textViewReportTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="סיבת הדיווח"
-        android:textSize="16sp"
-        android:textStyle="bold"
         android:layout_marginBottom="8dp"
-        android:textDirection="rtl" />
+        android:text="סיבת הדיווח"
+        android:textDirection="rtl"
+        android:textSize="16sp"
+        android:textStyle="bold" />
 
     <Spinner
         android:id="@+id/spinnerReportReason"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:spinnerMode="dropdown" />
+        android:layout_gravity="right"
+        android:gravity="right"
+        android:spinnerMode="dropdown"
+        android:textAlignment="textStart" />
 
     <TextView
         android:id="@+id/textViewAdditionalDetails"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="פרטים נוספים (לא חובה)"
-        android:textSize="14sp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="4dp"
-        android:textDirection="rtl" />
+        android:text="פרטים נוספים (לא חובה)"
+        android:textDirection="rtl"
+        android:textSize="14sp" />
 
     <EditText
         android:id="@+id/editTextAdditionalDetails"
+        style="@style/Theme.Roomatch.secondary"
         android:layout_width="match_parent"
         android:layout_height="100dp"
-        android:background="@android:drawable/editbox_background_normal"
         android:gravity="right|top"
         android:inputType="textMultiLine"
         android:padding="8dp" />
@@ -43,9 +47,9 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginTop="20dp"
-        android:gravity="end">
+        android:gravity="end"
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/buttonCancelReport"

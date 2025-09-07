@@ -90,11 +90,11 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
         });
 
         // לחיצה על כפתור הדיווח
-        holder.reportButton.setOnClickListener(v -> {
-            if (reportListener != null) {
-                reportListener.onReportClick(apt);
-            }
-        });
+//        holder.reportButton.setOnClickListener(v -> {
+//            if (reportListener != null) {
+//                reportListener.onReportClick(apt);
+//            }
+//        });
     }
 
     @Override
@@ -111,7 +111,7 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
         ImageView apartmentImageView;
         TextView cityTextView, streetTextView, houseNumberTextView, priceTextView;
         TextView distanceTextView;
-        ImageButton reportButton;
+        //ImageButton reportButton;
 
         public ApartmentViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -121,7 +121,7 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
             houseNumberTextView = itemView.findViewById(R.id.houseNumberTextView);
             priceTextView = itemView.findViewById(R.id.priceTextView);
             distanceTextView = itemView.findViewById(R.id.textViewApartmentDistance);
-            reportButton = itemView.findViewById(R.id.buttonReport);
+            //reportButton = itemView.findViewById(R.id.buttonReport);
         }
     }
 }

@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.ApartmentAdapter;
+import com.example.roomatch.adapters.PartnerAdapter;
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.model.repository.ApartmentRepository;
@@ -38,11 +39,13 @@ public class ApartmentSearchFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private Spinner spinnerFilterField, spinnerOrder;
-    private Button buttonFilter, buttonClearFilter;
+    private Button buttonFilter, buttonClearFilter, buttonSort;
     private SearchView searchView;
     private ApartmentAdapter adapter;
     private List<Apartment> apartments = new ArrayList<>();
     private List<Apartment> originalApartments = new ArrayList<>();
+    private boolean sortAscending=false, showFilters=false;
+    private View filtersView;
 
     private ApartmentSearchViewModel viewModel;
 
@@ -75,9 +78,24 @@ public class ApartmentSearchFragment extends Fragment {
         // חיבור רכיבי UI רגילים
         recyclerView = view.findViewById(R.id.apartmentRecyclerView);
         spinnerFilterField = view.findViewById(R.id.spinnerFilterField);
-        spinnerOrder = view.findViewById(R.id.spinnerOrder);
+        //spinnerOrder = view.findViewById(R.id.spinnerOrder);
         buttonClearFilter = view.findViewById(R.id.buttonClearFilter);
         searchView = view.findViewById(R.id.searchView);
+        buttonSort = view.findViewById(R.id.buttonSort);
+        buttonFilter = view.findViewById(R.id.buttonOpenFilters);
+        filtersView = view.findViewById(R.id.filtersView);
+
+        buttonFilter.setOnClickListener(v->
+        {
+            onButtonFilterClick();
+        });
+
+        buttonSort.setOnClickListener(v->
+        {
+            onButtonSortClick();
+        });
+
+
 
         // כפתור לחיפוש מתקדם
         //FloatingActionButton buttonAdvancedSearch = view.findViewById(R.id.buttonAdvancedSearch);
@@ -119,10 +137,10 @@ public class ApartmentSearchFragment extends Fragment {
         fieldAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerFilterField.setAdapter(fieldAdapter);
 
-        ArrayAdapter<String> orderAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item,
-                new String[]{"עולה", "יורד"});
-        orderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerOrder.setAdapter(orderAdapter);
+//        ArrayAdapter<String> orderAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item,
+//                new String[]{"עולה", "יורד"});
+//        orderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        spinnerOrder.setAdapter(orderAdapter);
 
         spinnerFilterField.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -134,15 +152,15 @@ public class ApartmentSearchFragment extends Fragment {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        spinnerOrder.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                applyFilter(); // כל פעם שמשנים סדר
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
+//        spinnerOrder.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//            @Override
+//            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+//                applyFilter(); // כל פעם שמשנים סדר
+//            }
+//
+//            @Override
+//            public void onNothingSelected(AdapterView<?> parent) {}
+//        });
 
 
         // כפתורי סינון
@@ -217,12 +235,38 @@ public class ApartmentSearchFragment extends Fragment {
 //        });
     }
 
+    private void onButtonFilterClick()
+    {
+        if(showFilters)
+        {
+            filtersView.setVisibility(View.GONE);
+        }
+        else
+        {
+            filtersView.setVisibility(View.VISIBLE);
+        }
+        showFilters=!showFilters;
+    }
+    private void onButtonSortClick()
+    {
+        if(sortAscending)
+        {
+            buttonSort.setBackgroundResource(R.mipmap.ic_ascending_foreground);
+
+        }
+        else
+        {
+            buttonSort.setBackgroundResource(R.mipmap.ic_descending_foreground);
+        }
+        sortAscending=!sortAscending;
+        applyFilter();
+    }
 
 
     private void applyFilter() {
         String selectedLabel = spinnerFilterField.getSelectedItem() != null ? spinnerFilterField.getSelectedItem().toString() : null;
         String selectedField = fieldMap.get(selectedLabel);
-        boolean ascending = spinnerOrder.getSelectedItem().toString().equals("עולה");
+        boolean ascending = sortAscending;
 
         List<Apartment> filtered = new ArrayList<>();
 
@@ -279,7 +323,10 @@ public class ApartmentSearchFragment extends Fragment {
 
         // איפוס שדה מיון וסדר
         spinnerFilterField.setSelection(0);
-        spinnerOrder.setSelection(0);
+        //spinnerOrder.setSelection(0);
+        sortAscending=false;
+        buttonSort.setBackgroundResource(R.mipmap.ic_ascending_foreground);
+
 
         // חישוב מרחקים מחדש
         for (Apartment apt : originalApartments) {
@@ -295,7 +342,7 @@ public class ApartmentSearchFragment extends Fragment {
         Bundle bundle = new Bundle();
         bundle.putSerializable("apartment", apt);
 
-        ApartmentDetailsFragment fragment = ApartmentDetailsFragment.newInstance(bundle);
+        ApartmentDetailsFragment fragment = ApartmentDetailsFragment.newInstance(bundle,this::showReportDialog );
 
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()

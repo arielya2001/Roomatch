@@ -138,7 +138,7 @@ public class AdvancedSearchFragment extends Fragment implements OnMapReadyCallba
     private void openApartmentDetails(Apartment apt) {
         Bundle bundle = new Bundle();
         bundle.putSerializable("apartment", apt);
-        ApartmentDetailsFragment fragment = ApartmentDetailsFragment.newInstance(bundle);
+        ApartmentDetailsFragment fragment = ApartmentDetailsFragment.newInstance(bundle,this::showReportDialog);
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragmentContainer, fragment)

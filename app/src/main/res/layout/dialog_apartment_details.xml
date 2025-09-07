@@ -22,51 +22,93 @@
             android:id="@+id/cityTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:gravity="right"
             android:text="עיר:"
             android:textSize="18sp"
             android:textStyle="bold" />
 
         <!-- רחוב -->
-        <TextView
-            android:id="@+id/streetTextView"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="רחוב:"
-            android:layout_marginTop="4dp" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textView25"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/houseNumberTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="right"
+                android:layout_marginTop="4dp"
+                android:gravity="right"
+                android:text="מספר בית:" />
+
+            <TextView
+                android:id="@+id/textView27"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:text=" , " />
+
+            <TextView
+                android:id="@+id/streetTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="right"
+                android:layout_marginTop="4dp"
+                android:gravity="right"
+                android:text="רחוב:" />
+
+        </LinearLayout>
 
         <!-- מספר בית -->
-        <TextView
-            android:id="@+id/houseNumberTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="מספר בית:"
-            android:layout_marginTop="4dp" />
 
         <!-- מחיר -->
         <TextView
             android:id="@+id/priceTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="מחיר:"
-            android:layout_marginTop="8dp" />
+            android:layout_gravity="right"
+            android:layout_marginTop="8dp"
+            android:gravity="right"
+            android:text="מחיר:" />
 
         <!-- שותפים דרושים -->
         <TextView
             android:id="@+id/roommatesTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="שותפים דרושים:"
-            android:layout_marginTop="4dp" />
+            android:layout_gravity="right"
+            android:layout_marginTop="4dp"
+            android:gravity="right"
+            android:text="שותפים דרושים:" />
 
         <!-- תיאור -->
         <TextView
-            android:id="@+id/descriptionTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="תיאור:"
-            android:layout_marginTop="8dp" />
+            android:layout_gravity="right"
+            android:layout_marginTop="8dp"
+            android:gravity="right"
+            android:text="תיאור:" />
 
         <!-- כפתור שליחת הודעה -->
+        <TextView
+            android:id="@+id/descriptionTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:gravity="right"
+            android:inputType="textMultiLine"
+            android:text="{תיאור}"
+            android:textAlignment="textStart" />
+
         <Button
             android:id="@+id/messageButton"
             android:layout_width="match_parent"

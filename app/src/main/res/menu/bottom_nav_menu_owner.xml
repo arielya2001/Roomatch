@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_apartments"
-        android:icon="@android:drawable/ic_menu_agenda"
+        android:icon="@mipmap/ic_apartments_foreground"
         android:title="הדירות שלי" />
     <item
         android:id="@+id/nav_chats"

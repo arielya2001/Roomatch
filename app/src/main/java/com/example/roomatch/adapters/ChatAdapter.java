@@ -4,6 +4,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -44,6 +45,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         Message message = messages.get(position);
 
         String text = message.getText() != null ? message.getText() : "הודעה ריקה";
+        holder.messageText.setText(text);
         String fromUserId = message.getFromUserId() != null ? message.getFromUserId() : "";
         long timestamp = message.getTimestamp();
         String time= formatTime(timestamp);
@@ -52,18 +54,18 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         String currentDate=formatDate(nowMs);
         if(currentDate.equals(date))
         {
-            holder.messageText.setText(text+"\n"+time);
+            holder.timeText.setText(time);
         }
         else {
-            holder.messageText.setText(text+"\n"+time+" "+ date);
+            holder.timeText.setText(time+" "+ date);
         }
-
+        String sender = "שולח:"+message.getSenderName();
+        holder.nameSenderText.setText(sender);
         // יישור לפי השולח
-        if (fromUserId.equals(currentUserId)) {
-            holder.container.setGravity(Gravity.END);
-        } else {
-            holder.container.setGravity(Gravity.START);
-        }
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) holder.container.getLayoutParams();
+        lp.gravity = fromUserId.equals(currentUserId) ? Gravity.END : Gravity.START;
+        holder.container.setLayoutParams(lp);
+
     }
 
     @Override
@@ -83,12 +85,14 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     }
 
     static class ChatViewHolder extends RecyclerView.ViewHolder {
-        TextView messageText;
+        TextView messageText,timeText,nameSenderText;
         LinearLayout container;
 
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
-            messageText = itemView.findViewById(R.id.textMessage);
+            messageText = itemView.findViewById(R.id.textMessagePerson);
+            timeText = itemView.findViewById(R.id.textTimePerson);
+            nameSenderText = itemView.findViewById(R.id.textSenderNamePerson);
             container = itemView.findViewById(R.id.messageContainer);
         }
     }

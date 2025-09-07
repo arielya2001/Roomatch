@@ -297,7 +297,7 @@ public class OwnerApartmentsFragment extends Fragment {
 
         cityTextView.setText("עיר: " + (apt.getCity() != null ? apt.getCity() : "לא זמין"));
         streetTextView.setText("רחוב: " + (apt.getStreet() != null ? apt.getStreet() : "לא זמין"));
-        houseNumberTextView.setText("מספר בית: " + apt.getHouseNumber());
+        houseNumberTextView.setText(apt.getHouseNumber()+"");
         priceTextView.setText("מחיר: " + apt.getPrice() + " ₪");
         roommatesTextView.setText("שותפים דרושים: " + apt.getRoommatesNeeded());
         descriptionTextView.setText("תיאור: " + (apt.getDescription() != null ? apt.getDescription() : "לא זמין"));

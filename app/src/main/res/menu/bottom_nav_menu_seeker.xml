@@ -22,13 +22,13 @@
     <!-- חברים (במקום קשרים, כולל בקשות לקשר) -->
     <item
         android:id="@+id/nav_friends"
-        android:icon="@android:drawable/ic_menu_share"
+        android:icon="@mipmap/ic_person_foreground"
         android:title="חברים" />
 
     <!-- קבוצות משותפות -->
     <item
         android:id="@+id/nav_shared_groups"
-        android:icon="@android:drawable/ic_menu_gallery"
+        android:icon="@mipmap/ic_group_foreground"
         android:title="קבוצות משותפות" />
 
 </menu>

@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -20,6 +21,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.example.roomatch.R;
+import com.example.roomatch.adapters.ApartmentAdapter;
 import com.example.roomatch.viewmodel.ViewModelFactoryProvider;
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.viewmodel.AppViewModelFactory;
@@ -34,10 +36,18 @@ public class ApartmentDetailsFragment extends Fragment {
     private ApartmentDetailsViewModel viewModel;
     private Spinner groupSpinner;
 
-    public static ApartmentDetailsFragment newInstance(Bundle apartmentData) {
+    private ApartmentAdapter.OnReportClickListener reportListener;
+
+
+    public static ApartmentDetailsFragment newInstance(Bundle apartmentData,ApartmentAdapter.OnReportClickListener reportListener) {
         ApartmentDetailsFragment fragment = new ApartmentDetailsFragment();
         fragment.setArguments(apartmentData);
+        fragment.setReportListener(reportListener);
         return fragment;
+    }
+
+    public void setReportListener(ApartmentAdapter.OnReportClickListener reportListener) {
+        this.reportListener = reportListener;
     }
 
     @Override
@@ -71,6 +81,15 @@ public class ApartmentDetailsFragment extends Fragment {
         ImageView imageView = view.findViewById(R.id.apartmentImageView);
         Button messageBtn = view.findViewById(R.id.messageButton);
         Button sendGroupMessageBtn = view.findViewById(R.id.sendGroupMessageButton);
+        ImageButton reportApartmentBtn = view.findViewById(R.id.buttonReportApartment);
+        reportApartmentBtn.setOnClickListener(v->
+        {
+            Apartment apartment = viewModel.getApartmentDetails().getValue();
+            if (apartment != null && reportListener != null) {
+                reportListener.onReportClick(apartment);
+            }
+
+        });
         groupSpinner = view.findViewById(R.id.groupSpinner);
 
         viewModel.getApartmentDetails().observe(getViewLifecycleOwner(), apartment -> {
@@ -79,7 +98,7 @@ public class ApartmentDetailsFragment extends Fragment {
             houseNumTV.setText(String.valueOf(apartment.getHouseNumber()));
             priceTV.setText(apartment.getPrice() + " ₪ / חודש");
             roommatesTV.setText(apartment.getRoommatesNeeded() + " מקומות פנויים ");
-            descriptionTV.setText("תיאור: " + apartment.getDescription());
+            descriptionTV.setText(apartment.getDescription());
 
             Glide.with(requireContext())
                     .load(!TextUtils.isEmpty(apartment.getImageUrl()) ? apartment.getImageUrl() : null)

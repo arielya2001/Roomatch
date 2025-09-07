@@ -1,18 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/messageContainer"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="8dp"
-    android:background="@android:color/transparent">
+    android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/textMessage"
+    <!-- הבועה עצמה (ה-View שעליו תשנה FrameLayout.LayoutParams.gravity באדפטר) -->
+    <LinearLayout
+        android:id="@+id/messageContainer"
+        style="@style/Theme.Roomatch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_margin="5dp"
         android:background="@drawable/message_bubble_background"
-        android:textColor="@android:color/white"
-        android:padding="12dp"
-        android:text="הודעה" />
-</LinearLayout>
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <!-- כותרת (שעה משמאל פיזי, שם מימין פיזי, עם רווח קבוע ביניהם) -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/headerAndBody"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <!-- זמן: נשאר בשמאל (פיזי), LTR כדי שהספרות/נקודות לא יתהפכו -->
+            <TextView
+                android:id="@+id/textTimePerson"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="13.09.25 08:35"
+                android:textColor="@color/border_color"
+                android:singleLine="true"
+                android:textDirection="ltr"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- שם: נשאר בימין (פיזי), לא חופף לזמן, יקבל … אם לא נכנס -->
+            <TextView
+                android:id="@+id/textSenderNamePerson"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="שם שולח"
+                android:textStyle="bold"
+                android:textColor="@color/border_color"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:maxWidth="180dp"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintLeft_toRightOf="@id/textTimePerson"
+                app:layout_constraintTop_toTopOf="@id/textTimePerson"
+                app:layout_constraintBottom_toBottomOf="@id/textTimePerson"
+                android:layout_marginStart="8dp" />
+
+            <!-- Barrier לתחתית הכותרת: מבטיח שהטקסט יתחיל בדיוק מתחתיה -->
+            <androidx.constraintlayout.widget.Barrier
+                android:id="@+id/headerBottom"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:barrierDirection="bottom"
+                app:constraint_referenced_ids="textTimePerson,textSenderNamePerson" />
+
+            <!-- גוף ההודעה: מיושר לימין, נשבר עד maxWidth -->
+            <TextView
+                android:id="@+id/textMessagePerson"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:maxWidth="280dp"
+                android:text="תוכן ההודעה"
+                android:textColor="@color/card_white"
+                android:gravity="end"
+                android:textAlignment="viewEnd"
+                app:layout_constraintTop_toBottomOf="@id/headerBottom"
+                app:layout_constraintRight_toRightOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+</FrameLayout>

@@ -4,6 +4,7 @@
     import android.view.LayoutInflater;
     import android.view.View;
     import android.view.ViewGroup;
+    import android.widget.FrameLayout;
     import android.widget.LinearLayout;
     import android.widget.TextView;
 
@@ -40,7 +41,7 @@
         @Override
         public void onBindViewHolder(@NonNull GroupChatViewHolder holder, int position) {
             GroupChatMessage msg = messages.get(position);
-
+            String fromUserId = msg.getSenderUserId() != null ? msg.getSenderUserId() : "";
             holder.textViewMessage.setText(msg.getContent());
             holder.textViewSenderName.setText(msg.getSenderName());
             long timestamp = msg.getTimestamp();
@@ -57,11 +58,9 @@
                 holder.textTime.setText(date+" "+time);
             }
 
-            if (msg.getSenderId().equals(currentUserId)) {
-                holder.messageContainer.setGravity(Gravity.END);
-            } else {
-                holder.messageContainer.setGravity(Gravity.START);
-            }
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) holder.messageContainer.getLayoutParams();
+            lp.gravity = fromUserId.equals(currentUserId) ? Gravity.END : Gravity.START;
+            holder.messageContainer.setLayoutParams(lp);
         }
 
         @Override
@@ -92,10 +91,10 @@
 
             public GroupChatViewHolder(@NonNull View itemView) {
                 super(itemView);
-                textViewMessage = itemView.findViewById(R.id.textMessage);
-                textViewSenderName = itemView.findViewById(R.id.textSenderName);
+                textViewMessage = itemView.findViewById(R.id.textMessageGroup);
+                textViewSenderName = itemView.findViewById(R.id.textSenderNameGroup);
                 messageContainer = itemView.findViewById(R.id.messageContainer);
-                textTime = itemView.findViewById(R.id.textTime);
+                textTime = itemView.findViewById(R.id.textTimeGroup);
             }
         }
 

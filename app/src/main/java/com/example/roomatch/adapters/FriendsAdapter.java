@@ -50,17 +50,17 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
 
     class FriendViewHolder extends RecyclerView.ViewHolder {
         private final TextView nameText;
-        private final TextView lifestyleText;
+        //private final TextView lifestyleText;
 
         public FriendViewHolder(@NonNull View itemView) {
             super(itemView);
             nameText = itemView.findViewById(R.id.textFriendName);
-            lifestyleText = itemView.findViewById(R.id.textFriendLifestyle);
+            //lifestyleText = itemView.findViewById(R.id.textFriendLifestyle);
         }
 
         public void bind(UserProfile profile) {
             nameText.setText(profile.getFullName() != null ? profile.getFullName() : "אנונימי");
-            lifestyleText.setText(profile.getLifestyle() != null ? profile.getLifestyle() : "לא צויין");
+            //lifestyleText.setText(profile.getLifestyle() != null ? profile.getLifestyle() : "לא צויין");
 
             itemView.setOnClickListener(v -> {
                 if (listener != null) listener.onFriendClick(profile);

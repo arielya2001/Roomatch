@@ -63,45 +63,45 @@
                         android:id="@+id/textViewApartmentPrice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="end" />
+                        android:layout_gravity="end"
+                        android:text="{price $ / month}" />
 
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
-
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1">
-
-                    </androidx.constraintlayout.widget.ConstraintLayout>
                 </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="518dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textViewApartmentCity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:text="{the city}"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
+                    android:layout_height="24dp"
                     android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/textView35"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
 
                     <TextView
                         android:id="@+id/textViewApartmentHouseNumber"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="end" />
-
-                    <TextView
-                        android:id="@+id/textView12"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=" " />
-
-                    <TextView
-                        android:id="@+id/textViewApartmentStreet"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="end" />
+                        android:layout_gravity="end"
+                        android:text="{number}" />
 
                     <TextView
                         android:id="@+id/textView11"
@@ -110,30 +110,12 @@
                         android:text=" , " />
 
                     <TextView
-                        android:id="@+id/textViewApartmentCity"
+                        android:id="@+id/textViewApartmentStreet"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/textViewApartmentDistance"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="מרחק: 1.2 ק\"
-                        android:textColor="@android:color/black"
-                        android:textSize="14sp" />
-
+                        android:text="{the street street}" />
                 </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="vertical">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -147,17 +129,16 @@
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <ImageButton
-                        android:id="@+id/buttonEditApartment"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@android:color/transparent"
-                        android:contentDescription="ערוך דירה"
-                        app:srcCompat="@android:drawable/ic_menu_edit"
-                        app:tint="@color/black" />
-
 
                     <!--  מחיקת דירה  -->
+
+                    <Button
+                        android:id="@+id/buttonEditApartment"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_weight="0"
+                        android:background="@android:drawable/ic_menu_edit" />
+
                     <ImageButton
                         android:id="@+id/buttonDeleteApartment"
                         android:layout_width="wrap_content"
