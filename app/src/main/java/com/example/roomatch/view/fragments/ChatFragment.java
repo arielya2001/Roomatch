@@ -112,9 +112,22 @@ public class ChatFragment extends Fragment {
                     Message message = doc.toObject(Message.class);
                     if (message != null) {
                         message.setId(doc.getId());
+
+                        if (message.getSenderName() == null && message.getFromUserId() != null) {
+                            viewModel.getUserRepository().getUserNameById(message.getFromUserId())
+                                    .addOnSuccessListener(name -> {
+                                        message.setSenderName(name);
+                                        adapter.notifyDataSetChanged(); // רענן UI
+                                    })
+                                    .addOnFailureListener(error -> {
+                                        Log.e("ChatFragment", "לא הצלחנו לשלוף את שם השולח", error);
+                                    });
+                        }
+
                         newMessages.add(message);
                     }
                 }
+
                 adapter.updateMessages(newMessages);
                 recyclerView.scrollToPosition(adapter.getItemCount() - 1);
             }

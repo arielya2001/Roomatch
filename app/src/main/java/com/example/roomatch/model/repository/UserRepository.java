@@ -5,6 +5,7 @@ import android.net.Uri;
 import com.example.roomatch.model.Chat;
 import com.example.roomatch.model.Message;
 import com.example.roomatch.model.UserProfile;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
@@ -14,10 +15,12 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +61,11 @@ public class UserRepository {
             return (profile != null && profile.getFullName() != null) ? profile.getFullName() : "אנונימי";
         });
     }
+
+    public interface RemoveFriendCallback {
+        void onComplete(boolean success);
+    }
+
 
 
 
@@ -172,30 +180,124 @@ public class UserRepository {
      * שולח בקשת match למשתמש אחר.
      */
     public Task<Void> sendMatchRequest(String fromUserId, String toUserId) {
-        Log.d(TAG, "sendMatchRequest: Initiating request from " + fromUserId + " to " + toUserId);
-        if (fromUserId == null || toUserId == null) {
-            Log.e(TAG, "sendMatchRequest: Invalid user IDs - fromUserId: " + fromUserId + ", toUserId: " + toUserId);
-            return Tasks.forException(new IllegalArgumentException("User IDs cannot be null"));
-        }
+        Log.d(TAG, "sendMatchRequest: Trying to send match from " + fromUserId + " to " + toUserId);
 
-        Map<String, Object> matchRequest = new HashMap<>();
-        matchRequest.put("fromUserId", fromUserId);
-        matchRequest.put("toUserId", toUserId);
-        matchRequest.put("status", "pending");
-        matchRequest.put("timestamp", System.currentTimeMillis());
-
-        Log.d(TAG, "sendMatchRequest: Adding match request to Firestore");
+        // שלב 1: לבדוק אם כבר קיימת בקשה או קשר מאושר
         return db.collection("match_requests")
-                .add(matchRequest)
+                .whereIn("status", Arrays.asList("pending", "accepted"))
+                .whereIn("fromUserId", Arrays.asList(fromUserId, toUserId))
+                .whereIn("toUserId", Arrays.asList(fromUserId, toUserId))
+                .get()
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) {
-                        Log.e(TAG, "sendMatchRequest: Failed to add match request: " + task.getException(), task.getException());
-                        throw task.getException();
+                        Exception e = task.getException();
+                        Log.e(TAG, "sendMatchRequest: Failed to check existing requests", e);
+                        return Tasks.forException(e);
                     }
-                    Log.d(TAG, "sendMatchRequest: Match request added successfully");
-                    return Tasks.forResult(null); // אישור הצלחה
+
+                    for (DocumentSnapshot doc : task.getResult().getDocuments()) {
+                        String from = doc.getString("fromUserId");
+                        String to = doc.getString("toUserId");
+
+                        // בדיקה אם קיימת כבר בקשה בשני הכיוונים
+                        if ((from.equals(fromUserId) && to.equals(toUserId)) ||
+                                (from.equals(toUserId) && to.equals(fromUserId))) {
+                            Log.w(TAG, "sendMatchRequest: Match request already exists between users");
+                            return Tasks.forException(new IllegalStateException("כבר קיימת בקשה או קשר"));
+                        }
+                    }
+
+                    // שלב 2: לשלוח בקשה חדשה
+                    Map<String, Object> matchRequest = new HashMap<>();
+                    matchRequest.put("fromUserId", fromUserId);
+                    matchRequest.put("toUserId", toUserId);
+                    matchRequest.put("status", "pending");
+                    matchRequest.put("timestamp", System.currentTimeMillis());
+
+                    return db.collection("match_requests")
+                            .add(matchRequest)
+                            .continueWith(task2 -> {
+                                if (!task2.isSuccessful()) {
+                                    throw task2.getException();
+                                }
+                                return null;
+                            });
                 });
     }
+    public void removeFriend(UserProfile profile, RemoveFriendCallback callback) {
+        String currentUserId = getCurrentUserId();
+        String otherUserId = profile.getUserId();
+
+        if (currentUserId == null || otherUserId == null) {
+            callback.onComplete(false);
+            return;
+        }
+
+        db.collection("match_requests")
+                .whereEqualTo("status", "accepted")
+                .whereIn("fromUserId", List.of(currentUserId, otherUserId))
+                .whereIn("toUserId", List.of(currentUserId, otherUserId))
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    WriteBatch batch = db.batch();
+
+                    for (var doc : snapshot.getDocuments()) {
+                        String from = doc.getString("fromUserId");
+                        String to = doc.getString("toUserId");
+
+                        // וידוא שהמסמך הוא בין שני המשתמשים
+                        if (
+                                (from.equals(currentUserId) && to.equals(otherUserId)) ||
+                                        (from.equals(otherUserId) && to.equals(currentUserId))
+                        ) {
+                            batch.delete(doc.getReference());
+                        }
+                    }
+
+                    batch.commit()
+                            .addOnSuccessListener(unused -> callback.onComplete(true))
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "❌ Error deleting friend: " + e.getMessage());
+                                callback.onComplete(false);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Error finding match request: " + e.getMessage());
+                    callback.onComplete(false);
+                });
+    }
+
+
+
+
+    public Task<Boolean> canSendMatchRequest(String fromUserId, String toUserId) {
+        return db.collection("match_requests")
+                .whereIn("status", List.of("pending", "accepted"))
+                .whereIn("fromUserId", List.of(fromUserId, toUserId))
+                .whereIn("toUserId", List.of(fromUserId, toUserId))
+                .get()
+                .continueWith(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.e(TAG, "canSendMatchRequest: Error checking existing requests", task.getException());
+                        return false;
+                    }
+
+                    for (DocumentSnapshot doc : task.getResult().getDocuments()) {
+                        String from = doc.getString("fromUserId");
+                        String to = doc.getString("toUserId");
+
+                        // בדיקה אם הבקשה קיימת לשני הכיוונים
+                        if ((from.equals(fromUserId) && to.equals(toUserId)) ||
+                                (from.equals(toUserId) && to.equals(fromUserId))) {
+                            Log.d(TAG, "canSendMatchRequest: Match request already exists between users.");
+                            return false; // אי אפשר לשלוח
+                        }
+                    }
+
+                    return true; // מותר לשלוח
+                });
+    }
+
 
     public void loadFriends(FirestoreCallback<List<UserProfile>> callback) {
         String myUid = getCurrentUserId();

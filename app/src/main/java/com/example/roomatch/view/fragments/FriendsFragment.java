@@ -49,7 +49,17 @@ public class FriendsFragment extends Fragment {
         // RecyclerView של חברים
         friendsRecyclerView = view.findViewById(R.id.recyclerViewFriends);
         friendsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new FriendsAdapter(new ArrayList<>(), this::openProfileDialog);
+        adapter = new FriendsAdapter(new ArrayList<>(), new FriendsAdapter.OnFriendClickListener() {
+            @Override
+            public void onFriendClick(UserProfile profile) {
+                openProfileDialog(profile);
+            }
+
+            @Override
+            public void onDeleteFriend(UserProfile profile) {
+                showRemoveFriendDialog(profile);
+            }
+        });
         friendsRecyclerView.setAdapter(adapter);
 
         // טען חברים מ-UserRepository
@@ -58,6 +68,26 @@ public class FriendsFragment extends Fragment {
             toggleNoFriendsMessage(friends.isEmpty());
         });
     }
+
+    private void showRemoveFriendDialog(UserProfile profile) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("מחיקת חבר")
+                .setMessage("האם אתה בטוח שברצונך להסיר את " + profile.getFullName() + " מרשימת החברים?")
+                .setPositiveButton("מחק", (dialog, which) -> {
+                    userRepository.removeFriend(profile, success -> {
+                        if (success) {
+                            // טען מחדש את רשימת החברים
+                            userRepository.loadFriends(friends -> {
+                                adapter.setData(friends);
+                                toggleNoFriendsMessage(friends.isEmpty());
+                            });
+                        }
+                    });
+                })
+                .setNegativeButton("בטל", null)
+                .show();
+    }
+
 
     private void openProfileDialog(UserProfile profile) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());

@@ -1,7 +1,10 @@
 package com.example.roomatch.view.fragments;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.*;
@@ -23,12 +26,24 @@ import com.example.roomatch.view.activities.AuthActivity;
 import com.example.roomatch.viewmodel.AppViewModelFactory;
 import com.example.roomatch.viewmodel.OwnerApartmentsViewModel;
 
+import com.google.android.gms.common.api.Status;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.AddressComponent;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.widget.Autocomplete;
+import com.google.android.libraries.places.widget.AutocompleteActivity;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class OwnerApartmentsFragment extends Fragment {
@@ -44,6 +59,11 @@ public class OwnerApartmentsFragment extends Fragment {
     private Button buttonFilter, buttonClear;
 
     private ImageButton addApartmentButton;
+
+    private String selectedCity = "", selectedStreet = "", selectedHouseNumber = "";
+    private EditText editCityGlobal, editStreetGlobal, editHouseNumberGlobal;
+    private static final int AUTOCOMPLETE_REQUEST_CODE = 1010;
+
 
     private final Map<String, String> fieldMap = new HashMap<>() {{
         put("מחיר", "price");
@@ -230,6 +250,25 @@ public class OwnerApartmentsFragment extends Fragment {
             viewModel.applyFilter(selectedField, ascending);
         }
     }
+    private void updateAddressFields(Place place, EditText editCity, EditText editStreet, EditText editHouseNumber) {
+        Geocoder geocoder = new Geocoder(getContext(), Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(
+                    place.getLatLng().latitude,
+                    place.getLatLng().longitude,
+                    1
+            );
+            if (!addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                editCity.setText(address.getLocality()); // עיר
+                editStreet.setText(address.getThoroughfare()); // רחוב
+                editHouseNumber.setText(address.getSubThoroughfare()); // מספר בית
+            }
+        } catch (IOException e) {
+            Log.e("GeocoderError", "Failed to parse address", e);
+        }
+    }
+
 
 
     private void searchApartments(String query) {
@@ -329,28 +368,61 @@ public class OwnerApartmentsFragment extends Fragment {
         View dialogView = inflater.inflate(R.layout.dialog_edit_apartment, null);
         builder.setView(dialogView);
 
-        EditText editCity = dialogView.findViewById(R.id.editCity);
-        EditText editStreet = dialogView.findViewById(R.id.editStreet);
-        EditText editHouseNumber = dialogView.findViewById(R.id.editHouseNumber);
+        // קישור שדות
+        editCityGlobal = dialogView.findViewById(R.id.editCity);
+        editStreetGlobal = dialogView.findViewById(R.id.editStreet);
+        editHouseNumberGlobal = dialogView.findViewById(R.id.editHouseNumber);
         EditText editPrice = dialogView.findViewById(R.id.editPrice);
         EditText editDescription = dialogView.findViewById(R.id.editDescription);
         EditText editRoommatesNeeded = dialogView.findViewById(R.id.editRoommatesNeeded);
+//        TextView selectedAddressText = dialogView.findViewById(R.id.selectedAddressText);
         Button btnSave = dialogView.findViewById(R.id.btn_save);
         Button btnCancel = dialogView.findViewById(R.id.btn_cancel);
+        Button btnSearchAddress = dialogView.findViewById(R.id.btn_search_address); // כפתור חיפוש
 
-        editCity.setText(apt.getCity());
-        editStreet.setText(apt.getStreet());
-        editHouseNumber.setText(String.valueOf(apt.getHouseNumber()));
+        editCityGlobal.setFocusable(false);
+        editCityGlobal.setClickable(false);
+
+        editStreetGlobal.setFocusable(false);
+        editStreetGlobal.setClickable(false);
+
+        editHouseNumberGlobal.setFocusable(false);
+        editHouseNumberGlobal.setClickable(false);
+
+
+
+
+        // מילוי נתונים
+        editCityGlobal.setText(apt.getCity());
+        editStreetGlobal.setText(apt.getStreet());
+        editHouseNumberGlobal.setText(String.valueOf(apt.getHouseNumber()));
         editPrice.setText(String.valueOf(apt.getPrice()));
         editDescription.setText(apt.getDescription());
         editRoommatesNeeded.setText(String.valueOf(apt.getRoommatesNeeded()));
+//        selectedAddressText.setVisibility(View.VISIBLE);
+//        selectedAddressText.setText(apt.getStreet() + " " +  apt.getHouseNumber() +", " + apt.getCity());
 
         AlertDialog dialog = builder.setTitle("עריכת דירה").create();
 
+        if (!Places.isInitialized()) {
+            Places.initialize(requireContext(), getString(R.string.google_maps_key));
+        }
+
+        btnSearchAddress.setOnClickListener(v -> {
+            List<Place.Field> fields = Arrays.asList(
+                    Place.Field.ADDRESS_COMPONENTS,
+                    Place.Field.LAT_LNG
+            );
+            Intent intent = new Autocomplete.IntentBuilder(
+                    AutocompleteActivityMode.OVERLAY, fields)
+                    .build(requireContext());
+            startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
+        });
+
         btnSave.setOnClickListener(v -> {
-            String newCity = editCity.getText().toString().trim();
-            String newStreet = editStreet.getText().toString().trim();
-            String houseNumStr = editHouseNumber.getText().toString().trim();
+            String newCity = editCityGlobal.getText().toString().trim();
+            String newStreet = editStreetGlobal.getText().toString().trim();
+            String houseNumStr = editHouseNumberGlobal.getText().toString().trim();
             String priceStr = editPrice.getText().toString().trim();
             String newDescription = editDescription.getText().toString().trim();
             String roommatesStr = editRoommatesNeeded.getText().toString().trim();
@@ -365,6 +437,7 @@ public class OwnerApartmentsFragment extends Fragment {
                     newDescription,
                     null
             );
+
             dialog.dismiss();
         });
 
@@ -372,6 +445,46 @@ public class OwnerApartmentsFragment extends Fragment {
 
         dialog.show();
     }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == AUTOCOMPLETE_REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
+            Place place = Autocomplete.getPlaceFromIntent(data);
+
+            for (AddressComponent component : place.getAddressComponents().asList()) {
+                if (component.getTypes().contains("locality")) {
+                    selectedCity = component.getName();
+                } else if (component.getTypes().contains("route")) {
+                    selectedStreet = component.getName();
+                } else if (component.getTypes().contains("street_number")) {
+                    selectedHouseNumber = component.getName();
+                }
+            }
+
+            // עדכון UI לשדות הקלט בדיאלוג
+            if (editCityGlobal != null) editCityGlobal.setText(selectedCity);
+            if (editStreetGlobal != null) editStreetGlobal.setText(selectedStreet);
+            if (editHouseNumberGlobal != null) editHouseNumberGlobal.setText(selectedHouseNumber);
+        } else if (resultCode == AutocompleteActivity.RESULT_ERROR && data != null) {
+            Status status = Autocomplete.getStatusFromIntent(data);
+            Log.e("AutocompleteError", status.getStatusMessage());
+        }
+    }
+
+
+
+    private String extractComponent(Place place, String type) {
+        if (place.getAddressComponents() == null) return "";
+        for (AddressComponent component : place.getAddressComponents().asList()) {
+            if (component.getTypes().contains(type)) {
+                return component.getName();
+            }
+        }
+        return "";
+    }
+
 
     private void confirmAndDelete(Apartment apt) {
         if (apt.getId() == null) {

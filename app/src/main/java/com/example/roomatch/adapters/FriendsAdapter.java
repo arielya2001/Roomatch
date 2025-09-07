@@ -15,6 +15,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
 
     public interface OnFriendClickListener {
         void onFriendClick(UserProfile profile);
+        void onDeleteFriend(UserProfile profile);
     }
 
     private List<UserProfile> friends;
@@ -50,21 +51,27 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
 
     class FriendViewHolder extends RecyclerView.ViewHolder {
         private final TextView nameText;
-        //private final TextView lifestyleText;
+        private final View removeButton;
 
         public FriendViewHolder(@NonNull View itemView) {
             super(itemView);
             nameText = itemView.findViewById(R.id.textFriendName);
-            //lifestyleText = itemView.findViewById(R.id.textFriendLifestyle);
+            removeButton = itemView.findViewById(R.id.buttonRemoveFriend);
         }
 
         public void bind(UserProfile profile) {
             nameText.setText(profile.getFullName() != null ? profile.getFullName() : "אנונימי");
-            //lifestyleText.setText(profile.getLifestyle() != null ? profile.getLifestyle() : "לא צויין");
 
+            // לחיצה על כל הפריט - לפתיחת פרופיל
             itemView.setOnClickListener(v -> {
                 if (listener != null) listener.onFriendClick(profile);
             });
+
+            // לחיצה על כפתור מחיקה
+            removeButton.setOnClickListener(v -> {
+                if (listener != null) listener.onDeleteFriend(profile);
+            });
         }
     }
+
 }

@@ -91,23 +91,15 @@
 
         <!-- תיאור -->
         <TextView
+            android:id="@+id/descriptionTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="right"
             android:gravity="right"
             android:text="תיאור:" />
 
-        <!-- כפתור שליחת הודעה -->
 
-        <TextView
-            android:id="@+id/descriptionTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="right"
-            android:layout_margin="2dp"
-            android:gravity="right"
-            android:inputType="textMultiLine"
-            android:text="{תיאור}" />
+        <!-- כפתור שליחת הודעה -->
 
         <ImageButton
             android:id="@+id/buttonReportApartment"

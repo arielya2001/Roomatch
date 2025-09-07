@@ -464,6 +464,10 @@ public class ChatViewModel extends ViewModel {
             Log.d("ChatVM", "🎯 finishLoading: הסתיים ללא טעינת שמות.");
         }
     }
+    public UserRepository getUserRepository() {
+        return userRepo;
+    }
+
 
 }
 

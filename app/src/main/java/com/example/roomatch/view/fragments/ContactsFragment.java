@@ -39,19 +39,24 @@ public class ContactsFragment extends Fragment {
         createGroupButton = view.findViewById(R.id.createGroupButton);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        ContactsAdapter adapter = new ContactsAdapter(new ContactsAdapter.OnContactSelectionListener() {
-            @Override
-            public void onCreateGroup(List<String> selectedUserIds) {
-                viewModel.createSharedGroup(selectedUserIds);
-            }
+        ContactsAdapter adapter = new ContactsAdapter(selectedUserIds -> {
+            viewModel.createSharedGroup(selectedUserIds);
         });
         recyclerView.setAdapter(adapter);
 
         viewModel = new ViewModelProvider(this).get(ContactsViewModel.class);
+
         viewModel.getContacts().observe(getViewLifecycleOwner(), adapter::setContacts);
 
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), msg ->
-                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show());
+                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show()
+        );
+
+        viewModel.getGroupCreationSuccess().observe(getViewLifecycleOwner(), success -> {
+            if (success != null && success) {
+                requireActivity().getSupportFragmentManager().popBackStack();
+            }
+        });
 
         createGroupButton.setOnClickListener(v -> {
             List<String> selectedIds = adapter.getSelectedContacts();
@@ -64,4 +69,5 @@ public class ContactsFragment extends Fragment {
 
         viewModel.loadContacts();
     }
+
 }

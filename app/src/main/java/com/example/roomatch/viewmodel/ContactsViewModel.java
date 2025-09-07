@@ -25,6 +25,12 @@ public class ContactsViewModel extends ViewModel {
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+    private final MutableLiveData<Boolean> groupCreationSuccess = new MutableLiveData<>();
+    public LiveData<Boolean> getGroupCreationSuccess() {
+        return groupCreationSuccess;
+    }
+
+
     public ContactsViewModel() {
         this.repository = new ApartmentRepository();
         loadContacts();
@@ -140,9 +146,10 @@ public class ContactsViewModel extends ViewModel {
                     // אם לא קיימת - צור
                     Log.d(TAG, "✅ Creating shared group with memberIds: " + fullMemberList);
                     repository.createSharedGroup(fullMemberList)
-                            .addOnSuccessListener(aVoid ->
-                                    toastMessage.setValue("קבוצה נוצרה בהצלחה")
-                            )
+                            .addOnSuccessListener(aVoid -> {
+                                toastMessage.setValue("קבוצה נוצרה בהצלחה");
+                                groupCreationSuccess.setValue(true); // ← כאן הסיגנל להצלחה
+                            })
                             .addOnFailureListener(e -> {
                                 Log.e(TAG, "❌ Error creating shared group: " + e.getMessage(), e);
                                 toastMessage.setValue("שגיאה ביצירת קבוצה: " + e.getMessage());

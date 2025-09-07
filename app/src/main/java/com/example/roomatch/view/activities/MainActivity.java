@@ -87,27 +87,37 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         String initialFragment = getIntent().getStringExtra("fragment");
 
         if (initialFragment != null) {
-            switch (initialFragment) {
-                case "owner_apartments":
-                    replaceFragment(new OwnerApartmentsFragment());
-                    setupBottomNav("owner");
-                    break;
-                case "seeker_home":
-                    replaceFragment(new SeekerHomeFragment());
-                    setupBottomNav("seeker");
-                    break;
-                case "create_profile":
-                    replaceFragment(new CreateProfileFragment());
-                    break;
-                case "menu_apartments":
-                    replaceFragment(new ApartmentSearchFragment());
-                    setupBottomNav("seeker");
-                    break;
+            if (initialFragment.equals("owner_apartments")) {
+                initUIForUserType("owner");
+                replaceFragment(new OwnerApartmentsFragment());
+            } else if (initialFragment.equals("menu_apartments")) {
+                initUIForUserType("seeker");
+                replaceFragment(new ApartmentSearchFragment());
             }
-        } else {
+            return; // חשוב! כדי לא להמשיך ל־checkUserProfile
+        }
+    else {
             checkUserProfile(currentUser.getUid());
         }
     }
+    private void initUIForUserType(String userType) {
+        this.userType = userType;
+
+        if ("owner".equals(userType)) {
+            toolbar.setVisibility(Toolbar.GONE);
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        } else if ("seeker".equals(userType)) {
+            setSupportActionBar(toolbar);
+            drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
+                    R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+            drawerLayout.addDrawerListener(drawerToggle);
+            drawerToggle.syncState();
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+        }
+
+        setupBottomNav(userType);
+    }
+
 
 
     // הסרת onCreateOptionsMenu ו-onOptionsItemSelected כי אין צורך ב-Toolbar
