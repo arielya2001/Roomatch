@@ -46,9 +46,9 @@ Roomatch includes two main types of tests:
 
 ### 1. **Unit Tests** – ViewModel and Repository logic
 - Location:  
-  `app/src/test/java/com/example/roomatch/`
+  `app/src/test/java/com/example/roomatch/view/fragments`
 - Examples:
-  - `OwnerApartmentsViewModelTest.java` – tests for publish/update/load using mocked repository.
+  - `ApartmentManagementTests.java` – tests for publish/update/load using mocked repository.
   - Uses `@Mock`, `when(...)`, `Tasks`, etc.
 
 ### 2. **UI Tests (Espresso)** – User interface tests
@@ -56,8 +56,6 @@ Roomatch includes two main types of tests:
   `app/src/androidTest/java/com/example/roomatch/ui/`
 - Examples:
   - `AuthActivityTest.java` – tests login (checks for Toast "Login successful").
-  - `ApartmentManagementUITest.java` – tests posting/updating/deleting apartments via `OwnerApartmentsFragment`.
-
 ---
 
 ## 🏗 Architecture
@@ -93,6 +91,3 @@ The app uses **MVVM** architecture:
 - Yaakov Nechmani  
 - Gabi Karovayak
 
----
-
-Generated on 2025-09-08.
