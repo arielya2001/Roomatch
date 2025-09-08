@@ -16,7 +16,8 @@ Roomatch/
 │   │   ├── main/
 │   │   │   ├── java/com/example/roomatch/
 │   │   │   │   ├── model/           # Data models (Apartment, UserProfile, Message, Chat...)
-│   │   │   │   ├── repository/      # Firebase data access (Firestore, Storage, Auth)
+│   │   │   │       ├── repository/      # Firebase data access (Firestore, Storage, Auth)
+│   │   │   │   ├── utils/           # utils classes (ChatUtil, FirebaseUtils, MyFirebaseMessagingServicec...)
 │   │   │   │   ├── view/            # UI (Activities + Fragments)
 │   │   │   │   │   ├── activities/ 
 │   │   │   │   │   └── fragments/   # OwnerApartmentsFragment, ApartmentSearchFragment, etc.
@@ -26,12 +27,10 @@ Roomatch/
 │   │   ├── androidTest/             # 🧪 UI Tests (Espresso)
 │   │   │   └── java/com/example/roomatch/ui/
 │   │   │       ├── AuthActivityTest.java
-│   │   │       ├── ApartmentManagementUITest.java
-│   │   │       └── ToastMatcher.java
 │   │   └── test/                    # 🧪 Unit Tests (Mockito, Robolectric)
 │   │       └── java/com/example/roomatch/
-│   │           └── viewmodel/
-│   │               └── OwnerApartmentsViewModelTest.java
+│   │           └── view/fragments
+│   │               └── ApartmentManagementTests.java
 │   │
 │   └── build.gradle
 │
