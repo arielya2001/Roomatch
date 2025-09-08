@@ -86,8 +86,8 @@ The app uses **MVVM** architecture:
 ---
 
 ## 👨‍💻 Team
-- Ariel Yaakobi (Team Lead)  
-- Yoav Yaakobi  
-- Yaakov Nechmani  
-- Gabi Karovayak
+- Ariel Yaacobi (Team Lead)  
+- Yoav Nechmani  
+- Yaacov Karovayak  
+- Gabi Rayman
 
