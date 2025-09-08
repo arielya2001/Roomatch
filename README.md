@@ -17,7 +17,7 @@ Roomatch/
 │   │   │   ├── java/com/example/roomatch/
 │   │   │   │   ├── model/           # Data models (Apartment, UserProfile, Message, Chat...)
 │   │   │   │       ├── repository/      # Firebase data access (Firestore, Storage, Auth)
-│   │   │   │   ├── utils/           # utils classes (ChatUtil, FirebaseUtils, MyFirebaseMessagingServicec...)
+│   │   │   │   ├── utils/           # utils classes (ChatUtil,, MyFirebaseMessagingServicec...)
 │   │   │   │   ├── view/            # UI (Activities + Fragments)
 │   │   │   │   │   ├── activities/ 
 │   │   │   │   │   └── fragments/   # OwnerApartmentsFragment, ApartmentSearchFragment, etc.
