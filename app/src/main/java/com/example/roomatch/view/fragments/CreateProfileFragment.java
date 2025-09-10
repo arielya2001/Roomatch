@@ -20,6 +20,7 @@ import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.view.activities.MainActivity;
 import com.example.roomatch.viewmodel.AppViewModelFactory;
 import com.example.roomatch.viewmodel.CreateProfileViewModel;
+import com.google.firebase.firestore.FieldValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -169,7 +170,7 @@ public class CreateProfileFragment extends Fragment {
         profile.setInterests(interests);
         profile.setUserType(getUserType(selectedUserTypeId));
         profile.setDescription(description);
-
+        profile.setCreatedAt(null);
         viewModel.saveProfile(profile);
     }
 

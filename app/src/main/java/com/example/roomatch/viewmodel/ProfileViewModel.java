@@ -1,5 +1,6 @@
 package com.example.roomatch.viewmodel;
 
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -7,17 +8,20 @@ import androidx.lifecycle.ViewModel;
 import com.example.roomatch.model.Message;
 import com.example.roomatch.model.UserProfile;
 import com.example.roomatch.model.repository.UserRepository;
+import com.example.roomatch.model.UserSession; // <<— חשוב לייבא
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ProfileViewModel extends ViewModel {
 
     private final UserRepository repository = new UserRepository();
-    private final MutableLiveData<UserProfile> profile = new MutableLiveData<>();
+
+    // מקבלים ישירות את ה־LiveData מתוך ה־UserSession (קאש + האזנה חיה)
+    private final LiveData<UserProfile> profile = UserSession.getInstance().getProfileLiveData();
+
     private final MutableLiveData<List<Message>> messages = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
     private final MutableLiveData<Boolean> editRequested = new MutableLiveData<>();
@@ -31,27 +35,9 @@ public class ProfileViewModel extends ViewModel {
     public LiveData<String> getToastMessage() { return toastMessage; }
     public LiveData<Boolean> getEditRequested() { return editRequested; }
 
+    /** מפעיל את ה־Session (טעינה ראשונית + מאזין). אין קריאת Firestore ידנית. */
     public void loadProfile() {
-        repository.getMyProfile()
-                .addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
-                        UserProfile userProfile = doc.toObject(UserProfile.class);
-                        try {
-                            Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
-                            userProfile.setLat(loc.get("latitude"));
-                            userProfile.setLat(loc.get("longitude"));
-                        }
-                        catch (Exception ex)
-                        {
-                            userProfile.setLat(0);
-                            userProfile.setLat(0);
-                        }
-
-                        profile.setValue(userProfile);
-                    } else {
-                        toastMessage.setValue("פרופיל לא נמצא");
-                    }
-                })
+        UserSession.getInstance().ensureStarted()
                 .addOnFailureListener(e ->
                         toastMessage.setValue("שגיאה בטעינת פרופיל: " + e.getMessage()));
     }
@@ -84,17 +70,18 @@ public class ProfileViewModel extends ViewModel {
     }
 
     public boolean isCurrentUserOwner() {
-        return getProfile().getValue() != null &&
-                "owner".equals(getProfile().getValue().getUserType());
+        UserProfile p = profile.getValue();
+        return p != null && "owner".equals(p.getUserType());
     }
-
-
 
     public void resetEditRequest() {
         editRequested.setValue(false);
     }
 
-    public void updateProfile(String fullName, String ageStr, String gender, String lifestyle, String interests,String city,String street,LatLng loc,String description) {
+    /** עדכון פרופיל דרך ה־UserSession (write-through + עדכון קאש/LiveData אוטומטי) */
+    public void updateProfile(String fullName, String ageStr, String gender, String lifestyle,
+                              String interests, String city, String street, LatLng loc, String description) {
+
         if (fullName == null || fullName.trim().length() < 2) {
             toastMessage.setValue("הכנס שם מלא (לפחות 2 תווים)");
             return;
@@ -104,12 +91,13 @@ public class ProfileViewModel extends ViewModel {
             toastMessage.setValue("הכנס גיל תקין (גדול מ-0)");
             return;
         }
-        if(loc==null)
-        {
+        if (loc == null) {
             toastMessage.setValue("מיקום לא חוקי");
             return;
-
         }
+
+        UserProfile current = profile.getValue();
+        String userType = current != null && current.getUserType() != null ? current.getUserType() : "seeker";
 
         UserProfile updated = new UserProfile(
                 fullName.trim(),
@@ -117,7 +105,7 @@ public class ProfileViewModel extends ViewModel {
                 gender != null ? gender.trim() : null,
                 lifestyle != null ? lifestyle.trim() : null,
                 interests != null ? interests.trim() : null,
-                profile.getValue() != null ? profile.getValue().getUserType() : "seeker",
+                userType,
                 city,
                 street,
                 loc.latitude,
@@ -125,22 +113,14 @@ public class ProfileViewModel extends ViewModel {
                 description
         );
 
-        repository.saveMyProfile(repository.getCurrentUserId(), updated)
-                .addOnSuccessListener(v -> {
-                    profile.setValue(updated);
-                    toastMessage.setValue("פרופיל עודכן בהצלחה!");
-                })
+        UserSession.getInstance().updateMyProfile(updated)
+                .addOnSuccessListener(v -> toastMessage.setValue("פרופיל עודכן בהצלחה!"))
                 .addOnFailureListener(e ->
                         toastMessage.setValue("שגיאה בעדכון פרופיל: " + e.getMessage()));
     }
 
-
-
     private Integer tryParseInt(String val) {
-        try {
-            return Integer.parseInt(val);
-        } catch (NumberFormatException e) {
-            return null;
-        }
+        try { return Integer.parseInt(val); }
+        catch (NumberFormatException e) { return null; }
     }
 }

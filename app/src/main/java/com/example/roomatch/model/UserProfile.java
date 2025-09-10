@@ -2,6 +2,9 @@ package com.example.roomatch.model;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.Exclude;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.ServerTimestamp;
+import java.util.Date;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,6 +24,9 @@ public class UserProfile implements Serializable {
     private String selectedStreet;
     private String description;
     private double lat=0, lng=0;
+
+    @ServerTimestamp
+    private Date createdAt;
 
     // קונסטרקטור ריק עבור Firebase
     public UserProfile() {}
@@ -85,6 +91,14 @@ public class UserProfile implements Serializable {
     public void setDescription(String description){this.description=description;}
     public double getLat(){return this.lat;}
     public double getLng(){return this.lng;}
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+    public void setCreatedAt(Date timeStamp)
+    {
+        this.createdAt=timeStamp;
+    }
 
     public void setContactIds(List<String> contactIds) {
         this.contactIds = contactIds;

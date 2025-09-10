@@ -24,6 +24,7 @@ import com.example.roomatch.adapters.ApartmentAdapter;
 import com.example.roomatch.adapters.PartnerAdapter;
 import com.example.roomatch.model.Apartment;
 import com.example.roomatch.model.UserProfile;
+import com.example.roomatch.model.UserSession;
 import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.model.repository.UserRepository;
 import com.example.roomatch.viewmodel.ApartmentSearchViewModel;
@@ -182,22 +183,32 @@ public class ApartmentSearchFragment extends Fragment {
         // טען את כל הדירות
         viewModel.loadApartments();
 
-        userRepo.getMyProfile().addOnSuccessListener(doc -> {
-            UserProfile profile = doc.toObject(UserProfile.class);
-            if (profile != null) {
-                double lat = profile.getLat();
-                double lng = profile.getLng();
-                Apartment.setSearchLocation(lat, lng); // נקודת ההשוואה למרחקים
-
-                // חישוב מחודש של מרחקים מול מיקום זה
-                for (Apartment apt : originalApartments) {
-                    apt.calculateDistanceFromSearchLocation();
-                }
-
-                // ואז תפעיל את הסינון הרגיל
-                applyFilter();
-            }
-        });
+        UserProfile profile = UserSession.getInstance().getCachedProfile();
+        try {
+            double lat = profile.getLat();
+            double lng = profile.getLng();
+            Apartment.setSearchLocation(lat,lng);
+        }
+        catch (Exception ex)
+        {
+            Apartment.setSearchLocation(0,0);
+        }
+//        userRepo.getMyProfile().addOnSuccessListener(doc -> {
+//            UserProfile profile = doc.toObject(UserProfile.class);
+//            if (profile != null) {
+//                double lat = profile.getLat();
+//                double lng = profile.getLng();
+//                Apartment.setSearchLocation(lat, lng); // נקודת ההשוואה למרחקים
+//
+//                // חישוב מחודש של מרחקים מול מיקום זה
+//                for (Apartment apt : originalApartments) {
+//                    apt.calculateDistanceFromSearchLocation();
+//                }
+//
+//                // ואז תפעיל את הסינון הרגיל
+//                applyFilter();
+//            }
+//        });
 
 
 

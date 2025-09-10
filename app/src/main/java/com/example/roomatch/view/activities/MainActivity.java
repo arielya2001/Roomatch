@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
+
+import com.example.roomatch.model.UserSession;
 import com.example.roomatch.view.activities.AuthActivity;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -213,6 +215,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             return true;
         } else if (id == R.id.nav_logout) {
             auth.signOut();
+            UserSession.getInstance().stop();
             startActivity(new Intent(this, AuthActivity.class));
             finish();
             return true;
