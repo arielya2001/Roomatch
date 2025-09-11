@@ -164,74 +164,9 @@ public class PartnerViewModel extends ViewModel {
     }
 
 
-
-
-
-
-    private void loadPartnersFromRepository() {
-
-//        FirebaseFirestore.getInstance()
-//                .collection("users")
-//                .get()
-//                .addOnSuccessListener(queryDocumentSnapshots -> {
-//                    allPartners.clear();
-//                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
-//                        UserProfile profile = doc.toObject(UserProfile.class);
-//                        profile.setUserId(doc.getId());
-//                        if(profile.getCreatedAt()==null)
-//                        {
-//                            profile.setCreatedAt(new Date());
-//                        }
-//                        try
-//                        {
-//                            Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
-//                            profile.setLat(loc.get("latitude"));
-//                            profile.setLng(loc.get("longitude"));
-//
-//                        }
-//                        catch (Exception ex)
-//                        {
-//                            profile.setLat(0);
-//                            profile.setLng(0);
-//                        }
-//                        if (profile != null) {
-//                            allPartners.add(profile);
-//                        }
-//                    }
-//                    partners.setValue(new ArrayList<>(allPartners));
-//
-//                })
-//                .addOnFailureListener(e -> {
-//                    toastMessage.setValue("שגיאה בטעינת שותפים: " + e.getMessage());
-//                });
-    }
-
     public void loadProfile() {
 
         UserSession.getInstance().ensureStarted();
-//        repository.getMyProfile()
-//                .addOnSuccessListener(doc -> {
-//                    if (doc.exists()) {
-//                        UserProfile userProfile = doc.toObject(UserProfile.class);
-//                        try
-//                        {
-//                            Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
-//                            userProfile.setLat(loc.get("latitude"));
-//                            userProfile.setLng(loc.get("longitude"));
-//                        }
-//                        catch (Exception ex)
-//                        {
-//                            userProfile.setLat(0);
-//                            userProfile.setLng(0);
-//                        }
-//
-//                        profile.setValue(userProfile);
-//                    } else {
-//                        toastMessage.setValue("פרופיל לא נמצא");
-//                    }
-//                })
-//                .addOnFailureListener(e ->
-//                        toastMessage.setValue("שגיאה בטעינת פרופיל: " + e.getMessage()));
     }
 
     public LiveData<List<UserProfile>> getPartners() {

@@ -1,6 +1,7 @@
 package com.example.roomatch.adapters;
 
 import android.content.Context;
+import android.location.Location;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,11 +11,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.roomatch.R;
 import com.example.roomatch.model.Apartment;
+import com.example.roomatch.model.UserProfile;
+import com.example.roomatch.model.UserSession;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.List;
 
@@ -32,6 +37,11 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
     private Context context;
     private OnApartmentClickListener listener;
     private OnReportClickListener reportListener;
+    private final LiveData<UserProfile> profile = UserSession.getInstance().getProfileLiveData();
+    public LiveData<UserProfile> getProfile() { return profile; }
+    public void loadProfile() {
+        UserSession.getInstance().ensureStarted();
+    }
 
     public ApartmentAdapter(List<Apartment> apartmentList, Context context,
                             OnApartmentClickListener listener,
@@ -40,6 +50,7 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
         this.context = context;
         this.listener = listener;
         this.reportListener = reportListener;
+        loadProfile();
     }
 
     @NonNull
@@ -62,10 +73,19 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
         holder.priceTextView.setText(" חודש/ " + "₪" + apt.getPrice());
 
         // הצגת המרחק אם קיים
-        double distance = apt.getDistance(); // במטרים
-        if (distance > 0 && distance < Integer.MAX_VALUE) {
-            double distanceKm = distance / 1000.0;
-            holder.distanceTextView.setText(String.format("מרחק: %.1f ק\"מ", distanceKm));
+        LatLng aptLoc = apt.getSelectedLocation();
+        LatLng userloc = getProfile().getValue().getSelectedLocation();
+        if(userloc==null)
+        {
+            userloc=new LatLng(0,0);
+        }
+        float[] results = new float[1];
+        Location.distanceBetween(userloc.latitude, userloc.longitude,
+                aptLoc.latitude, aptLoc.longitude,
+                results);
+        double distKm = results[0] / 1000.0;
+        if (distKm > 0 && distKm < Double.MAX_VALUE) {
+            holder.distanceTextView.setText(String.format("מרחק: %.1f ק\"מ", distKm));
             holder.distanceTextView.setVisibility(View.VISIBLE);
         } else {
             holder.distanceTextView.setVisibility(View.GONE);

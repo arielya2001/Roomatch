@@ -152,7 +152,36 @@ public class PartnerFragment extends Fragment {
 
         // איפוס סינונים
         clearFiltersButton.setOnClickListener(v -> resetAllFilters());
+        // ודא שהוא לא אייקון סגור כברירת מחדל
+        searchViewName.setIconifiedByDefault(false);
+// בהתחלה שיהיה סגור (לא מקלדת פתוחה)
+        searchViewName.setIconified(false);
+        searchViewName.clearFocus();
 
+// לפתוח ולתת פוקוס כשנוגעים בכל הקופסה
+        searchViewName.setOnClickListener(v -> {
+            searchViewName.setIconified(false);
+            searchViewName.onActionViewExpanded();
+            searchViewName.requestFocus();
+
+            // פתיחת המקלדת
+            android.view.inputmethod.InputMethodManager imm =
+                    (android.view.inputmethod.InputMethodManager)
+                            requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+            View text = searchViewName.findViewById(androidx.appcompat.R.id.search_src_text);
+            if (imm != null && text != null) {
+                text.requestFocus();
+                imm.showSoftInput(text, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
+
+// אם מקבל פוקוס – וודא שהוא פתוח
+        searchViewName.setOnQueryTextFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                searchViewName.setIconified(false);
+                searchViewName.onActionViewExpanded();
+            }
+        });
         // חיפוש עם דיבאונס
         searchRunnable = this::applyAllFilters;
         searchViewName.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
