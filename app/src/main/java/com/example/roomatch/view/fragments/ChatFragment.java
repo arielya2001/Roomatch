@@ -32,18 +32,23 @@ import java.util.List;
 public class ChatFragment extends Fragment {
 
     private static final String TAG = "ChatFragment";
+
     private ChatViewModel viewModel;
     private RecyclerView recyclerView;
     private EditText messageEditText;
     private Button sendButton, backButton;
     private ChatAdapter adapter;
-    private String otherUserId;
-    private String apartmentId;
-    private String chatId;
 
-    public ChatFragment(String otherUserId, String apartmentId) {
-        this.otherUserId = otherUserId;
-        this.apartmentId = apartmentId;
+    // מגיעים מה-arguments
+    private String chatId;
+    private String otherUserId;   // לפרטי בלבד
+    private String apartmentId;   // אופציונלי (משמש למטא-דאטה בהודעה)
+
+    private LinearLayoutManager layoutManager;
+    private RecyclerView.OnScrollListener pagingScrollListener;
+
+    public ChatFragment() {
+        // חובה קונסטרקטור ריק
     }
 
     @Override
@@ -68,100 +73,110 @@ public class ChatFragment extends Fragment {
             }
         }).get(ChatViewModel.class);
 
+        // ---- קבלת פרמטרים מה־arguments ----
+        Bundle args = getArguments();
+        if (args != null) {
+            chatId = args.getString("chatId");
+            otherUserId = args.getString("otherUserId");
+            apartmentId = args.getString("apartmentId");
+        }
 
         String currentUid = viewModel.getCurrentUserId();
         if (currentUid == null) {
             Toast.makeText(getContext(), "שגיאה: משתמש לא מחובר", Toast.LENGTH_SHORT).show();
+            requireActivity().getSupportFragmentManager().popBackStack();
             return;
         }
 
-        // יצירת chatId עקבי על ידי מיון
-        chatId = generateConsistentChatId(currentUid, otherUserId, apartmentId);
+        // אם אין chatId בארגומנט – ננסה fallback *רק אם יש לנו את כל הנתונים*.
+        if (chatId == null || chatId.trim().isEmpty()) {
+            if (currentUid != null && otherUserId != null && apartmentId != null) {
+                chatId = generateConsistentChatId(currentUid, otherUserId, apartmentId);
+                Log.d(TAG, "chatId was missing; generated fallback chatId=" + chatId);
+            } else {
+                Toast.makeText(getContext(), "חסרים נתונים לפתיחת צ'אט", Toast.LENGTH_SHORT).show();
+                requireActivity().getSupportFragmentManager().popBackStack();
+                return;
+            }
+        }
 
+        // ---- UI ----
         recyclerView = view.findViewById(R.id.recyclerViewMessages);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ChatAdapter(new ArrayList<>(), currentUid);
-        recyclerView.setAdapter(adapter);
-
         messageEditText = view.findViewById(R.id.editTextMessage);
         sendButton = view.findViewById(R.id.buttonSend);
         backButton = view.findViewById(R.id.buttonBack);
 
+        adapter = new ChatAdapter(new ArrayList<>(), currentUid);
+
+        layoutManager = new LinearLayoutManager(getContext());
+        layoutManager.setReverseLayout(true); // לשמור את הסדר כפי שהיה אצלך
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(adapter);
+
+        // ---- Observe ----
+        viewModel.getMessages().observe(getViewLifecycleOwner(), list -> adapter.updateMessages(list));
+        viewModel.getToast().observe(getViewLifecycleOwner(),
+                msg -> { if (msg != null) Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show(); });
+
+        // ---- פגינציית הודעות ----
+        pagingScrollListener = new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                super.onScrolled(rv, dx, dy);
+                if (dy >= 0) return;
+
+                int visible = layoutManager.getChildCount();
+                int total = layoutManager.getItemCount();
+                int first = layoutManager.findFirstVisibleItemPosition();
+
+                if (!viewModel.isLoading() && viewModel.hasMore()
+                        && (first + visible) >= (total - 5)) {
+                    viewModel.loadNextPage(chatId);
+                }
+            }
+        };
+        recyclerView.addOnScrollListener(pagingScrollListener);
+
+        // עמוד ראשון של הודעות
+        viewModel.loadFirstPage(chatId);
+
+        // ---- שליחה ----
         sendButton.setOnClickListener(v -> {
             String text = messageEditText.getText().toString().trim();
-            if (!text.isEmpty()) {
-                viewModel.sendMessage(chatId, otherUserId, apartmentId, text);
-                messageEditText.setText("");
-            }
-        });
-        backButton.setOnClickListener(v ->
-                requireActivity()
-                        .getSupportFragmentManager()
-                        .popBackStack());
+            if (text.isEmpty()) return;
 
-        // האזנה להודעות עם הגבלה של 20 הודעות
-        viewModel.getChatMessagesQuery(chatId, 20).addSnapshotListener((snapshot, e) -> {
-            if (e != null) {
-                Log.e(TAG, "Listener error: " + e.getMessage());
+            if (otherUserId == null || otherUserId.trim().isEmpty()) {
+                Toast.makeText(getContext(), "לא ניתן לשלוח: לא זוהה נמען הצ'אט", Toast.LENGTH_SHORT).show();
                 return;
             }
-            if (snapshot != null) {
-                Log.d(TAG, "Received snapshot with " + snapshot.getDocuments().size() + " messages");
-                List<Message> newMessages = new ArrayList<>();
-                for (var doc : snapshot.getDocuments()) {
-                    Message message = doc.toObject(Message.class);
-                    if (message != null) {
-                        message.setId(doc.getId());
 
-                        if (message.getSenderName() == null && message.getFromUserId() != null) {
-                            viewModel.getUserRepository().getUserNameById(message.getFromUserId())
-                                    .addOnSuccessListener(name -> {
-                                        message.setSenderName(name);
-                                        adapter.notifyDataSetChanged(); // רענן UI
-                                    })
-                                    .addOnFailureListener(error -> {
-                                        Log.e("ChatFragment", "לא הצלחנו לשלוף את שם השולח", error);
-                                    });
-                        }
-
-                        newMessages.add(message);
-                    }
-                }
-
-                adapter.updateMessages(newMessages);
-                recyclerView.scrollToPosition(adapter.getItemCount() - 1);
-            }
+            viewModel.sendMessage(chatId, otherUserId, apartmentId, text);
+            messageEditText.setText("");
         });
 
-        // סימון הודעות כנקראות
+        // ---- חזרה ----
+        backButton.setOnClickListener(v ->
+                requireActivity().getSupportFragmentManager().popBackStack());
+
+        // סימון הודעות כנקראו
         viewModel.markMessagesAsRead(chatId);
-
-        // צפייה בהודעות Toast
-        viewModel.getToast().observe(getViewLifecycleOwner(), message -> {
-            if (message != null) {
-                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     /**
-     * יוצר chatId עקבי על ידי מיון של userIds ואז להוסיף את apartmentId.
+     * fallback בלבד: יוצר chatId עקבי על ידי מיון של userIds ואז הוספת apartmentId.
      */
     private String generateConsistentChatId(String userId1, String userId2, String apartmentId) {
         if (userId1 == null || userId2 == null || apartmentId == null) {
             throw new IllegalArgumentException("User IDs and apartment ID must not be null");
         }
-
         List<String> ids = Arrays.asList(userId1, userId2);
         Collections.sort(ids);
         return ids.get(0) + "_" + ids.get(1) + "_" + apartmentId;
     }
 
-
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // המאזין יוסר אוטומטית עם החיים של ה-Fragment
+        // אין since המאזינים קשורים ל-lifecycle
     }
 }

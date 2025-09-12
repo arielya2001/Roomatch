@@ -26,15 +26,17 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
 
     private final List<ChatListItem> items;
     private final OnChatClickListener listener;
+    private final String currentUserId;
 
     public interface OnChatClickListener {
-        void onPrivateChatClick(String fromUserId, String apartmentId);
+        void onPrivateChatClick(String chatId, String otherUserId, String apartmentId);
         void onGroupChatClick(String groupId, String apartmentId);
     }
 
-    public ChatListAdapter(List<ChatListItem> items, OnChatClickListener listener) {
+    public ChatListAdapter(List<ChatListItem> items, String currentUserId, OnChatClickListener listener) {
         this.items = new ArrayList<>(items != null ? items : new ArrayList<>());
         this.listener = listener;
+        this.currentUserId = currentUserId;
     }
 
     @NonNull
@@ -112,9 +114,39 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
                 listener.onGroupChatClick(g.getGroupId(), g.getApartmentId());
             } else {
                 Chat chat = (Chat) item;
-                listener.onPrivateChatClick(chat.getFromUserId(), chat.getApartmentId());
+
+                String other = null;
+
+                // 1) אם יש שני מזהים מפורשים במודל
+                if (chat.getFromUserId() != null && chat.getToUserId() != null) {
+                    other = currentUserId != null && currentUserId.equals(chat.getFromUserId())
+                            ? chat.getToUserId() : chat.getFromUserId();
+                }
+
+                // 2) אחרת, נסה מתוך from/to אם קיימים
+                if (other == null && chat.getFromUserId() != null && chat.getToUserId() != null) {
+                    other = currentUserId != null && currentUserId.equals(chat.getFromUserId())
+                            ? chat.getToUserId() : chat.getFromUserId();
+                }
+
+                // 3) אחרת, נסה לפענח מתוך chatId בפורמט userA_userB_apartmentId
+                if (other == null && chat.getId() != null && chat.getId().contains("_") && currentUserId != null) {
+                    String[] parts = chat.getId().split("_");
+                    if (parts.length >= 3) {
+                        String u1 = parts[0], u2 = parts[1];
+                        other = currentUserId.equals(u1) ? u2 : u1;
+                    }
+                }
+
+                listener.onPrivateChatClick(
+                        chat.getId(),                      // יכול להיות null — זה בסדר
+                        other,                             // חשוב שיצא לא-null בסוף!
+                        chat.getApartmentId()
+                );
             }
         });
+
+
     }
 
     @Override
