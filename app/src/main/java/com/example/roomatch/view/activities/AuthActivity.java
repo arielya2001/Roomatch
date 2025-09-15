@@ -203,7 +203,7 @@ public class AuthActivity extends AppCompatActivity {
                     startMain();
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(this, "שגיאה: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "הסיסמה או שם המשתמש שהזנת שגויים", Toast.LENGTH_LONG).show()
                 );
     }
 
