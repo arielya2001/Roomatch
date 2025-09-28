@@ -20,10 +20,13 @@ public class UserProfile implements Serializable {
     private String userType;
     private String userId; // הוספה של userId
     private List<String> contactIds;
-    private String selectedCity;
+    private String selectedCity; 
     private String selectedStreet;
     private String description;
     private double lat=0, lng=0;
+
+    private String profileImageUrl;
+
 
     @ServerTimestamp
     private Date createdAt;
@@ -55,6 +58,13 @@ public class UserProfile implements Serializable {
     public String getLifestyle() { return lifestyle; }
     public void setLifestyle(String lifestyle) { this.lifestyle = lifestyle; }
     public String getInterests() { return interests; }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
     @Exclude
     public List<String> getLifeStyleslist()
     {

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp"
@@ -11,29 +12,54 @@
         android:orientation="vertical">
 
         <TextView
-            android:text="צור פרופיל"
+            android:id="@+id/titleCreateProfile"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="22sp"
-            android:textStyle="bold"
             android:layout_gravity="center_horizontal"
-            android:paddingBottom="16dp"/>
+            android:paddingBottom="16dp"
+            android:text="צור פרופיל"
+            android:textSize="22sp"
+            android:textStyle="bold" />
 
+        <!-- תמונת פרופיל + כפתור בחירה -->
+        <ImageView
+            android:id="@+id/imageCreateProfilePic"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:contentDescription="תצוגה מקדימה של תמונת פרופיל"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_default_profile_placeholder"
+            tools:src="@drawable/ic_default_profile_placeholder" />
+
+        <Button
+            android:id="@+id/buttonSelectProfileImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:text="בחר תמונת פרופיל" />
+
+        <!-- פרטים אישיים -->
         <EditText
             android:id="@+id/editFullName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:hint="שם מלא"
-            android:inputType="textPersonName"/>
+            android:inputType="textPersonName" />
 
         <EditText
             android:id="@+id/editprofileAge"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="גיל"
-            android:inputType="number"/>
+            android:inputType="number" />
 
+        <!-- מין -->
         <TextView
+            android:id="@+id/labelGender"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="right"
@@ -80,13 +106,16 @@
                 android:text="זכר" />
         </RadioGroup>
 
+        <!-- סוג משתמש -->
         <TextView
+            android:id="@+id/labelUserType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="right"
             android:paddingTop="16dp"
             android:text="סוג משתמש"
             android:textStyle="bold" />
+
         <RadioGroup
             android:id="@+id/userTypeGroup"
             android:layout_width="match_parent"
@@ -117,6 +146,7 @@
                 android:text="בעל דירה" />
         </RadioGroup>
 
+        <!-- תיאור (אופציונלי) -->
         <EditText
             android:id="@+id/editCreateDescription"
             android:layout_width="match_parent"
@@ -124,55 +154,52 @@
             android:ems="10"
             android:hint="תיאור (אופציונלי)"
             android:inputType="textMultiLine"
+            android:minLines="3"
             android:visibility="gone" />
 
+        <!-- סגנון חיים -->
         <TextView
             android:id="@+id/lifestyleLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="סגנון חיים:"
             android:textStyle="bold"
-            android:layout_marginTop="16dp"
             android:visibility="gone" />
+
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/createProfileLifeStyles"
             android:name="com.example.roomatch.view.fragments.LifeStylesFragment"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_gravity="right"
-            android:visibility="gone"
+            android:visibility="gone" />
 
-            />
-
+        <!-- תחומי עניין -->
         <TextView
             android:id="@+id/interestsLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="תחומי עניין:"
             android:textStyle="bold"
-            android:layout_marginTop="16dp"
             android:visibility="gone" />
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/createProfileInterests"
             android:name="com.example.roomatch.view.fragments.InterestsFragment"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_gravity="right"
             android:visibility="gone" />
 
-
-
-
-
-
-
-
+        <!-- שמירה -->
         <Button
             android:id="@+id/buttonSaveProfile"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="צור פרופיל" />
+
     </LinearLayout>
 </ScrollView>
