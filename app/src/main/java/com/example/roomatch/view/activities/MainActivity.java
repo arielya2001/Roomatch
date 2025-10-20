@@ -181,7 +181,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 })
                 .addOnFailureListener(e -> {
                     Log.e("MainActivity", "Error loading profile: " + e.getMessage(), e);
-                    Toast.makeText(MainActivity.this, "שגיאה בטעינת פרופיל", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "אירעה שגיאה בטעינת פרופיל", Toast.LENGTH_SHORT).show();
                     auth.signOut();
                     startActivity(new Intent(MainActivity.this, AuthActivity.class));
                     finish();
@@ -275,4 +275,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
 }
+
 
