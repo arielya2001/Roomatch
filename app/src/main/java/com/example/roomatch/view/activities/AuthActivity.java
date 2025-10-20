@@ -78,7 +78,7 @@ public class AuthActivity extends AppCompatActivity {
             String password = editPassword.getText().toString().trim();
 
             if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-                Toast.makeText(this, "נא למלא את כל השדות", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, ".נא למלא את כל השדות", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -87,11 +87,11 @@ public class AuthActivity extends AppCompatActivity {
             } else {
                 String username = editUsername.getText().toString().trim();
                 if (TextUtils.isEmpty(username)) {
-                    Toast.makeText(this, "יש להזין שם משתמש", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, ".יש להזין שם משתמש", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (username.length() < 3) {
-                    Toast.makeText(this, "שם משתמש קצר מדי (מינימום 3 תווים)", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "שם משתמש קצר מדי (צריך מינימום 3 תווים)", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 register(email, password, username);
