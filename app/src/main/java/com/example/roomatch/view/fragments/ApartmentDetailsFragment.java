@@ -146,7 +146,13 @@ public class ApartmentDetailsFragment extends Fragment {
                     if (parts.length == 2) {
                         String ownerId = parts[0];
                         String apartmentId = parts[1];
-                        ChatFragment chatFragment = new ChatFragment(ownerId, apartmentId);
+                        ChatFragment chatFragment = new ChatFragment();
+                        Bundle args = new Bundle();
+                        args.putString("otherUserId", ownerId);
+                        args.putString("apartmentId", apartmentId);
+// אופציונלי: אם יש לך chatId מוכן, תעביר גם אותו: args.putString("chatId", chatId);
+                        chatFragment.setArguments(args);
+
                         requireActivity().getSupportFragmentManager()
                                 .beginTransaction()
                                 .replace(R.id.fragmentContainer, chatFragment)

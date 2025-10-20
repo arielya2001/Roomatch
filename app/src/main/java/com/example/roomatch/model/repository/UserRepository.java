@@ -28,6 +28,8 @@ import java.util.UUID;
 
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 public class UserRepository {
 
     private static final String TAG = "UserRepository"; // תגית לוג ייחודית
@@ -132,6 +134,26 @@ public class UserRepository {
             return Tasks.forException(new IllegalStateException("User not logged in"));
         }
         return db.collection("users").whereNotEqualTo("uid", uid).get();
+    }
+
+    public Task<QuerySnapshot> getUsersPage(@Nullable DocumentSnapshot lastDoc,
+                                            int pageSize,
+                                            @Nullable String userType /* "seeker"/"owner" or null */) {
+        Query q = db.collection("users");
+
+        if (userType != null) {
+            q = q.whereEqualTo("userType", userType);
+        }
+
+        // חשוב: ממיינים לפי createdAt (Date/@ServerTimestamp)
+        q = q.orderBy("createdAt", Query.Direction.DESCENDING)
+                .limit(pageSize);
+
+        if (lastDoc != null) {
+            q = q.startAfter(lastDoc);
+        }
+
+        return q.get();
     }
 
     public Task<UserProfile> getUserById(String userId) {

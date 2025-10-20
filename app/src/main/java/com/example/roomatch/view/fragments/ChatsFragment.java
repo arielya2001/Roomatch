@@ -53,6 +53,7 @@ public class ChatsFragment extends Fragment {
     public void onViewCreated(@NonNull View v, @Nullable Bundle s) {
         super.onViewCreated(v, s);
 
+
         // ViewModel
         viewModel = new ViewModelProvider(this, new ViewModelProvider.Factory() {
             @NonNull
@@ -70,21 +71,24 @@ public class ChatsFragment extends Fragment {
         // UI רכיבים
         recyclerView = v.findViewById(R.id.recyclerViewChats);
         searchView = v.findViewById(R.id.searchViewChats);
-        Spinner spinnerChatType = v.findViewById(R.id.spinnerChatType);
+        spinnerChatType = v.findViewById(R.id.spinnerChatType);
 
         // Adapter + RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ChatListAdapter(new ArrayList<>(), new ChatListAdapter.OnChatClickListener() {
+        String currentUid = new UserRepository().getCurrentUserId();
+        adapter = new ChatListAdapter(new ArrayList<>(), currentUid, new ChatListAdapter.OnChatClickListener() {
             @Override
-            public void onPrivateChatClick(String fromUserId, String apartmentId) {
-                openPrivateChat(fromUserId, apartmentId);
+            public void onPrivateChatClick(String chatId, String otherUserId, String apartmentId) {
+                openPrivateChat(otherUserId, apartmentId, chatId);
             }
-
             @Override
             public void onGroupChatClick(String groupChatId, String apartmentId) {
                 openGroupChat(groupChatId);
             }
         });
+        recyclerView.setAdapter(adapter);
+
+
         recyclerView.setAdapter(adapter);
 
         // Spinner - סוג צ'אט
@@ -145,7 +149,7 @@ public class ChatsFragment extends Fragment {
         });
 
         // טען צ'אטים
-        viewModel.loadChats();
+        viewModel.loadChatsFirstPage();
     }
 
     private void filterBySearchAndType(String query, int typePosition) {
@@ -193,7 +197,33 @@ public class ChatsFragment extends Fragment {
             Toast.makeText(getContext(), "שגיאה: משתמש לא מחובר", Toast.LENGTH_SHORT).show();
             return;
         }
-        ChatFragment cf = new ChatFragment(fromUserId, apartmentId);
+        Bundle args = new Bundle();
+        args.putString("chatId", /* item.getId() אם קיים */ null);
+        args.putString("otherUserId", fromUserId);
+        args.putString("apartmentId", apartmentId);
+
+        ChatFragment cf = new ChatFragment();
+        cf.setArguments(args);
+
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, cf)
+                .addToBackStack(null)
+                .commit();
+
+    }
+
+    private void openPrivateChat(String fromUserId, String apartmentId, @Nullable String chatId) {
+        Bundle args = new Bundle();
+        args.putString("otherUserId", fromUserId);
+        args.putString("apartmentId", apartmentId);
+        if (chatId != null) {
+            args.putString("chatId", chatId);
+        }
+
+        ChatFragment cf = new ChatFragment();
+        cf.setArguments(args);
+
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragmentContainer, cf)
@@ -201,14 +231,7 @@ public class ChatsFragment extends Fragment {
                 .commit();
     }
 
-    private void openPrivateChat(String fromUserId, String apartmentId) {
-        ChatFragment cf = new ChatFragment(fromUserId, apartmentId);
-        requireActivity().getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.fragmentContainer, cf)
-                .addToBackStack(null)
-                .commit();
-    }
+
 
     private void openGroupChat(String groupChatId) {
         Log.d("ChatsFragment", "פותח צ'אט קבוצתי עם groupChatId: " + groupChatId);

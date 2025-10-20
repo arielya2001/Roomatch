@@ -12,6 +12,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.roomatch.R;
 import com.example.roomatch.model.UserProfile;
+import com.example.roomatch.model.UserSession;
 import com.example.roomatch.model.repository.UserRepository;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -26,7 +27,7 @@ public class PartnerAdapter extends
     private final OnReportClickListener reportClickListener;
     private final UserRepository repository = new UserRepository();
 
-    private final MutableLiveData<UserProfile> profile = new MutableLiveData<>();
+    private final LiveData<UserProfile> profile = UserSession.getInstance().getProfileLiveData();
 
     public LiveData<UserProfile> getProfile() { return profile; }
     public PartnerAdapter(List<UserProfile> partnerList,
@@ -40,28 +41,7 @@ public class PartnerAdapter extends
     }
 
     public void loadProfile() {
-        repository.getMyProfile()
-                .addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
-                        UserProfile userProfile = doc.toObject(UserProfile.class);
-                        try {
-                            Map<String,Double> loc = (Map<String, Double>) doc.get("selectedLocation");
-                            userProfile.setLat(loc.get("latitude"));
-                            userProfile.setLng(loc.get("longitude"));
-                        }
-                        catch (Exception ex)
-                        {
-                            userProfile.setLat(0);
-                            userProfile.setLng(0);
-                        }
-
-                        profile.setValue(userProfile);
-                    } else {
-                        //toastMessage.setValue("פרופיל לא נמצא");
-                    }
-                });
-                //.addOnFailureListener(e ->
-                        //toastMessage.setValue("שגיאה בטעינת פרופיל: " + e.getMessage()));
+        UserSession.getInstance().ensureStarted();
     }
     public interface OnProfileClickListener {
         void onProfileClick(UserProfile profile);

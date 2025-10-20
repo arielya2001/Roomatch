@@ -1,5 +1,8 @@
 package com.example.roomatch.model;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.firestore.Exclude;
+
 import java.io.Serializable;
 
 public class Apartment implements Serializable {
@@ -95,6 +98,11 @@ public class Apartment implements Serializable {
                 results
         );
         this.distance = results[0]; // במטרים
+    }
+    @Exclude
+    public LatLng getSelectedLocation()
+    {
+        return new LatLng(this.latitude,this.longitude);
     }
 
 }
