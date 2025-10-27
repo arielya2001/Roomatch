@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.*;
@@ -426,6 +427,7 @@ public class OwnerApartmentsFragment extends Fragment {
             String priceStr = editPrice.getText().toString().trim();
             String newDescription = editDescription.getText().toString().trim();
             String roommatesStr = editRoommatesNeeded.getText().toString().trim();
+            String imgUri = apt.getImageUrl();
 
             viewModel.updateApartment(
                     apt.getId(),
@@ -435,7 +437,9 @@ public class OwnerApartmentsFragment extends Fragment {
                     priceStr,
                     roommatesStr,
                     newDescription,
-                    null
+                    null,
+                    imgUri,
+                    apt.getSelectedLocation()
             );
 
             dialog.dismiss();

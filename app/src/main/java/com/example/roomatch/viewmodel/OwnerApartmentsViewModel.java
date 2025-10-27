@@ -180,7 +180,7 @@ public class OwnerApartmentsViewModel extends ViewModel {
 
 
     public void updateApartment(String apartmentId, String city, String street, String houseNumStr,
-                                String priceStr, String roommatesStr, String description, Uri imageUri) {
+                                String priceStr, String roommatesStr, String description, Uri imageUri,String url,LatLng location ) {
         String validationError = validateInputs(city, street, houseNumStr, priceStr, roommatesStr, description);
         if (validationError != null) {
             toastMessage.setValue(validationError);
@@ -200,6 +200,9 @@ public class OwnerApartmentsViewModel extends ViewModel {
         }
 
         Apartment apartment = new Apartment(apartmentId, getCurrentUserId(), city, street, houseNumber, price, roommatesNeeded, description, null);
+        apartment.setLatitude(location.latitude);
+        apartment.setLongitude(location.longitude);
+        apartment.setImageUrl(url);
         repository.updateApartment(apartmentId, apartment, imageUri)
                 .addOnSuccessListener(aVoid -> {
                     toastMessage.setValue("דירה עודכנה בהצלחה");
