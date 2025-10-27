@@ -30,7 +30,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
 
     public interface OnChatClickListener {
         void onPrivateChatClick(String chatId, String otherUserId, String apartmentId);
-        void onGroupChatClick(String groupId, String apartmentId);
+        void onGroupChatClick(String groupChatId, String apartmentId, boolean isGroup);
     }
 
     public ChatListAdapter(List<ChatListItem> items, String currentUserId, OnChatClickListener listener) {
@@ -111,7 +111,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         holder.itemView.setOnClickListener(v -> {
             if (item.isGroup()) {
                 GroupChatListItem g = (GroupChatListItem) item;
-                listener.onGroupChatClick(g.getGroupId(), g.getApartmentId());
+                listener.onGroupChatClick(g.getId(), g.getApartmentId(), true);
             } else {
                 Chat chat = (Chat) item;
 

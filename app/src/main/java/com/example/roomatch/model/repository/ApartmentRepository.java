@@ -12,20 +12,25 @@ import com.example.roomatch.model.UserProfile;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class ApartmentRepository {
@@ -597,41 +602,74 @@ public class ApartmentRepository {
     /**
      * שולח הודעה בצ'אט קבוצתי.
      */
-    public Task<Void> sendGroupChatMessage(String groupChatId, String userId, String text) {
-        // נחזיר Task שמבצע את כל הפעולה
-        Task<DocumentSnapshot> groupChatDocTask =
-                db.collection("group_chats").document(groupChatId).get();
+    public Task<Void> sendGroupChatMessage(String groupChatId, String fromUserId, String text) {
+        long now = System.currentTimeMillis();
+        DocumentReference groupChatRef = db.collection("group_chats").document(groupChatId);
+        CollectionReference msgsCol = db.collection("group_messages")
+                .document(groupChatId).collection("chat");
+        DocumentReference newMsgRef = msgsCol.document();
 
-        return groupChatDocTask.continueWithTask(task -> {
-            if (!task.isSuccessful()) {
-                throw task.getException();
-            }
+        return Tasks.whenAllSuccess(groupChatRef.get(), resolveUserName(fromUserId))
+                .continueWithTask(t -> {
+                    DocumentSnapshot chatDoc = (DocumentSnapshot) t.getResult().get(0);
+                    String senderName = (String) t.getResult().get(1);
 
-            DocumentSnapshot doc = task.getResult();
-            String ownerId = doc.getString("ownerId");  // ✅ נשלף ממקום תקני
+                    if (!chatDoc.exists()) throw new IllegalStateException("group_chat not found: " + groupChatId);
 
-            if (ownerId == null) {
-                throw new Exception("ownerId is missing in group_chat " + groupChatId);
-            }
+                    String apartmentId = chatDoc.getString("apartmentId");
+                    String addressStreet = chatDoc.getString("addressStreet");
+                    String addressHouseNumber = chatDoc.getString("addressHouseNumber");
+                    String addressCity = chatDoc.getString("addressCity");
+                    String sharedGroupId = chatDoc.getString("groupId");
+                    String ownerId = chatDoc.getString("ownerId");
 
-            Map<String, Object> message = new HashMap<>();
-            message.put("fromUserId", userId);
-            message.put("toUserId", ownerId);
-            message.put("text", text);
-            message.put("timestamp", System.currentTimeMillis());
+                    @SuppressWarnings("unchecked")
+                    List<String> memberIds = (List<String>) chatDoc.get("memberIds");
+                    if (memberIds == null) memberIds = new ArrayList<>();
+                    // ודא שגם הבעלים מקבל thread
+                    if (ownerId != null && !memberIds.contains(ownerId)) memberIds.add(ownerId);
 
-            return db.collection("group_messages")
-                    .document(groupChatId)
-                    .collection("chat")
-                    .add(message)
-                    .continueWith(innerTask -> {
-                        if (!innerTask.isSuccessful()) {
-                            throw innerTask.getException();
-                        }
-                        return null;
-                    });
-        });
+                    // הודעה
+                    Map<String, Object> msg = new HashMap<>();
+                    msg.put("fromUserId", fromUserId);
+                    msg.put("text", text);
+                    msg.put("timestamp", now);
+                    msg.put("senderName", senderName);
+
+                    // תקציר לקבוצה
+                    Map<String, Object> chatSummary = new HashMap<>();
+                    chatSummary.put("lastMessage", text);
+                    chatSummary.put("lastMessageSenderName", senderName);
+                    chatSummary.put("lastMessageTimestamp", now);
+
+                    WriteBatch batch = db.batch();
+                    batch.set(newMsgRef, msg);
+                    batch.set(groupChatRef, chatSummary, SetOptions.merge());
+
+                    for (String uid : memberIds) {
+                        DocumentReference threadRef = db.collection("userChats")
+                                .document(uid).collection("threads").document(groupChatId);
+
+                        Map<String, Object> thread = new HashMap<>();
+                        thread.put("type", "group");
+                        thread.put("groupId", sharedGroupId);
+                        thread.put("apartmentId", apartmentId);
+                        thread.put("addressStreet", addressStreet);
+                        thread.put("addressHouseNumber", addressHouseNumber);
+                        thread.put("addressCity", addressCity);
+                        thread.put("lastMessage", text);
+                        thread.put("lastMessageSenderName", senderName);
+                        thread.put("lastMessageTimestamp", now);
+                        thread.put("timestamp", now);
+                        thread.put("hasUnread", !uid.equals(fromUserId));
+
+                        batch.set(threadRef, thread, SetOptions.merge());
+                    }
+                    return batch.commit();
+                });
     }
+
+
 
     public Task<Void> markGroupMessagesAsRead(String groupChatId, String userId) {
         return db.collection("group_messages")
@@ -669,6 +707,17 @@ public class ApartmentRepository {
 
         return db.collection("reports").add(report).continueWith(task -> null);
     }
+
+    private Task<String> resolveUserName(String userId) {
+        if (userId == null) return Tasks.forResult("אנונימי");
+        return db.collection("users").document(userId).get()
+                .continueWith(t -> {
+                    if (!t.isSuccessful() || !t.getResult().exists()) return userId;
+                    String n = t.getResult().getString("fullName");
+                    return (n == null || n.trim().isEmpty()) ? userId : n;
+                });
+    }
+
 
 
 

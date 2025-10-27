@@ -82,10 +82,11 @@ public class ChatsFragment extends Fragment {
                 openPrivateChat(otherUserId, apartmentId, chatId);
             }
             @Override
-            public void onGroupChatClick(String groupChatId, String apartmentId) {
-                openGroupChat(groupChatId);
+            public void onGroupChatClick(String groupChatId, String apartmentId, boolean isGroup) {
+                openGroupChat(groupChatId, apartmentId); // isGroup תמיד true כאן
             }
         });
+
         recyclerView.setAdapter(adapter);
 
 
@@ -217,6 +218,7 @@ public class ChatsFragment extends Fragment {
         Bundle args = new Bundle();
         args.putString("otherUserId", fromUserId);
         args.putString("apartmentId", apartmentId);
+        args.putBoolean("isGroup", false);          // <<< חשוב
         if (chatId != null) {
             args.putString("chatId", chatId);
         }
@@ -231,16 +233,22 @@ public class ChatsFragment extends Fragment {
                 .commit();
     }
 
+    private void openGroupChat(String groupChatId, @Nullable String apartmentId) {
+        // groupChatId = מזהה מסמך הקבוצה (ה-thread id), משמש גם ל-group_messages/{groupChatId}/chat
+        Bundle args = new Bundle();
+        args.putString("chatId", groupChatId);      // <<< זה ה-ID של הצ'אט הקבוצתי
+        args.putString("apartmentId", apartmentId); // אופציונלי – לתצוגה/מטא
+        args.putBoolean("isGroup", true);           // <<< חשוב
 
+        ChatFragment cf = new ChatFragment();
+        cf.setArguments(args);
 
-    private void openGroupChat(String groupChatId) {
-        Log.d("ChatsFragment", "פותח צ'אט קבוצתי עם groupChatId: " + groupChatId);
-        GroupChatFragment fragment = GroupChatFragment.newInstance(groupChatId);
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.fragmentContainer, fragment)
+                .replace(R.id.fragmentContainer, cf)
                 .addToBackStack(null)
                 .commit();
     }
+
 
 }

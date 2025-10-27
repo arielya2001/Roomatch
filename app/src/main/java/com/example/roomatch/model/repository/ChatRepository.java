@@ -22,6 +22,8 @@ import com.google.firebase.storage.StorageReference;
 import org.json.JSONObject;
 
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Repository אחראי על:
@@ -99,18 +101,25 @@ public class ChatRepository {
         if (chatId == null || message == null || message.getFromUserId() == null || message.getToUserId() == null) {
             return Tasks.forException(new IllegalArgumentException("Invalid message parameters"));
         }
+
         long now = System.currentTimeMillis();
         message.setTimestamp(now);
-        // הודעה "נקראה" רק אם שולח=נמען (נדיר), אחרת לא נקראה
         message.setRead(message.getFromUserId().equals(message.getToUserId()));
 
-        // כתיבה להודעות
-        return db.collection("messages")
-                .document(chatId)
-                .collection("chat")
-                .add(message)
+        Task<String> ensureNameTask = (message.getSenderName() == null || message.getSenderName().trim().isEmpty())
+                ? resolveUserName(message.getFromUserId())
+                : Tasks.forResult(message.getSenderName());
+
+        return ensureNameTask
+                .continueWithTask(nameTask -> {
+                    message.setSenderName(nameTask.getResult()); // שם סופי
+                    return db.collection("messages")
+                            .document(chatId)
+                            .collection("chat")
+                            .add(message);
+                })
                 .onSuccessTask(docRef -> {
-                    // עדכון threads: לשולח hasUnread=false, לנמען hasUnread=true
+                    // בונים summary ל-threads
                     Map<String, Object> threadPayload = buildThreadSummaryFromMessage(
                             chatId,
                             "private",
@@ -131,12 +140,130 @@ public class ChatRepository {
                     Task<Void> t1 = upsertThread(message.getFromUserId(), chatId, forSender);
                     Task<Void> t2 = upsertThread(message.getToUserId(), chatId, forReceiver);
 
-                    // (אופציונלי) שליחת התראה
                     sendNotificationToRecipient(message);
 
                     return Tasks.whenAll(t1, t2).onSuccessTask(v -> Tasks.forResult(docRef));
                 });
     }
+
+    public Task<Void> sendGroupChatMessage(String groupChatId, String fromUserId, String text) {
+        if (groupChatId == null || fromUserId == null || text == null || text.trim().isEmpty()) {
+            return Tasks.forException(new IllegalArgumentException("Missing parameters"));
+        }
+
+        long now = System.currentTimeMillis();
+        DocumentReference groupChatRef = db.collection("group_chats").document(groupChatId);
+        CollectionReference msgsCol = db.collection("group_messages").document(groupChatId).collection("chat");
+        DocumentReference newMsgRef = msgsCol.document();
+
+        Task<DocumentSnapshot> chatTask = groupChatRef.get();
+        Task<String> senderNameTask = resolveUserName(fromUserId);
+
+        return Tasks.whenAllSuccess(chatTask, senderNameTask).continueWithTask(t -> {
+            DocumentSnapshot chatDoc = (DocumentSnapshot) t.getResult().get(0);
+            String senderName = (String) t.getResult().get(1);
+
+            if (!chatDoc.exists())
+                throw new IllegalStateException("group_chat not found: " + groupChatId);
+
+            String apartmentId = chatDoc.getString("apartmentId");
+            String sharedGroupId = chatDoc.getString("groupId");
+            String ownerId = chatDoc.getString("ownerId");
+
+            // עטיפות לכתובת כדי שיהיו final
+            AtomicReference<String> addressStreetRef = new AtomicReference<>(chatDoc.getString("addressStreet"));
+            AtomicReference<String> addressHouseNumberRef = new AtomicReference<>(chatDoc.getString("addressHouseNumber"));
+            AtomicReference<String> addressCityRef = new AtomicReference<>(chatDoc.getString("addressCity"));
+
+            @SuppressWarnings("unchecked")
+            List<String> memberIds = (List<String>) chatDoc.get("memberIds");
+            if (memberIds == null) memberIds = new ArrayList<>();
+            if (ownerId != null && !memberIds.contains(ownerId)) memberIds.add(ownerId);
+
+            boolean needAptLookup =
+                    (addressStreetRef.get() == null || addressStreetRef.get().trim().isEmpty()) ||
+                            (addressCityRef.get() == null || addressCityRef.get().trim().isEmpty()) ||
+                            (addressHouseNumberRef.get() == null || addressHouseNumberRef.get().trim().isEmpty());
+
+            List<String> finalMemberIds = memberIds;
+            Callable<Task<Void>> commitAction = () -> {
+                WriteBatch batch = db.batch();
+
+                // הודעה חדשה
+                Map<String, Object> msg = new HashMap<>();
+                msg.put("fromUserId", fromUserId);
+                msg.put("text", text);
+                msg.put("timestamp", now);
+                msg.put("senderName", senderName);
+                batch.set(newMsgRef, msg);
+
+                // עדכון מידע כללי בצ׳אט
+                Map<String, Object> chatSummary = new HashMap<>();
+                chatSummary.put("lastMessage", text);
+                chatSummary.put("lastMessageSenderName", senderName);
+                chatSummary.put("lastMessageTimestamp", now);
+                batch.set(groupChatRef, chatSummary, SetOptions.merge());
+
+                // שמירת כתובת בקבוצה אם נוספה
+                Map<String, Object> addrPatch = new HashMap<>();
+                if (addressStreetRef.get() != null)      addrPatch.put("addressStreet", addressStreetRef.get());
+                if (addressHouseNumberRef.get() != null) addrPatch.put("addressHouseNumber", addressHouseNumberRef.get());
+                if (addressCityRef.get() != null)        addrPatch.put("addressCity", addressCityRef.get());
+                if (!addrPatch.isEmpty()) {
+                    batch.set(groupChatRef, addrPatch, SetOptions.merge());
+                }
+
+                // threads לכל חבר
+                for (String uid : finalMemberIds) {
+                    DocumentReference threadRef = db.collection("userChats")
+                            .document(uid)
+                            .collection("threads")
+                            .document(groupChatId);
+
+                    Map<String, Object> thread = new HashMap<>();
+                    thread.put("type", "group");
+                    thread.put("groupId", sharedGroupId);
+                    thread.put("apartmentId", apartmentId);
+                    thread.put("addressStreet", addressStreetRef.get());
+                    thread.put("addressHouseNumber", addressHouseNumberRef.get());
+                    thread.put("addressCity", addressCityRef.get());
+                    thread.put("lastMessage", text);
+                    thread.put("lastMessageSenderName", senderName);
+                    thread.put("lastMessageTimestamp", now);
+                    thread.put("timestamp", now);
+                    thread.put("hasUnread", !uid.equals(fromUserId));
+
+                    batch.set(threadRef, thread, SetOptions.merge());
+                }
+
+                return batch.commit();
+            };
+
+            if (needAptLookup && apartmentId != null) {
+                return db.collection("apartments").document(apartmentId).get()
+                        .continueWithTask(aptTask -> {
+                            if (aptTask.isSuccessful() && aptTask.getResult().exists()) {
+                                DocumentSnapshot apt = aptTask.getResult();
+                                if (addressStreetRef.get() == null || addressStreetRef.get().trim().isEmpty())
+                                    addressStreetRef.set(apt.getString("street"));
+                                if (addressHouseNumberRef.get() == null || addressHouseNumberRef.get().trim().isEmpty()) {
+                                    Long hn = apt.getLong("houseNumber");
+                                    addressHouseNumberRef.set(hn != null ? String.valueOf(hn) : null);
+                                }
+                                if (addressCityRef.get() == null || addressCityRef.get().trim().isEmpty())
+                                    addressCityRef.set(apt.getString("city"));
+                            }
+                            return commitAction.call();
+                        });
+            } else {
+                return commitAction.call();
+            }
+        });
+    }
+
+
+
+
 
     public Task<DocumentReference> sendMessageWithImage(String chatId, Message message, Uri imageUri) {
         if (chatId == null || message == null || message.getFromUserId() == null || message.getToUserId() == null) {
@@ -423,4 +550,29 @@ public class ChatRepository {
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get();
     }
+
+    private Task<String> resolveUserName(String userId) {
+        if (userId == null) return Tasks.forResult("אנונימי");
+        return db.collection("users").document(userId).get()
+                .continueWith(t -> {
+                    if (!t.isSuccessful() || !t.getResult().exists()) return userId; // fallback
+                    String n = t.getResult().getString("fullName");
+                    return (n == null || n.trim().isEmpty()) ? userId : n;
+                });
+    }
+
+    public Query buildGroupQuery(String groupChatId) {
+        return db.collection("group_messages").document(groupChatId)
+                .collection("chat")
+                .orderBy("timestamp", Query.Direction.DESCENDING);
+    }
+
+    public Query getPaginatedGroupChatMessagesQuery(String groupChatId, int limit) {
+        return db.collection("group_messages").document(groupChatId)
+                .collection("chat")
+                .orderBy("timestamp", Query.Direction.ASCENDING)
+                .limit(limit);
+    }
+
+
 }

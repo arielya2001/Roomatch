@@ -141,26 +141,36 @@ public class ChatViewModel extends ViewModel {
     /** המרת מסמכי thread ל־ChatListItem/GroupChatListItem */
     private List<ChatListItem> mapThreadsSnapshotToItems(QuerySnapshot snap) {
         List<ChatListItem> items = new ArrayList<>();
-        for (DocumentSnapshot d : snap) {
-            // אם יש לך מודל ChatListItem תואם – אפשר: ChatListItem it = d.toObject(ChatListItem.class);
-            // כאן אמיר ידני כי פעמים רבות השדות שונים מעט:
-            String id = d.getString("id");           // chatId או groupId
-            String type = d.getString("type");       // "private" | "group"
-            String apartmentId = d.getString("apartmentId");
-            String addressStreet = d.getString("addressStreet");
-            String addressHouseNumber = d.getString("addressHouseNumber");
-            String addressCity = d.getString("addressCity");
-            String lastMessage = d.getString("lastMessage");
-            String lastMessageSenderName = d.getString("lastMessageSenderName");
-            Long ts = d.getLong("lastMessageTimestamp");
-            Boolean hasUnread = d.getBoolean("hasUnread");
 
-            long timestamp = (ts != null ? ts : 0L);
+        for (DocumentSnapshot d : snap) {
+            if (d == null) continue;
+
+            // מזהה המסמך של ה-thread (עבור userChats/{uid}/threads/{docId})
+            String docId = d.getId();
+
+            // סוג ברירת מחדל "private" אם לא הוגדר
+            String type = d.getString("type");
+            if (type == null) type = "private";
+
+            // שדות משותפים לתצוגה
+            String apartmentId       = d.getString("apartmentId");
+            String addressStreet     = d.getString("addressStreet");
+            String addressHouseNumber= d.getString("addressHouseNumber");
+            String addressCity       = d.getString("addressCity");
+            String lastMessage       = d.getString("lastMessage");
+            String lastSenderName    = d.getString("lastMessageSenderName");
+            Long   ts                = d.getLong("lastMessageTimestamp");
+            boolean hasUnread        = Boolean.TRUE.equals(d.getBoolean("hasUnread"));
+            long   timestampMillis   = (ts != null ? ts : 0L);
 
             if ("group".equals(type)) {
+                // groupId הוא מזהה ה-shared_group (הקבוצה הלוגית), לא מזהה מסמך ה-thread
+                String groupId = d.getString("groupId");
+                if (groupId == null) groupId = docId; // נפילה רכה אם חסר
+
                 GroupChat gc = new GroupChat();
-                gc.setId(id);
-                gc.setGroupId(id);
+                gc.setId(docId);               // מזהה ה-thread במסמכי המשתמש
+                gc.setGroupId(groupId);        // מזהה הקבוצה הלוגית
                 gc.setApartmentId(apartmentId);
                 gc.setLastMessage(lastMessage);
                 if (ts != null) gc.setLastMessageTimestamp(ts);
@@ -169,35 +179,39 @@ public class ChatViewModel extends ViewModel {
                 item.setAddressStreet(addressStreet);
                 item.setAddressHouseNumber(addressHouseNumber);
                 item.setAddressCity(addressCity);
-                item.setLastMessageSenderName(lastMessageSenderName);
-                item.setHasUnread(hasUnread != null && hasUnread);
+                item.setLastMessageSenderName(lastSenderName);
+                item.setHasUnread(hasUnread);
 
                 items.add(item);
+
             } else {
+                // שיחה פרטית
                 Chat chat = new Chat();
-                chat.setId(id);
+                chat.setId(docId);                 // מזהה ה-thread למסמך הפרטי
                 chat.setApartmentId(apartmentId);
                 chat.setAddressStreet(addressStreet);
                 chat.setAddressHouseNumber(addressHouseNumber);
                 chat.setAddressCity(addressCity);
                 chat.setType("private");
+
                 if (lastMessage != null) {
                     Message m = new Message();
                     m.setText(lastMessage);
-                    m.setSenderName(lastMessageSenderName);
-                    m.setTimestamp(timestamp);
+                    m.setSenderName(lastSenderName);
+                    m.setTimestamp(timestampMillis);
                     chat.setLastMessage(m);
-                    chat.setTimestamp(new Timestamp(new Date(timestamp)));
                 }
 
-                // אם צריך מאפיינים נוספים (from/to) – אפשר לאחזרם מ־participants בשדה נוסף
+                // אם למודל יש שדה Timestamp של Firebase – נעדכן אותו (אופציונלי לפי המודל שלך)
+                if (ts != null) {
+                    chat.setTimestamp(new com.google.firebase.Timestamp(new java.util.Date(ts)));
+                }
 
-                // Chat יורש/מממש ChatListItem
-                chat.setHasUnread(hasUnread != null && hasUnread);
-                if (ts != null) chat.setTimestamp(new com.google.firebase.Timestamp(new java.util.Date(ts)));
+                chat.setHasUnread(hasUnread);
                 items.add(chat);
             }
         }
+
         return items;
     }
 
@@ -224,23 +238,26 @@ public class ChatViewModel extends ViewModel {
     public boolean isLoading() { return isLoading; }
     public boolean hasMore() { return hasMore; }
 
-    public void loadFirstPage(String chatId) {
+    public void loadFirstPage(String chatId, boolean isGroup) {
         if (isLoading) return;
         isLoading = true;
         hasMore = true;
         lastDoc = null;
         messages.setValue(new ArrayList<>());
-        fetchAccumulated(PAGE_SIZE, /*replace=*/true, new ArrayList<>(), chatId);
+        fetchAccumulated(PAGE_SIZE, /*replace=*/true, new ArrayList<>(), chatId, isGroup);
     }
 
-    public void loadNextPage(String chatId) {
+    public void loadNextPage(String chatId, boolean isGroup) {
         if (isLoading || !hasMore) return;
         isLoading = true;
-        fetchAccumulated(PAGE_SIZE, /*replace=*/false, new ArrayList<>(), chatId);
+        fetchAccumulated(PAGE_SIZE, /*replace=*/false, new ArrayList<>(), chatId, isGroup);
     }
 
-    private void fetchAccumulated(final int wanted, final boolean replace, final List<Message> acc, String chatId) {
-        Query q = chatRepo.buildQuery(chatId).limit(PAGE_SIZE);
+
+    private void fetchAccumulated(final int wanted, final boolean replace, final List<Message> acc,
+                                  String chatId, boolean isGroup) {
+        Query q = (isGroup ? chatRepo.buildGroupQuery(chatId) : chatRepo.buildQuery(chatId))
+                .limit(PAGE_SIZE);
         if (lastDoc != null) q = q.startAfter(lastDoc);
 
         q.get()
@@ -252,7 +269,7 @@ public class ChatViewModel extends ViewModel {
                     boolean filledEnough = (acc.size() >= wanted);
 
                     if (!filledEnough && !noMoreServerPages) {
-                        fetchAccumulated(wanted, replace, acc, chatId);
+                        fetchAccumulated(wanted, replace, acc, chatId, isGroup);
                         return;
                     }
 
@@ -273,6 +290,7 @@ public class ChatViewModel extends ViewModel {
                     toast.setValue("שגיאה בטעינה: " + e.getMessage());
                 });
     }
+
 
     private List<Message> filterBatch(QuerySnapshot snap) {
         List<Message> out = new ArrayList<>();
@@ -314,13 +332,32 @@ public class ChatViewModel extends ViewModel {
                     .addOnSuccessListener(r -> {
                         toast.setValue("הודעה נשלחה");
                         // רענון הודעות הצ'אט המקומי
-                        loadFirstPage(chatId);
+                        loadFirstPage(chatId,false);
                         // רענון Thread list – אופציונלי: למשוך מחדש first page/לעדכן פריט בודד
                         // loadChatsFirstPage();
                     })
                     .addOnFailureListener(e -> toast.setValue("שגיאה: " + e.getMessage()));
         }).addOnFailureListener(e -> toast.setValue("שגיאה בטעינת הדירה: " + e.getMessage()));
     }
+
+    public void sendGroupMessage(String groupChatId, String text) {
+        String fromUid = uid();
+        if (fromUid == null || text.trim().isEmpty()) {
+            toast.setValue("שגיאה: משתמש לא מחובר או הודעה ריקה");
+            return;
+        }
+
+        chatRepo.sendGroupChatMessage(groupChatId, fromUid, text)
+                .addOnSuccessListener(v -> {
+                    toast.setValue("הודעה נשלחה");
+                    // רענון צ'אט קבוצתי
+                    loadFirstPage(groupChatId, true);
+                    // רענון רשימת threads אם צריך:
+                    // loadChatsFirstPage();
+                })
+                .addOnFailureListener(e -> toast.setValue("שגיאה: " + e.getMessage()));
+    }
+
 
     public void sendMessageWithImage(String chatId, String toUserId, String apartmentId, String text, Uri imageUri) {
         String fromUid = uid();

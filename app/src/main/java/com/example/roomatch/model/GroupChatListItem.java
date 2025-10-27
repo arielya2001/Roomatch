@@ -9,7 +9,28 @@ public class GroupChatListItem implements ChatListItem {
     private String addressCity;
 
     private boolean hasUnread = false;
+    private String participantsString;
 
+    public GroupChatListItem(GroupChat groupChat) {
+        this.groupChat = groupChat;
+    }
+
+    // === מזהים ===
+    /** מזהה ה-thread: document id של הקבוצה (משמש לפתיחת הצ'אט וקריאת group_messages/{id}/chat) */
+    public String getId() {
+        return groupChat != null ? groupChat.getId() : null;
+    }
+
+    /** מזהה הקבוצה הלוגית (shared group id), לא ה-thread id */
+    public String getGroupId() {
+        return groupChat != null ? groupChat.getGroupId() : null;
+    }
+
+    public String getApartmentId() {
+        return groupChat != null ? groupChat.getApartmentId() : null;
+    }
+
+    // === כתובת לתצוגה (ניתן להזין מבחוץ דרך ה־VM) ===
     public String getAddressStreet() { return addressStreet; }
     public void setAddressStreet(String addressStreet) { this.addressStreet = addressStreet; }
 
@@ -19,11 +40,7 @@ public class GroupChatListItem implements ChatListItem {
     public String getAddressCity() { return addressCity; }
     public void setAddressCity(String addressCity) { this.addressCity = addressCity; }
 
-
-    public GroupChatListItem(GroupChat groupChat) {
-        this.groupChat = groupChat;
-    }
-
+    // === הכותרות/טקסטים לרשימה ===
     public void setLastMessageSenderName(String lastMessageSenderName) {
         this.lastMessageSenderName = lastMessageSenderName;
     }
@@ -34,12 +51,15 @@ public class GroupChatListItem implements ChatListItem {
 
     @Override
     public long getTimestamp() {
-        return groupChat.getLastMessageTimestamp();
+        return groupChat != null ? groupChat.getLastMessageTimestamp() : 0L;
     }
 
     @Override
     public String getTitle() {
-        return groupChat.getGroupName();
+        // אם יש לך שדה name בקבוצה – עדיף להשתמש בו; אחרת אפשר לגזור משמות חברים/דיפולט
+        return groupChat != null && groupChat.getGroupName() != null
+                ? groupChat.getGroupName()
+                : "צ'אט קבוצתי";
     }
 
     @Override
@@ -47,14 +67,16 @@ public class GroupChatListItem implements ChatListItem {
         if (addressStreet != null && addressHouseNumber != null && addressCity != null) {
             return addressStreet + " " + addressHouseNumber + ", " + addressCity;
         } else {
-            return "דירה: " + groupChat.getApartmentId();
+            // נפילה רכה אם לא הוזנו שדות כתובת בדוקומנט ה-thread
+            return "דירה: " + getApartmentId();
         }
     }
 
-
     @Override
     public String getLastMessage() {
-        return groupChat.getLastMessage() != null ? groupChat.getLastMessage() : "אין הודעות";
+        return (groupChat != null && groupChat.getLastMessage() != null)
+                ? groupChat.getLastMessage()
+                : "אין הודעות";
     }
 
     @Override
@@ -62,16 +84,7 @@ public class GroupChatListItem implements ChatListItem {
         return true;
     }
 
-    public String getGroupId() {
-        return groupChat.getGroupId();
-    }
-
-    public String getApartmentId() {
-        return groupChat.getApartmentId();
-    }
-
-    private String participantsString;
-
+    // === משתתפים (טקסט מרוכז לתצוגה) ===
     @Override
     public String getParticipantsString() {
         return participantsString;
@@ -82,6 +95,7 @@ public class GroupChatListItem implements ChatListItem {
         this.participantsString = names;
     }
 
+    // === מצב "לא נקרא" ===
     public boolean isHasUnread() {
         return hasUnread;
     }
@@ -89,5 +103,4 @@ public class GroupChatListItem implements ChatListItem {
     public void setHasUnread(boolean hasUnread) {
         this.hasUnread = hasUnread;
     }
-
 }

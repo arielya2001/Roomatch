@@ -18,7 +18,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.roomatch.R;
 import com.example.roomatch.adapters.ChatAdapter;
-import com.example.roomatch.model.Message;
 import com.example.roomatch.model.repository.ApartmentRepository;
 import com.example.roomatch.model.repository.ChatRepository;
 import com.example.roomatch.model.repository.UserRepository;
@@ -40,16 +39,15 @@ public class ChatFragment extends Fragment {
     private ChatAdapter adapter;
 
     // מגיעים מה-arguments
-    private String chatId;
+    private String chatId;        // לצ'אט פרטי = chatId; לקבוצתי = groupChatId
     private String otherUserId;   // לפרטי בלבד
-    private String apartmentId;   // אופציונלי (משמש למטא-דאטה בהודעה)
+    private String apartmentId;   // אופציונלי
+    private boolean isGroup = false;
 
     private LinearLayoutManager layoutManager;
     private RecyclerView.OnScrollListener pagingScrollListener;
 
-    public ChatFragment() {
-        // חובה קונסטרקטור ריק
-    }
+    public ChatFragment() {}
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -76,9 +74,10 @@ public class ChatFragment extends Fragment {
         // ---- קבלת פרמטרים מה־arguments ----
         Bundle args = getArguments();
         if (args != null) {
-            chatId = args.getString("chatId");
+            chatId      = args.getString("chatId");
             otherUserId = args.getString("otherUserId");
             apartmentId = args.getString("apartmentId");
+            isGroup     = args.getBoolean("isGroup", false);
         }
 
         String currentUid = viewModel.getCurrentUserId();
@@ -88,13 +87,20 @@ public class ChatFragment extends Fragment {
             return;
         }
 
-        // אם אין chatId בארגומנט – ננסה fallback *רק אם יש לנו את כל הנתונים*.
-        if (chatId == null || chatId.trim().isEmpty()) {
-            if (currentUid != null && otherUserId != null && apartmentId != null) {
-                chatId = generateConsistentChatId(currentUid, otherUserId, apartmentId);
-                Log.d(TAG, "chatId was missing; generated fallback chatId=" + chatId);
+        // ⚠️ fallback ל-chatId מותר רק בצ'אט פרטי
+        if ((chatId == null || chatId.trim().isEmpty())) {
+            if (!isGroup) {
+                if (otherUserId != null && apartmentId != null) {
+                    chatId = generateConsistentChatId(currentUid, otherUserId, apartmentId);
+                    Log.d(TAG, "chatId was missing; generated fallback chatId=" + chatId);
+                } else {
+                    Toast.makeText(getContext(), "חסרים נתונים לפתיחת צ'אט", Toast.LENGTH_SHORT).show();
+                    requireActivity().getSupportFragmentManager().popBackStack();
+                    return;
+                }
             } else {
-                Toast.makeText(getContext(), "חסרים נתונים לפתיחת צ'אט", Toast.LENGTH_SHORT).show();
+                // בקבוצתי תמיד חייב להגיע groupChatId אמיתי מהרשימה
+                Toast.makeText(getContext(), "חסר מזהה צ'אט קבוצתי", Toast.LENGTH_SHORT).show();
                 requireActivity().getSupportFragmentManager().popBackStack();
                 return;
             }
@@ -109,7 +115,7 @@ public class ChatFragment extends Fragment {
         adapter = new ChatAdapter(new ArrayList<>(), currentUid);
 
         layoutManager = new LinearLayoutManager(getContext());
-        layoutManager.setReverseLayout(true); // לשמור את הסדר כפי שהיה אצלך
+        layoutManager.setReverseLayout(true); // להשאיר כפי שהיה
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(adapter);
 
@@ -131,26 +137,29 @@ public class ChatFragment extends Fragment {
 
                 if (!viewModel.isLoading() && viewModel.hasMore()
                         && (first + visible) >= (total - 5)) {
-                    viewModel.loadNextPage(chatId);
+                    viewModel.loadNextPage(chatId, isGroup);
                 }
             }
         };
         recyclerView.addOnScrollListener(pagingScrollListener);
 
-        // עמוד ראשון של הודעות
-        viewModel.loadFirstPage(chatId);
+        // ---- עמוד ראשון של הודעות ----
+        viewModel.loadFirstPage(chatId, isGroup);
 
         // ---- שליחה ----
         sendButton.setOnClickListener(v -> {
             String text = messageEditText.getText().toString().trim();
             if (text.isEmpty()) return;
 
-            if (otherUserId == null || otherUserId.trim().isEmpty()) {
-                Toast.makeText(getContext(), "לא ניתן לשלוח: לא זוהה נמען הצ'אט", Toast.LENGTH_SHORT).show();
-                return;
+            if (isGroup) {
+                viewModel.sendGroupMessage(chatId, text); // chatId == groupChatId
+            } else {
+                if (otherUserId == null || otherUserId.trim().isEmpty()) {
+                    Toast.makeText(getContext(), "לא ניתן לשלוח: לא זוהה נמען הצ'אט", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                viewModel.sendMessage(chatId, otherUserId, apartmentId, text);
             }
-
-            viewModel.sendMessage(chatId, otherUserId, apartmentId, text);
             messageEditText.setText("");
         });
 
@@ -158,13 +167,15 @@ public class ChatFragment extends Fragment {
         backButton.setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager().popBackStack());
 
-        // סימון הודעות כנקראו
-        viewModel.markMessagesAsRead(chatId);
+        // ---- סימון כהודעות נקראו ----
+        // כרגע יש מימוש לסימון בפרטי בלבד
+        if (!isGroup) {
+            viewModel.markMessagesAsRead(chatId);
+        }
+        // אם תרצה גם לקבוצות: הוסף VM API שעוטף chatRepo.markGroupMessagesAsRead(...)
     }
 
-    /**
-     * fallback בלבד: יוצר chatId עקבי על ידי מיון של userIds ואז הוספת apartmentId.
-     */
+    /** fallback בלבד לצ'אט פרטי: יוצר chatId עקבי ע"י מיון userIds ואז הוספת apartmentId. */
     private String generateConsistentChatId(String userId1, String userId2, String apartmentId) {
         if (userId1 == null || userId2 == null || apartmentId == null) {
             throw new IllegalArgumentException("User IDs and apartment ID must not be null");
