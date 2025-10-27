@@ -158,7 +158,40 @@ public class ApartmentRepository {
      * מוחק דירה לפי מזהה.
      */
     public Task<Void> deleteApartment(String apartmentId) {
-        return db.collection("apartments").document(apartmentId).delete();
+        DocumentReference docRef = db.collection("apartments").document(apartmentId);
+
+        return docRef.get().continueWithTask(task -> {
+            if (!task.isSuccessful()) throw task.getException();
+
+            DocumentSnapshot snap = task.getResult();
+            if (snap == null || !snap.exists()) {
+                // אין מסמך — אין מה למחוק
+                return Tasks.forResult(null);
+            }
+
+            String storagePath = snap.getString("storagePath"); // מומלץ לשמור בעת ההעלאה
+            String imageUrl    = snap.getString("imageUrl");
+
+            StorageReference fileRef = null;
+            FirebaseStorage storage = FirebaseStorage.getInstance();
+
+            if (storagePath != null && !storagePath.isEmpty()) {
+                fileRef = storage.getReference().child(storagePath);
+            } else if (imageUrl != null && !imageUrl.isEmpty()) {
+                try {
+                    fileRef = storage.getReferenceFromUrl(imageUrl);
+                } catch (IllegalArgumentException ignore) {
+                    // URL לא תקין — נמשיך למחיקת המסמך
+                }
+            }
+
+            if (fileRef != null) {
+                // גם אם מחיקת הקובץ נכשלת, נמשיך למחוק את המסמך
+                return fileRef.delete().continueWithTask(ignored -> docRef.delete());
+            } else {
+                return docRef.delete();
+            }
+        });
     }
 
     /**

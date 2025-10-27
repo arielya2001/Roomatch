@@ -173,6 +173,8 @@ public class ApartmentManagementTests {
         String roommatesStr1 = "4";
         String description1 = "Modern apartment";
         Uri imageUri1 = null;
+        String url = "";
+        LatLng location = null;
 
         // Create a Task that simulates a successful update operation
         Task<Void> successTask = Tasks.forResult(null);
@@ -181,7 +183,7 @@ public class ApartmentManagementTests {
                 .thenReturn(successTask);
 
         // Call the updateApartment method with valid input
-        viewModel.updateApartment(apartmentId1, city1, street1, houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1);
+        viewModel.updateApartment(apartmentId1, city1, street1, houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1,url,location);
         // Process any pending asynchronous operations to update LiveData
         Shadows.shadowOf(Looper.getMainLooper()).idle();
         // Verify that the publishSuccess LiveData is set to true
@@ -203,7 +205,7 @@ public class ApartmentManagementTests {
         Uri imageUri2 = null;
 
         // Call the updateApartment method with invalid input
-        viewModel.updateApartment(apartmentId2, city2, street2, houseNumStr2, priceStr2, roommatesStr2, description2, imageUri2);
+        viewModel.updateApartment(apartmentId2, city2, street2, houseNumStr2, priceStr2, roommatesStr2, description2, imageUri2,url,location);
         // Process any pending asynchronous operations to update LiveData
         Shadows.shadowOf(Looper.getMainLooper()).idle();
         // Verify that the publishSuccess LiveData is set to false due to validation failure
@@ -223,7 +225,7 @@ public class ApartmentManagementTests {
                 .thenReturn(failUpdateTask);
 
         // Call the updateApartment method with a non-existent apartment ID
-        viewModel.updateApartment(apartmentId3, city1, street1, houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1);
+        viewModel.updateApartment(apartmentId3, city1, street1, houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1,url,location);
         // Process any pending asynchronous operations to update LiveData
         Shadows.shadowOf(Looper.getMainLooper()).idle();
         // Verify that the publishSuccess LiveData is set to false due to the failure
@@ -241,7 +243,7 @@ public class ApartmentManagementTests {
                 .thenReturn(networkFailTask);
 
         // Call the updateApartment method with valid input to test network failure
-        viewModel.updateApartment(apartmentId1, city1, street1, houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1);
+        viewModel.updateApartment(apartmentId1, city1, street1, houseNumStr1, priceStr1, roommatesStr1, description1, imageUri1,url,location);
         // Process any pending asynchronous operations to update LiveData
         Shadows.shadowOf(Looper.getMainLooper()).idle();
         // Verify that the publishSuccess LiveData is set to false due to network failure
