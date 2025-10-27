@@ -78,7 +78,7 @@ public class AuthActivity extends AppCompatActivity {
             String password = editPassword.getText().toString().trim();
 
             if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-                Toast.makeText(this, "נא למלא את כל השדות", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, ".נא למלא את כל השדות", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -91,7 +91,7 @@ public class AuthActivity extends AppCompatActivity {
                     return;
                 }
                 if (username.length() < 3) {
-                    Toast.makeText(this, "שם משתמש קצר מדי (מינימום 3 תווים)", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "שם משתמש קצר מדי (צריך מינימום 3 תווים)", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 register(email, password, username);
@@ -155,13 +155,13 @@ public class AuthActivity extends AppCompatActivity {
                                                             finish();
                                                         } else {
                                                             Log.e("AuthActivity", "Failed to verify user profile creation");
-                                                            Toast.makeText(this, "שגיאה: לא נוצר משתמש חדש", Toast.LENGTH_SHORT).show();
+                                                            Toast.makeText(this, "שגיאה - לא נוצר משתמש חדש", Toast.LENGTH_SHORT).show();
                                                         }
                                                     });
                                         })
                                         .addOnFailureListener(e -> {
                                             Log.e("AuthActivity", "Failed to create user profile: " + e.getMessage(), e);
-                                            Toast.makeText(this, "שגיאה ביצירת משתמש", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(this, "אירעה שגיאה ביצירת משתמש", Toast.LENGTH_SHORT).show();
                                         });
                             } else {
                                 Log.d("AuthActivity", "Existing user, proceeding to main");
@@ -170,7 +170,7 @@ public class AuthActivity extends AppCompatActivity {
                         });
                     } else {
                         Log.e("AuthActivity", "Firebase authentication failed: " + task.getException().getMessage(), task.getException());
-                        Toast.makeText(this, "שגיאה באימות עם גוגל", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "אירעה שגיאה באימות עם גוגל", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -199,11 +199,11 @@ public class AuthActivity extends AppCompatActivity {
         auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(result -> {
                     saveFcmToken();
-                    Toast.makeText(this, "התחברת בהצלחה", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "!התחברת בהצלחה", Toast.LENGTH_SHORT).show();
                     startMain();
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(this, "שגיאה: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "הסיסמה או שם המשתמש שהזנת שגויים", Toast.LENGTH_LONG).show()
                 );
     }
 
@@ -224,15 +224,15 @@ public class AuthActivity extends AppCompatActivity {
                     db.collection("users").document(uid).set(userProfile)
                             .addOnSuccessListener(unused -> {
                                 saveFcmToken();
-                                Toast.makeText(this, "נרשמת בהצלחה", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, "!נרשמת בהצלחה", Toast.LENGTH_SHORT).show();
                                 startMain();
                             })
                             .addOnFailureListener(e ->
-                                    Toast.makeText(this, "שגיאה בפרופיל: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                                    Toast.makeText(this, "אירעה שגיאה בפרופיל: " + e.getMessage(), Toast.LENGTH_LONG).show()
                             );
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(this, "שגיאה בהרשמה: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "אירעה שגיאה בהרשמה: " + e.getMessage(), Toast.LENGTH_LONG).show()
                 );
     }
 
