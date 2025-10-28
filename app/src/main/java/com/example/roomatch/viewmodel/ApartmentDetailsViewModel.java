@@ -126,15 +126,8 @@ public class ApartmentDetailsViewModel extends ViewModel {
         }
     }
 
-
-    private void navigateToGroupChat(String groupId, String apartmentId) {
-        // ניתוב זמני עם groupId ו-apartmentId; נצטרך לחפש את groupChatId
-        // (נניח ש-GroupChatFragment יטפל בחיפוש ה-groupChatId)
-        String chatKey = groupId + "::" + apartmentId;
-        navigateToChatWith.setValue(chatKey);
-    }
-
     public void clearNavigation() {
         navigateToChatWith.setValue(null);
     }
+
 }
