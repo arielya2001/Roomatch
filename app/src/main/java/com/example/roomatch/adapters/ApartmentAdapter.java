@@ -109,12 +109,6 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
             }
         });
 
-        // לחיצה על כפתור הדיווח
-//        holder.reportButton.setOnClickListener(v -> {
-//            if (reportListener != null) {
-//                reportListener.onReportClick(apt);
-//            }
-//        });
     }
 
     @Override
@@ -145,3 +139,4 @@ public class ApartmentAdapter extends RecyclerView.Adapter<ApartmentAdapter.Apar
         }
     }
 }
+
