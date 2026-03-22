@@ -1,93 +1,83 @@
-# 📖 Roomatch – README
+# 🏠 Roomatch – Smart Roommate & Apartment Matching
 
-## 🏠 What is Roomatch?
-Roomatch is an Android application designed to smartly and efficiently match apartment seekers, roommates, and property owners.  
-It enables users to post apartments, search and filter listings based on preferences (price, location, lifestyle, etc.), chat in real-time, manage personal profiles, receive push notifications, and report inappropriate content.
+**Roomatch** is a comprehensive Android-native solution designed to streamline the often frustrating process of finding compatible roommates and apartments. By moving away from cluttered social media groups, Roomatch provides a centralized, profile-based platform that prioritizes lifestyle compatibility and real-time communication.
+
+---
+
+## 💡 The Problem & Our Solution
+* **The Problem:** Traditional platforms like Facebook groups or generic listing sites often lack lifestyle filtering, leading to irrelevant leads, privacy concerns, and fragmented communication.
+* **The Roomatch Solution:** A holistic ecosystem connecting property owners, seekers, and current tenants through a data-driven matching system and integrated communication tools.
+
+---
+
+## 📱 Key Features & User Benefits
+
+### 👤 Profile-Driven Matching
+* **For Seekers:** Create detailed profiles highlighting lifestyle habits (cleanliness, smoking, pets, social style) to find like-minded roommates.
+* **For Owners:** Manage listings efficiently with screening tools to ensure only relevant candidates apply.
+
+### 💬 Seamless Communication
+* **Real-Time Chat:** Integrated private and group messaging powered by Firebase, eliminating the need to share personal phone numbers prematurely.
+* **Instant Notifications:** Stay updated with match alerts and message notifications via Firebase Cloud Messaging (FCM).
+
+### 📍 Location Intelligence
+* **Smart Search:** Utilize **Google Places API** for precise address auto-complete and location-based filtering.
+
+### 🛡️ Safety & Moderation
+* **Reporting System:** Built-in community reporting tools allowing users to flag inappropriate content or suspicious profiles for admin review.
+
+---
+
+## 🏗 Architecture & Tech Stack
+The application is built on a robust, scalable foundation to ensure maintainability and performance:
+
+* **Pattern:** **MVVM (Model-View-ViewModel)** – Ensures a clean separation of concerns, making the UI reactive and the logic testable.
+* **Frontend:** Native Android development utilizing **Jetpack Compose** for a modern UI.
+* **Backend (BaaS):** **Firebase**:
+    * *Authentication:* Secure Email & Google Sign-In.
+    * *Realtime Database / Firestore:* Live sync for chats and listings.
+    * *Cloud Storage:* High-performance image hosting for apartment and profile photos.
+* **APIs:** **Google Places API** for efficient location-based searching.
 
 ---
 
 ## 📂 Project Structure
-
 ```plaintext
 Roomatch/
-│
 ├── app/
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/com/example/roomatch/
-│   │   │   │   ├── model/           # Data models (Apartment, UserProfile, Message, Chat...)
-│   │   │   │       ├── repository/      # Firebase data access (Firestore, Storage, Auth)
-│   │   │   │   ├── utils/           # utils classes (ChatUtil,, MyFirebaseMessagingServicec...)
-│   │   │   │   ├── view/            # UI (Activities + Fragments)
-│   │   │   │   │   ├── activities/ 
-│   │   │   │   │   └── fragments/   # OwnerApartmentsFragment, ApartmentSearchFragment, etc.
-│   │   │   │   ├── viewmodel/       # ViewModels per MVVM
-│   │   │   │   └── adapters/        # RecyclerView adapters
-│   │   │   └── res/                 # Layout XMLs, images, strings...
-│   │   ├── androidTest/             # 🧪 UI Tests (Espresso)
-│   │   │   └── java/com/example/roomatch/ui/
-│   │   │       ├── AuthActivityTest.java
-│   │   └── test/                    # 🧪 Unit Tests (Mockito, Robolectric)
-│   │       └── java/com/example/roomatch/
-│   │           └── view/fragments
-│   │               └── ApartmentManagementTests.java
-│   │
-│   └── build.gradle
-│
-├── build.gradle (root)
-└── README.md  (📌 You are here)
+│   │   │   │   ├── model/         # POJO Data models (Apartment, User, Message)
+│   │   │   │   ├── repository/    # Data abstraction layer (Firebase access)
+│   │   │   │   ├── viewmodel/     # Logic & State management
+│   │   │   │   ├── view/          # Jetpack Compose UI components
+│   │   │   │   └── utils/         # Helper classes (Messaging, Chat utils)
+│   │   │   └── res/               # Static resources & layouts
+│   │   ├── androidTest/           # 🧪 UI Integration Tests (Espresso)
+│   │   └── test/                  # 🧪 Logic & ViewModel Unit Tests (Mockito)
+└── README.md
 ```
 
 ---
 
-## 🧪 Testing
-
-Roomatch includes two main types of tests:
-
-### 1. **Unit Tests** – ViewModel and Repository logic
-- Location:  
-  `app/src/test/java/com/example/roomatch/view/fragments`
-- Examples:
-  - `ApartmentManagementTests.java` – tests for publish/update/load using mocked repository.
-  - Uses `@Mock`, `when(...)`, `Tasks`, etc.
-
-### 2. **UI Tests (Espresso)** – User interface tests
-- Location:  
-  `app/src/androidTest/java/com/example/roomatch/ui/`
-- Examples:
-  - `AuthActivityTest.java` – tests login (checks for Toast "Login successful").
----
-
-## 🏗 Architecture
-The app uses **MVVM** architecture:
-- **Model** – POJO models and Firebase data access.
-- **ViewModel** – Logic, state management, interaction with repositories.
-- **View** – Activities and Fragments using LiveData and observers to reflect UI state.
+## 🧪 Quality Assurance
+We prioritized reliability through a dual-testing strategy:
+* **Unit Testing:** Leveraged **Mockito** to isolate ViewModel logic, ensuring data processing and repository interactions are flawless.
+* **UI Testing:** Used **Espresso** to simulate user journeys (Login, Search, Posting), ensuring a smooth experience.
 
 ---
 
-## 📱 Key Features
-- 🔑 Auth (Email & Google Sign-In via Firebase)
-- 👤 Profile management
-- 🏠 Apartment listing and filtering (price, area, lifestyle)
-- 💬 Real-time private & group chat
-- 📢 Push notifications (FCM)
-- 🚩 Apartment reporting
-- 🗺 Advanced search via address/location (Google Maps + Places API)
+## 🚀 Getting Started
+1. **Clone:** `git clone https://github.com/arielya2001/Roomatch`
+2. **Environment:** Open in **Android Studio** (minSdk 26).
+3. **Config:** Add your `google-services.json` in the `/app` directory and ensure your **Google Places API** key is configured.
+4. **Launch:** Run on an emulator or physical device (Android 8.0+).
 
 ---
 
-## 🚀 How to Run
-1. Open project in **Android Studio**
-2. Minimum SDK: `minSdk 26`
-3. Add `google-services.json` with Firebase config and Maps API keys.
-4. Run on emulator or physical Android 8+ device.
-
----
-
-## 👨‍💻 Team
-- Ariel Yaacobi (Team Lead)  
-- Yoav Nachmany 
-- Yaacov Krawiec
-- Gabi Rayman
-
+## 👨‍💻 Development Team
+* **Ariel Yaacobi** – Team Lead & System Architect
+* **Yoav Nachmany** – Full Stack Developer
+* **Yaacov Krawiec** – Backend & Integration Specialist
+* **Gabi Rayman** – UI/UX & Frontend Developer
